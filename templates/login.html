@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center vh-100">
+    <div class="glass-card">
+        <h3 class="text-center fw-bold text-light">Login</h3>
+
+        <!-- Flash Message -->
+        {% with messages = get_flashed_messages(with_categories=True) %}
+            {% if messages %}
+                <div class="alert alert-danger text-center alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle"></i> {{ messages[0][1] }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('login') }}">
+            <div class="mb-3">
+                <label class="form-label text-light">USN</label>
+                <input type="text" name="student_id" class="form-control input-glass" required pattern="\d{11}" placeholder="Enter USN">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label text-light">Password</label>
+                <div class="input-group">
+                    <input type="password" name="password" id="password" class="form-control input-glass" required placeholder="Enter password">
+                    <button class="btn btn-outline-light toggle-btn" type="button" onclick="togglePassword()">
+                        <i class="fas fa-eye" id="toggleIcon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-light w-100 fw-bold">Login</button>
+        </form>
+
+        <div class="text-center mt-3">
+            <a href="{{ url_for('register') }}" class="text-light text-decoration-none">Register</a>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Glossy Background */
+    /* Background with Black Overlay */
+body {
+    background: url('/static/default_background.png') no-repeat center center/cover;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+/* Add a dark overlay on top of the background */
+body::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.692); /* Adjust opacity here (0.5 = 50% black) */
+    z-index: 1;
+}
+
+/* Ensure the login form appears on top */
+.glass-card {
+    width: 350px;
+    padding: 30px;
+    background: rgba(184, 184, 184, 0.11);
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 10px rgba(255, 255, 255, 0.1);
+    text-align: center;
+    position: relative;
+    z-index: 2; /* Ensure it appears above the overlay */
+}
+
+    /* Glossy Input Fields */
+    .input-glass {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        padding: 10px;
+        border-radius: 10px;
+    }
+
+    .input-glass::placeholder {
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    /* Button Styling */
+    .btn-light {
+        background-color: rgba(255, 255, 255, 0.3);
+        color: white;
+        border-radius: 10px;
+        transition: 0.3s;
+    }
+
+    .btn-light:hover {
+        background-color: rgba(255, 255, 255, 0.5);
+        transform: scale(1.05);
+    }
+
+    /* Mobile-Friendly */
+    @media (max-width: 576px) {
+        .glass-card {
+            width: 90%;
+        }
+    }
+</style>
+
+<script>
+    function togglePassword() {
+        let passwordInput = document.getElementById("password");
+        let toggleIcon = document.getElementById("toggleIcon");
+
+        if (passwordInput.type === "password") {
+            passwordInput.type = "text";
+            toggleIcon.classList.replace("fa-eye", "fa-eye-slash");
+        } else {
+            passwordInput.type = "password";
+            toggleIcon.classList.replace("fa-eye-slash", "fa-eye");
+        }
+    }
+</script>
+{% endblock %}

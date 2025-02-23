@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}View Application{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>📄 Student Application Details</h2>
+
+    <table class="table table-bordered mt-3">
+        <tr>
+            <th>Full Name</th>
+            <td>{{ student.name }}</td>
+        </tr>
+        <tr>
+            <th>USN</th>
+            <td>{{ student.student_id }}</td>
+        </tr>
+        <tr>
+            <th>Course</th>
+            <td>{{ student.course }}</td>
+        </tr>
+        <tr>
+            <th>Contact</th>
+            <td>{{ student.contact }}</td>
+        </tr>
+        <tr>
+            <th>Guardian</th>
+            <td>{{ student.mother_name }}</td>
+        </tr>
+        <tr>
+            <th>Address</th>
+            <td>{{ student.address }}</td>
+        </tr>
+        <tr>
+            <th>Application Status</th>
+            <td>
+                <span class="badge bg-{{ 'warning' if student.application_status == 'pending' else 'info' if student.application_status == 'processing' else 'success' }}">
+                    {{ student.application_status.capitalize() }}
+                </span>
+            </td>
+        </tr>
+    </table>
+
+    <a href="{{ url_for('admin_applications') }}" class="btn btn-secondary">⬅️ Back</a>
+</div>
+{% endblock %}

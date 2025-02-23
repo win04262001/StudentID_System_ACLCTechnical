@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>{% block title %}Student ID System{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.jpg') }}">
+
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4f4f4;
+            transition: margin-left 0.3s ease-in-out;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 250px;
+            background-color: #222d32;
+            color: white;
+            padding-top: 20px;
+            transition: width 0.3s ease-in-out;
+            overflow: hidden;
+            z-index: 1000;
+        }
+
+        .sidebar .logo {
+            font-size: 22px;
+            text-align: center;
+            font-weight: bold;
+            padding: 10px 0;
+            color: white;
+        }
+
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            color: white;
+            padding: 12px 20px;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        .sidebar a:hover {
+            background-color: #1a2226;
+        }
+
+        .sidebar a i {
+            margin-right: 10px;
+        }
+
+        /* Sidebar Collapsed */
+        .sidebar.collapsed {
+            width: 70px;
+        }
+
+        .sidebar.collapsed a {
+            justify-content: center;
+        }
+
+        .sidebar.collapsed a span {
+            display: none;
+        }
+
+        .sidebar.collapsed .logo {
+            display: none;
+        }
+
+        /* Content Area */
+        .content {
+            margin-left: 250px;
+            padding: 20px;
+            transition: margin-left 0.3s ease-in-out;
+        }
+
+        .content.expanded {
+            margin-left: 70px;
+        }
+
+        /* Toggle Button */
+        .menu-toggle {
+            position: fixed;
+            top: 10px;
+            left: 260px;
+            background: #222d32;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: left 0.3s ease-in-out;
+            z-index: 1100;
+        }
+
+        .menu-toggle i {
+            font-size: 20px;
+        }
+
+        .menu-toggle.expanded {
+            left: 80px;
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 0;
+            }
+
+            .sidebar.collapsed {
+                width: 250px;
+            }
+
+            .content {
+                margin-left: 0;
+            }
+
+            .content.expanded {
+                margin-left: 250px;
+            }
+
+            .menu-toggle {
+                left: 10px;
+            }
+
+            .menu-toggle.expanded {
+                left: 260px;
+            }
+/* Ensures all images are equal-sized and aligned */
+.image-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 200px;  /* Ensures same width */
+        height: 200px; /* Ensures same height */
+    }
+
+    .fixed-size {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain; /* Keeps aspect ratio and prevents stretching */
+    }
+
+    /* Aligns the Download Button under each image */
+    .download-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 10px;
+    }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar Toggle Button -->
+    <button class="menu-toggle" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="logo">Student ID System</div>
+        
+        {% if 'user_id' in session %}
+            {% if session['user_role'] == 'admin' %}
+                <!-- Admin Panel -->
+                <a href="{{ url_for('admin_dashboard') }}"><i class="fas fa-user-shield"></i> <span>Admin Dashboard</span></a>
+                <a href="{{ url_for('admin_applications') }}"><i class="fas fa-users"></i> <span>Manage Applications</span></a>
+                <a href="{{ url_for('student_id_history') }}"><i class="fas fa-clipboard-list"></i> <span>Student ID History</span></a>
+                
+            {% elif session['user_role'] == 'student' %}
+                <!-- Student Panel -->
+                <a href="{{ url_for('student_dashboard') }}"><i class="fas fa-user"></i> <span>My Profile</span></a>
+                <a href="{{ url_for('my_application_status') }}"><i class="fas fa-info-circle"></i> <span>Application Status</span></a>
+            {% endif %}
+
+            <a href="{{ url_for('logout') }}" class="text-danger"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a>
+        
+        {% else %}
+            <!-- Visible only if NOT logged in -->
+            <a href="{{ url_for('home') }}"><i class="fas fa-home"></i> <span>Home</span></a>
+            <a href="{{ url_for('login') }}"><i class="fas fa-sign-in-alt"></i> <span>Login</span></a>
+            <a href="{{ url_for('register') }}"><i class="fas fa-user-plus"></i> <span>Register</span></a>
+        {% endif %}
+    </div>
+
+    <!-- Content Area -->
+    <div class="content" id="main-content">
+        {% if request.endpoint not in ['login', 'admin_login'] %}
+            <!-- Display Flash Messages (Hide on Login Pages) -->
+            {% with messages = get_flashed_messages(with_categories=True) %}
+                {% if messages %}
+                    <div class="alert alert-{{ messages[0][0] }} alert-dismissible fade show" role="alert">
+                        {{ messages[0][1] }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endif %}
+            {% endwith %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- ✅ Bootstrap JavaScript Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function toggleSidebar() {
+            let sidebar = document.getElementById("sidebar");
+            let content = document.getElementById("main-content");
+            let toggleButton = document.querySelector(".menu-toggle");
+
+            sidebar.classList.toggle("collapsed");
+            content.classList.toggle("expanded");
+            toggleButton.classList.toggle("expanded");
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% block title %}Student ID History{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>📜 Student ID History</h2>
+
+    <!-- Search Bar -->
+    <input type="text" id="searchInput" class="form-control mb-3" placeholder="🔍 Search by Student ID or Name...">
+
+    <!-- Student History Table -->
+    <table class="table table-bordered mt-3">
+        <thead class="table-dark">
+            <tr>
+                <th>Student ID</th>
+                <th>Name</th>
+                <th>Received Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="studentHistoryTable">
+            {% for student in student_history %}
+            <tr>
+                <td>{{ student.student_id }}</td>
+                <td>{{ student.name }}</td>
+                <td>{{ student.received_date.strftime('%B %d, %Y') }}</td>
+                <td>
+                    <button class="btn btn-info btn-sm" onclick="loadStudentHistory('{{ student.student_id }}')">
+                        🔍 View Details
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Student ID History Modal -->
+<div class="modal fade" id="studentHistoryModal" tabindex="-1" aria-labelledby="studentHistoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">📄 Student ID Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Profile, Barcode & Download -->
+                <div class="row mb-3 text-center">
+                    <!-- Profile Picture -->
+                    <div class="col-md-4">
+                        <div class="card text-center mb-3">
+                            <div class="card-header">🖼️ Profile Picture</div>
+                            <img id="profilePicture" src="" class="card-img-top border img-fluid" style="max-height: 200px; object-fit: cover;" alt="Profile Picture">
+                            <div class="card-body">
+                                <a id="downloadProfile" href="#" download class="btn btn-sm btn-secondary">⬇️ Download</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Barcode -->
+                    <div class="col-md-4">
+                        <div class="card text-center mb-3">
+                            <div class="card-header">📌 Barcode</div>
+                            <img id="barcodeImage" src="" class="card-img-top border img-fluid" style="max-height: 200px; object-fit: contain;" alt="Barcode">
+                            <div class="card-body">
+                                <a id="downloadBarcode" href="#" download class="btn btn-sm btn-secondary">⬇️ Download</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Signature -->
+                    <div class="col-md-4">
+                        <div class="card text-center mb-3">
+                            <div class="card-header">🖊️ Signature</div>
+                            <img id="signatureImage" src="" class="card-img-top border img-fluid" style="max-height: 200px; object-fit: cover;" alt="Signature">
+                            <div class="card-body">
+                                <a id="downloadSignature" href="#" download class="btn btn-sm btn-secondary">⬇️ Download</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student Details Table -->
+                <table class="table table-bordered">
+                    <tbody>
+                        <tr>
+                            <th>📌 Student ID:</th>
+                            <td id="studentID"></td>
+                        </tr>
+                        <tr>
+                            <th>👤 Name:</th>
+                            <td id="studentName"></td>
+                        </tr>
+                        <tr>
+                            <th>🎓 Course:</th>
+                            <td id="studentCourse"></td>
+                        </tr>
+                        <tr>
+                            <th>📞 Contact:</th>
+                            <td id="studentContact"></td>
+                        </tr>
+                        <tr>
+                            <th>👨‍👩‍👦 Guardian Name:</th>
+                            <td id="studentGuardian"></td>
+                        </tr>
+                        <tr>
+                            <th>🏠 Address:</th>
+                            <td id="studentAddress"></td>
+                        </tr>
+                        <tr>
+                            <th>📅 Received Date:</th>
+                            <td id="receivedDate"></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Download as Image -->
+                <div class="text-end">
+                    <button id="downloadHistory" class="btn btn-primary">📥 Download as Image</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ✅ JavaScript for Fetch API & Modal -->
+<script>
+    function loadStudentHistory(studentId) {
+        fetch(`/get_student_history/${studentId}`)
+        .then(response => response.json())
+        .then(student => {
+            document.getElementById("profilePicture").src = student.profile_picture ? `/static/uploads/${student.profile_picture}` : "/static/default_profile.png";
+            document.getElementById("signatureImage").src = student.signature ? `/static/uploads/${student.signature}` : "/static/default_signature.png";
+
+            // ✅ Load stored barcode image
+            if (student.barcode) {
+                document.getElementById("barcodeImage").src = `/static/barcodes/${student.barcode}`;
+                document.getElementById("downloadBarcode").href = `/static/barcodes/${student.barcode}`;
+                document.getElementById("downloadBarcode").download = student.barcode;
+            } else {
+                document.getElementById("barcodeImage").src = "/static/default_barcode.jpg";
+                document.getElementById("downloadBarcode").href = "#";
+            }
+
+            document.getElementById("downloadProfile").href = `/static/uploads/${student.profile_picture}`;
+            document.getElementById("downloadSignature").href = `/static/uploads/${student.signature}`;
+
+            document.getElementById("studentID").textContent = student.student_id;
+            document.getElementById("studentName").textContent = student.name;
+            document.getElementById("studentCourse").textContent = student.course;
+            document.getElementById("studentContact").textContent = student.contact;
+            document.getElementById("studentGuardian").textContent = student.guardian_name;
+            document.getElementById("studentAddress").textContent = student.address;
+            document.getElementById("receivedDate").textContent = student.received_date;
+
+            let studentHistoryModal = new bootstrap.Modal(document.getElementById("studentHistoryModal"));
+            studentHistoryModal.show();
+        })
+        .catch(error => console.error("Error fetching student history:", error));
+    }
+
+    // 📥 Download Modal Content as an Image (JPG/PNG)
+    document.getElementById("downloadHistory").addEventListener("click", function () {
+        let modalElement = document.querySelector("#studentHistoryModal .modal-content");
+        html2canvas(modalElement, { scale: 3, logging: true, useCORS: true }).then(canvas => {
+            let link = document.createElement("a");
+            link.href = canvas.toDataURL("image/png");
+            link.download = document.getElementById("studentName").textContent + "_ID_History.png";
+            link.click();
+        });
+    });
+
+    // 🔍 Search Functionality
+    document.getElementById("searchInput").addEventListener("keyup", function () {
+        let filter = this.value.toLowerCase();
+        let rows = document.querySelectorAll("#studentHistoryTable tr");
+        rows.forEach(row => {
+            let studentID = row.cells[0].textContent.toLowerCase();
+            let studentName = row.cells[1].textContent.toLowerCase();
+            row.style.display = (studentID.includes(filter) || studentName.includes(filter)) ? "" : "none";
+        });
+    });
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+{% endblock %}

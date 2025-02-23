@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>📊 Analytics Dashboard</h2>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <h4>📊 Daily Check-ins</h4>
+            <canvas id="dailyCheckinsChart"></canvas>
+        </div>
+        <div class="col-md-6">
+            <h4>📈 Appointments Per Month</h4>
+            <canvas id="monthlyAppointmentsChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Load Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        let dailyLabels = JSON.parse('{{ daily_labels | tojson | safe }}');
+        let dailyValues = JSON.parse('{{ daily_values | tojson | safe }}');
+        let monthlyLabels = JSON.parse('{{ monthly_labels | tojson | safe }}');
+        let monthlyValues = JSON.parse('{{ monthly_values | tojson | safe }}');
+
+        console.log("Daily Labels:", dailyLabels);
+        console.log("Daily Values:", dailyValues);
+        console.log("Monthly Labels:", monthlyLabels);
+        console.log("Monthly Values:", monthlyValues);
+
+        let dailyCheckinsCtx = document.getElementById("dailyCheckinsChart").getContext("2d");
+        let monthlyAppointmentsCtx = document.getElementById("monthlyAppointmentsChart").getContext("2d");
+
+        new Chart(dailyCheckinsCtx, {
+            type: 'bar',
+            data: {
+                labels: dailyLabels,
+                datasets: [{
+                    label: 'Check-ins Per Day',
+                    data: dailyValues,
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)'
+                }]
+            }
+        });
+
+        new Chart(monthlyAppointmentsCtx, {
+            type: 'line',
+            data: {
+                labels: monthlyLabels,
+                datasets: [{
+                    label: 'Appointments Per Month',
+                    data: monthlyValues,
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    fill: false
+                }]
+            }
+        });
+    });
+</script>
+{% endblock %}

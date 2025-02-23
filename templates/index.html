@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}🎓 Apply for Student ID{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center fw-bold text-primary"><i class="fas fa-id-card"></i> Student ID Application</h2>
+
+    <!-- 📌 Student Registration Form -->
+    <div class="card shadow-lg p-4 mt-4">
+        <h4 class="fw-bold">📋 Student Details</h4>
+        <form id="studentForm" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label class="form-label">👤 Full Name:</label>
+                <input type="text" name="name" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">🆔 Student ID:</label>
+                <input type="text" name="student_id" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">✉️ Email:</label>
+                <input type="email" name="email" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">📞 Phone:</label>
+                <input type="text" name="phone" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">🏫 Department:</label>
+                <input type="text" name="department" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">📖 Course:</label>
+                <input type="text" name="course" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">🎓 Year Level:</label>
+                <select name="year_level" class="form-control" required>
+                    <option value="1">1st Year</option>
+                    <option value="2">2nd Year</option>
+                    <option value="3">3rd Year</option>
+                    <option value="4">4th Year</option>
+                </select>
+            </div>
+
+            <!-- 📸 Upload Profile Picture -->
+            <div class="mb-3">
+                <label class="form-label">📸 Upload Profile Picture:</label>
+                <input type="file" name="profile_picture" class="form-control" accept="image/*" required>
+            </div>
+
+            <!-- 🖊 Upload Signature -->
+            <div class="mb-3">
+                <label class="form-label">🖊 Upload Signature:</label>
+                <input type="file" name="signature" class="form-control" accept="image/*" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">📩 Submit Application</button>
+        </form>
+    </div>
+</div>
+
+<!-- ✅ JavaScript for Handling Form Submission -->
+<script>
+    document.getElementById("studentForm").onsubmit = async function(event) {
+        event.preventDefault();
+        
+        let formData = new FormData(document.getElementById("studentForm"));
+
+        let response = await fetch("/apply_student_id", {
+            method: "POST",
+            body: formData
+        });
+
+        let result = await response.json();
+        if (result.success) {
+            alert("✅ Student ID Application Submitted Successfully!");
+            window.location.href = "/student_dashboard";
+        } else {
+            alert("❌ Error: " + result.error);
+        }
+    };
+</script>
+
+{% endblock %}

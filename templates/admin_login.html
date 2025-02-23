@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Login{% endblock %}
+
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center vh-100">
+    <div class="card p-4 shadow-lg" style="width: 400px;">
+        <h3 class="text-center">🛡️ Admin Login</h3>
+        <p class="text-center text-muted">Authorized Access Only</p>
+
+        <!-- Flash Message -->
+        {% with messages = get_flashed_messages(with_categories=True) %}
+            {% if messages %}
+                <div class="alert alert-danger text-center alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle"></i> {{ messages[0][1] }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('admin_login') }}">
+            <div class="mb-3">
+                <label class="form-label">🆔 Admin ID</label>
+                <input type="text" name="student_id" class="form-control" required>
+            </div>
+            <div class="mb-3 position-relative">
+                <label class="form-label">🔑 Password</label>
+                <div class="input-group">
+                    <input type="password" name="password" id="password" class="form-control" required>
+                    <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
+                        <i class="fas fa-eye" id="toggleIcon"></i>
+                    </button>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Login</button>
+        </form>
+    </div>
+</div>
+
+<!-- JavaScript for Password Toggle -->
+<script>
+    function togglePassword() {
+        let passwordInput = document.getElementById("password");
+        let toggleIcon = document.getElementById("toggleIcon");
+
+        if (passwordInput.type === "password") {
+            passwordInput.type = "text";
+            toggleIcon.classList.replace("fa-eye", "fa-eye-slash");
+        } else {
+            passwordInput.type = "password";
+            toggleIcon.classList.replace("fa-eye-slash", "fa-eye");
+        }
+    }
+</script>
+
+{% endblock %}

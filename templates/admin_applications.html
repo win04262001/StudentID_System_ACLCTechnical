@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block title %}Manage Applications{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>📋 Manage Student Applications</h2>
+    <table class="table table-bordered mt-3">
+        <thead class="table-dark">
+            <tr>
+                <th>Student ID</th>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in applications %}
+            <tr>
+                <td>{{ student.student_id }}</td>
+                <td>{{ student.name }}</td>
+                <td>
+                    <span class="badge 
+                    {% if student.application_status == 'pending' %}bg-warning text-dark
+                    {% elif student.application_status == 'processing' %}bg-info text-white
+                    {% elif student.application_status == 'done' %}bg-success text-white
+                    {% elif student.application_status == 'receive' %}bg-primary text-white
+                    {% endif %}">
+                    {% if student.application_status == 'pending' %}
+                        ⏳ Pending
+                    {% elif student.application_status == 'processing' %}
+                        🔄 Processing
+                    {% elif student.application_status == 'done' %}
+                        ✅ Done
+                    {% elif student.application_status == 'receive' %}
+                        🎉 Received
+                    {% endif %}
+                </span>
+                
+                </td>
+                <td>
+                    <button class="btn btn-info btn-sm" onclick="loadStudentDetails('{{ student.student_id }}')">
+                        🔍 View
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Student Application Modal -->
+<div class="modal fade" id="studentModal" tabindex="-1" aria-labelledby="studentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">📄 Student Application</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Profile, Barcode & Signature Section -->
+                <div class="row mb-3 text-center">
+                    <!-- Profile Picture -->
+                    <div class="col-md-4">
+                        <div class="card text-center mb-3">
+                            <div class="card-header">🖼️ Profile Picture</div>
+                            <img id="profilePicture" src="" class="card-img-top border img-fluid" style="max-height: 200px; object-fit: cover;" alt="Profile Picture">
+                            <div class="card-body">
+                                <a id="downloadProfile" href="#" download class="btn btn-sm btn-secondary">⬇️ Download</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Barcode -->
+                    <div class="col-md-4">
+                        <div class="card text-center mb-3">
+                            <div class="card-header">📌 Barcode</div>
+                            <img id="barcodeImage" src="" class="card-img-top border img-fluid" style="max-height: 200px; object-fit: contain;" alt="Barcode">
+                            <div class="card-body">
+                                <a id="downloadBarcode" href="#" download class="btn btn-sm btn-secondary">⬇️ Download</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Signature -->
+                    <div class="col-md-4">
+                        <div class="card text-center mb-3">
+                            <div class="card-header">✍️ Signature</div>
+                            <img id="signatureImage" src="" class="card-img-top border img-fluid" style="max-height: 200px; object-fit: cover;" alt="Signature">
+                            <div class="card-body">
+                                <a id="downloadSignature" href="#" download class="btn btn-sm btn-secondary">⬇️ Download</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student Details Table -->
+                <table class="table table-bordered">
+                    <tbody>
+                        <tr>
+                            <th>📌 Student ID:</th>
+                            <td id="studentID"></td>
+                        </tr>
+                        <tr>
+                            <th>👤 Name:</th>
+                            <td id="studentName"></td>
+                        </tr>
+                        <tr>
+                            <th>🎓 Course:</th>
+                            <td id="studentCourse"></td>
+                        </tr>
+                        <tr>
+                            <th>📞 Contact:</th>
+                            <td id="studentContact"></td>
+                        </tr>
+                        <tr>
+                            <th>👨‍👩‍👦 Guardian Name:</th>
+                            <td id="studentGuardian"></td>
+                        </tr>
+                        <tr>
+                            <th>🏠 Address:</th>
+                            <td id="studentAddress"></td>
+                        </tr>
+                        <tr>
+                            <th>📌 Status:</th>
+                            <td>
+                                <select id="statusDropdown" class="form-select">
+                                    <option value="pending">Pending</option>
+                                    <option value="processing">Processing</option>
+                                    <option value="done">Done</option>
+                                    <option value="receive">Received</option>
+                                </select>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Save Changes Button -->
+                <div class="text-end">
+                    <button id="saveStatusBtn" class="btn btn-primary">💾 Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    function loadStudentDetails(studentId) {
+    fetch(`/get_student/${studentId}`)
+    .then(response => response.json())
+    .then(student => {
+        // ✅ Set profile picture
+        document.getElementById("profilePicture").src = student.profile_picture 
+            ? `/static/uploads/${student.profile_picture}` 
+            : "/static/default_profile.png";
+
+        // ✅ Set signature
+        document.getElementById("signatureImage").src = student.signature 
+            ? `/static/uploads/${student.signature}` 
+            : "/static/default_signature.png";
+
+        // ✅ Fix barcode path (ensure correct database fetch)
+        document.getElementById("barcodeImage").src = student.barcode;
+        document.getElementById("downloadBarcode").href = student.barcode;
+
+        // ✅ Ensure other details load correctly
+        document.getElementById("studentID").textContent = student.student_id;
+        document.getElementById("studentName").textContent = student.name;
+        document.getElementById("studentCourse").textContent = student.course;
+        document.getElementById("studentContact").textContent = student.contact;
+        document.getElementById("studentGuardian").textContent = student.mother_name;
+        document.getElementById("studentAddress").textContent = student.address;
+        document.getElementById("statusDropdown").value = student.application_status;
+
+        // ✅ Show modal
+        let studentModal = new bootstrap.Modal(document.getElementById("studentModal"));
+        studentModal.show();
+    })
+    .catch(error => console.error("Error fetching student details:", error));
+}
+
+
+    document.getElementById("saveStatusBtn").addEventListener("click", function () {
+        let studentId = document.getElementById("studentID").textContent;
+        let newStatus = document.getElementById("statusDropdown").value;
+
+        fetch(`/update_application_status/${studentId}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: newStatus }),
+        })
+        .then(response => response.json())
+        .then(() => {
+            alert("✅ Status Updated!");
+            location.reload();
+        })
+        .catch(error => console.error("Error:", error));
+    });
+</script>
+
+
+{% endblock %}

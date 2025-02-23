@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center">📌 Student ID Application Status</h2>
+
+    <div class="row mt-4">
+        <!-- Pending -->
+        <div class="col-md-3">
+            <div class="card shadow-lg text-center {% if session.application_status == 'pending' %}bg-warning text-dark{% else %}bg-light{% endif %}">
+                <div class="card-body">
+                    <h4>⏳ Pending</h4>
+                    <p>Your application is awaiting review.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Processing -->
+        <div class="col-md-3">
+            <div class="card shadow-lg text-center {% if session.application_status == 'processing' %}bg-info text-white{% else %}bg-light{% endif %}">
+                <div class="card-body">
+                    <h4>🔄 Processing</h4>
+                    <p>Your application is currently being processed.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Done -->
+        <div class="col-md-3">
+            <div class="card shadow-lg text-center {% if session.application_status == 'done' %}bg-success text-white{% else %}bg-light{% endif %}">
+                <div class="card-body">
+                    <h4>✅ Done</h4>
+                    <p>Your student ID is ready for pickup.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Received -->
+        <div class="col-md-3">
+            <div class="card shadow-lg text-center {% if session.application_status == 'receive' %}bg-primary text-white{% else %}bg-light{% endif %}">
+                <div class="card-body">
+                    <h4>🎉 Received</h4>
+                    {% if session.application_status == 'receive' %}
+                        <p>Congratulations! You have received your student ID.</p>
+                    {% else %}
+                        <p>Pick up your ID and this will be updated.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Button to Edit Profile -->
+    <div class="text-center mt-4">
+        <a href="{{ url_for('complete_student_profile') }}" class="btn btn-dark">✏️ Update Your Information</a>
+    </div>
+</div>
+{% endblock %}

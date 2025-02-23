@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>🛡️ Admin Dashboard</h2>
+
+    <!-- Status Cards -->
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card bg-warning text-white shadow-lg">
+                <div class="card-body text-center">
+                    <h4>Pending Applications</h4>
+                    <h2>{{ pending }}</h2>  <!-- ✅ Direct Jinja Rendering -->
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white shadow-lg">
+                <div class="card-body text-center">
+                    <h4>Processing Applications</h4>
+                    <h2>{{ processing }}</h2>  <!-- ✅ Direct Jinja Rendering -->
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white shadow-lg">
+                <div class="card-body text-center">
+                    <h4>Done Applications</h4>
+                    <h2>{{ done }}</h2>  <!-- ✅ Direct Jinja Rendering -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Applications -->
+    <h3 class="mt-4">📋 Manage Student Applications</h3>
+    <a href="{{ url_for('admin_applications') }}" class="btn btn-info mb-3">📋 View Applications</a>
+</div>
+{% endblock %}

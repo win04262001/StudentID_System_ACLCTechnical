@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Student ID History</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4f4f4;
+            transition: margin-left 0.3s ease-in-out;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 250px;
+            background-color: #222d32;
+            color: white;
+            padding-top: 20px;
+            transition: width 0.3s ease-in-out;
+            overflow: hidden;
+            z-index: 1000;
+        }
+
+        .sidebar .logo {
+            font-size: 22px;
+            text-align: center;
+            font-weight: bold;
+            padding: 10px 0;
+            color: white;
+        }
+
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            color: white;
+            padding: 12px 20px;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        .sidebar a:hover {
+            background-color: #1a2226;
+        }
+
+        .sidebar a i {
+            margin-right: 10px;
+        }
+
+        /* Sidebar Collapsed */
+        .sidebar.collapsed {
+            width: 70px;
+        }
+
+        .sidebar.collapsed a {
+            justify-content: center;
+        }
+
+        .sidebar.collapsed a span {
+            display: none;
+        }
+
+        .sidebar.collapsed .logo {
+            display: none;
+        }
+
+        /* Content Area */
+        .content {
+            margin-left: 250px;
+            padding: 20px;
+            transition: margin-left 0.3s ease-in-out;
+        }
+
+        .content.expanded {
+            margin-left: 70px;
+        }
+
+        /* Toggle Button */
+        .menu-toggle {
+            position: fixed;
+            top: 10px;
+            left: 260px;
+            background: #222d32;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: left 0.3s ease-in-out;
+            z-index: 1100;
+        }
+
+        .menu-toggle i {
+            font-size: 20px;
+        }
+
+        .menu-toggle.expanded {
+            left: 80px;
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 0;
+            }
+
+            .sidebar.collapsed {
+                width: 250px;
+            }
+
+            .content {
+                margin-left: 0;
+            }
+
+            .content.expanded {
+                margin-left: 250px;
+            }
+
+            .menu-toggle {
+                left: 10px;
+            }
+
+            .menu-toggle.expanded {
+                left: 260px;
+            }
+/* Ensures all images are equal-sized and aligned */
+.image-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 200px;  /* Ensures same width */
+        height: 200px; /* Ensures same height */
+    }
+
+    .fixed-size {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain; /* Keeps aspect ratio and prevents stretching */
+    }
+
+    /* Aligns the Download Button under each image */
+    .download-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 10px;
+    }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar Toggle Button -->
+    <button class="menu-toggle" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="logo">🎓 Student ID System</div>
+        
+        
+            
+                <!-- Admin Panel -->
+                <a href="/admin_dashboard"><i class="fas fa-user-shield"></i> <span>Admin Dashboard</span></a>
+                <a href="/admin/applications"><i class="fas fa-users"></i> <span>Manage Applications</span></a>
+                <a href="/student_id_history"><i class="fas fa-clipboard-list"></i> <span>Student ID History</span></a>
+                
+            
+
+            <a href="/logout" class="text-danger"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a>
+        
+        
+    </div>
+
+    <!-- Content Area -->
+    <div class="content" id="main-content">
+        
+            <!-- Display Flash Messages (Hide on Login Pages) -->
+            
+                
+            
+        
+
+        
+<div class="container mt-4">
+    <h2>📜 Student ID History</h2>
+
+    <!-- Search Bar -->
+    <input type="text" id="searchInput" class="form-control mb-3" placeholder="🔍 Search by Student ID or Name...">
+
+    <!-- Student History Table -->
+    <table class="table table-bordered mt-3">
+        <thead class="table-dark">
+            <tr>
+                <th>Student ID</th>
+                <th>Name</th>
+                <th>Received Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="studentHistoryTable">
+            
+            <tr>
+                <td>21000602400</td>
+                <td>Zarwin K. Villaro</td>
+                <td>February 22, 2025</td>
+                <td>
+                    <button class="btn btn-info btn-sm" onclick="loadStudentHistory('21000602400')">
+                        🔍 View Details
+                    </button>
+                </td>
+            </tr>
+            
+            <tr>
+                <td>22000602400</td>
+                <td>Harvey Perater</td>
+                <td>February 22, 2025</td>
+                <td>
+                    <button class="btn btn-info btn-sm" onclick="loadStudentHistory('22000602400')">
+                        🔍 View Details
+                    </button>
+                </td>
+            </tr>
+            
+            <tr>
+                <td>21000502401</td>
+                <td>zarwin</td>
+                <td>February 22, 2025</td>
+                <td>
+                    <button class="btn btn-info btn-sm" onclick="loadStudentHistory('21000502401')">
+                        🔍 View Details
+                    </button>
+                </td>
+            </tr>
+            
+            <tr>
+                <td>22000602400</td>
+                <td>Harvey Perater</td>
+                <td>February 22, 2025</td>
+                <td>
+                    <button class="btn btn-info btn-sm" onclick="loadStudentHistory('22000602400')">
+                        🔍 View Details
+                    </button>
+                </td>
+            </tr>
+            
+            <tr>
+                <td>21000502400</td>
+                <td>charnelyn estal</td>
+                <td>February 22, 2025</td>
+                <td>
+                    <button class="btn btn-info btn-sm" onclick="loadStudentHistory('21000502400')">
+                        🔍 View Details
+                    </button>
+                </td>
+            </tr>
+            
+        </tbody>
+    </table>
+</div>
+
+<!-- Student ID History Modal -->
+<div class="modal fade" id="studentHistoryModal" tabindex="-1" aria-labelledby="studentHistoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">📄 Student ID Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Profile, Barcode & Download -->
+                <div class="row mb-3 text-center">
+                    <!-- Profile Picture -->
+                    <div class="col-md-4">
+                        <div class="card text-center mb-3">
+                            <div class="card-header">🖼️ Profile Picture</div>
+                            <img id="profilePicture" src="" class="card-img-top border img-fluid" style="max-height: 200px; object-fit: cover;" alt="Profile Picture">
+                            <div class="card-body">
+                                <a id="downloadProfile" href="#" download class="btn btn-sm btn-secondary">⬇️ Download</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Barcode -->
+                    <div class="col-md-4">
+                        <div class="card text-center mb-3">
+                            <div class="card-header">📌 Barcode</div>
+                            <img id="barcodeImage" class="card-img-top border img-fluid" style="max-height: 200px; object-fit: contain;" alt="Barcode">
+                            <div class="card-body">
+                                <a id="downloadBarcode" href="#" download="barcode.png" class="btn btn-sm btn-secondary">⬇️ Download</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+
+                    <!-- Signature -->
+                    <div class="col-md-4">
+                        <div class="card text-center mb-3">
+                            <div class="card-header">🖊️ Signature</div>
+                            <img id="signatureImage" src="" class="card-img-top border img-fluid" style="max-height: 200px; object-fit: cover;" alt="Signature">
+                            <div class="card-body">
+                                <a id="downloadSignature" href="#" download class="btn btn-sm btn-secondary">⬇️ Download</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student Details Table -->
+                <table class="table table-bordered">
+                    <tbody>
+                        <tr>
+                            <th>📌 Student ID:</th>
+                            <td id="studentID"></td>
+                        </tr>
+                        <tr>
+                            <th>👤 Name:</th>
+                            <td id="studentName"></td>
+                        </tr>
+                        <tr>
+                            <th>🎓 Course:</th>
+                            <td id="studentCourse"></td>
+                        </tr>
+                        <tr>
+                            <th>📞 Contact:</th>
+                            <td id="studentContact"></td>
+                        </tr>
+                        <tr>
+                            <th>👨‍👩‍👦 Guardian Name:</th>
+                            <td id="studentGuardian"></td>
+                        </tr>
+                        <tr>
+                            <th>🏠 Address:</th>
+                            <td id="studentAddress"></td>
+                        </tr>
+                        <tr>
+                            <th>📅 Received Date:</th>
+                            <td id="receivedDate"></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Download as Image -->
+                <div class="text-end">
+                    <button id="downloadHistory" class="btn btn-primary">📥 Download as Image</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ✅ JavaScript for Fetch API & Modal -->
+<script>
+    function loadStudentHistory(studentId) {
+    fetch(`/get_student_history/${studentId}`)
+    .then(response => response.json())
+    .then(student => {
+        document.getElementById("profilePicture").src = `/static/uploads/${student.profile_picture}`;
+        document.getElementById("signatureImage").src = `/static/uploads/${student.signature}`;
+
+        if (student.barcode) {
+            document.getElementById("barcodeImage").src = `/static/barcodes/${student.barcode}`;
+            document.getElementById("downloadBarcode").href = `/static/barcodes/${student.barcode}`;
+        } else {
+            document.getElementById("barcodeImage").src = "/static/default_barcode.jpg";
+            document.getElementById("downloadBarcode").href = "#";
+        }
+
+            document.getElementById("downloadProfile").href = `/static/uploads/${student.profile_picture}`;
+            document.getElementById("downloadSignature").href = `/static/uploads/${student.signature}`;
+
+            document.getElementById("studentID").textContent = student.student_id;
+            document.getElementById("studentName").textContent = student.name;
+            document.getElementById("studentCourse").textContent = student.course;
+            document.getElementById("studentContact").textContent = student.contact;
+            document.getElementById("studentGuardian").textContent = student.mother_name;
+            document.getElementById("studentAddress").textContent = student.address;
+            document.getElementById("receivedDate").textContent = student.received_date;
+
+            let studentHistoryModal = new bootstrap.Modal(document.getElementById("studentHistoryModal"));
+        studentHistoryModal.show();
+    })
+    .catch(error => console.error("Error fetching student history:", error));
+}
+    // 📥 Download Modal Content as an Image (JPG/PNG)
+    document.getElementById("downloadHistory").addEventListener("click", function () {
+        let modalElement = document.querySelector("#studentHistoryModal .modal-content");
+        html2canvas(modalElement, { scale: 3, logging: true, useCORS: true }).then(canvas => {
+            let link = document.createElement("a");
+            link.href = canvas.toDataURL("image/png");
+            link.download = document.getElementById("studentName").textContent + "_ID_History.png";
+            link.click();
+        });
+    });
+
+    // 🔍 Search Functionality
+    document.getElementById("searchInput").addEventListener("keyup", function () {
+        let filter = this.value.toLowerCase();
+        let rows = document.querySelectorAll("#studentHistoryTable tr");
+        rows.forEach(row => {
+            let studentID = row.cells[0].textContent.toLowerCase();
+            let studentName = row.cells[1].textContent.toLowerCase();
+            row.style.display = (studentID.includes(filter) || studentName.includes(filter)) ? "" : "none";
+        });
+    });
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    </div>
+
+    <!-- ✅ Bootstrap JavaScript Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function toggleSidebar() {
+            let sidebar = document.getElementById("sidebar");
+            let content = document.getElementById("main-content");
+            let toggleButton = document.querySelector(".menu-toggle");
+
+            sidebar.classList.toggle("collapsed");
+            content.classList.toggle("expanded");
+            toggleButton.classList.toggle("expanded");
+        }
+    </script>
+
+</body>
+</html>

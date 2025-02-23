@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Apply for Student ID{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center text-primary">📄 Apply for Your Student ID</h2>
+
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-3">
+            <label class="form-label">Full Name:</label>
+            <input type="text" name="name" value="{{ student.name }}" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">USN:</label>
+            <input type="text" value="{{ student.student_id }}" class="form-control" disabled>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Course:</label>
+            <input type="text" name="course" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Contact Number:</label>
+            <input type="text" name="contact" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Guardian Name:</label>
+            <input type="text" name="guardian" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Address:</label>
+            <textarea name="address" class="form-control" required></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Upload Profile Picture:</label>
+            <input type="file" name="profile_picture" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Upload Signature:</label>
+            <input type="file" name="signature" class="form-control" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">📥 Submit Application</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Application Status{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center">📌 Application Status</h2>
+    <div class="text-center">
+        <h3 class="fw-bold text-primary">{{ status|capitalize }}</h3>
+
+        {% if status == "pending" %}
+            <p class="text-warning">⏳ Your application is under review.</p>
+        {% elif status == "processing" %}
+            <p class="text-info">🔄 Your application is being processed.</p>
+        {% elif status == "approved" %}
+            <p class="text-success">✅ Your application has been approved! Please wait for your ID.</p>
+        {% elif status == "rejected" %}
+            <p class="text-danger">❌ Your application was rejected. Please contact admin.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
