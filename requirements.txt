@@ -18,3 +18,4 @@ PyMySQL==1.1.1
 python-barcode==0.15.1
 qrcode==8.0
 Werkzeug==3.0.3
+gunicorn==23.0.0
