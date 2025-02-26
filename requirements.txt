@@ -19,3 +19,7 @@ python-barcode==0.15.1
 qrcode==8.0
 Werkzeug==3.0.3
 gunicorn==23.0.0
+opencv-python==4.9.0.80
+numpy==1.26.4
+Pillow==10.2.0
+scikit-image==0.22.0

@@ -4,12 +4,13 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2 class="text-center">📌 Student ID Application Status</h2>
+    <h2 class="text-center text-primary">📌 Student ID Application Status</h2>
+    <p class="text-center text-muted">Track the progress of your student ID application.</p>
 
-    <div class="row mt-4">
+    <div class="row mt-4 g-3">
         <!-- Pending -->
         <div class="col-md-3">
-            <div class="card shadow-lg text-center {% if session.application_status == 'pending' %}bg-warning text-dark{% else %}bg-light{% endif %}">
+            <div class="card shadow-lg text-center border-0 {% if session.application_status == 'pending' %}bg-warning text-dark{% else %}bg-light{% endif %}">
                 <div class="card-body">
                     <h4>⏳ Pending</h4>
                     <p>Your application is awaiting review.</p>
@@ -19,7 +20,7 @@
 
         <!-- Processing -->
         <div class="col-md-3">
-            <div class="card shadow-lg text-center {% if session.application_status == 'processing' %}bg-info text-white{% else %}bg-light{% endif %}">
+            <div class="card shadow-lg text-center border-0 {% if session.application_status == 'processing' %}bg-info text-white{% else %}bg-light{% endif %}">
                 <div class="card-body">
                     <h4>🔄 Processing</h4>
                     <p>Your application is currently being processed.</p>
@@ -29,7 +30,7 @@
 
         <!-- Done -->
         <div class="col-md-3">
-            <div class="card shadow-lg text-center {% if session.application_status == 'done' %}bg-success text-white{% else %}bg-light{% endif %}">
+            <div class="card shadow-lg text-center border-0 {% if session.application_status == 'done' %}bg-success text-white{% else %}bg-light{% endif %}">
                 <div class="card-body">
                     <h4>✅ Done</h4>
                     <p>Your student ID is ready for pickup.</p>
@@ -39,7 +40,7 @@
 
         <!-- Received -->
         <div class="col-md-3">
-            <div class="card shadow-lg text-center {% if session.application_status == 'receive' %}bg-primary text-white{% else %}bg-light{% endif %}">
+            <div class="card shadow-lg text-center border-0 {% if session.application_status == 'receive' %}bg-primary text-white{% else %}bg-light{% endif %}">
                 <div class="card-body">
                     <h4>🎉 Received</h4>
                     {% if session.application_status == 'receive' %}
@@ -52,9 +53,10 @@
         </div>
     </div>
 
-    <!-- Button to Edit Profile -->
-    <div class="text-center mt-4">
-        <a href="{{ url_for('complete_student_profile') }}" class="btn btn-dark">✏️ Update Your Information</a>
+    <!-- Profile & Support -->
+    <div class="text-center mt-4 d-flex justify-content-center gap-3">
+        <a href="{{ url_for('complete_student_profile') }}" class="btn btn-dark">✏️ Update Information</a>
+        <a href="#" class="btn btn-outline-primary">📩 Contact Support</a>
     </div>
 </div>
 {% endblock %}

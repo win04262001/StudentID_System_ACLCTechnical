@@ -36,29 +36,35 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.884);
+            background: rgba(0, 0, 0, 0.7);
         }
 
         .hero-content {
             position: relative;
             z-index: 1;
-            max-width: 700px;
+            max-width: 90%;
         }
 
         .hero h1 {
-            font-size: 3.2rem;
+            font-size: 2.5rem;
             font-weight: bold;
             animation: fadeIn 1.5s ease-in-out;
         }
 
         .hero p {
-            font-size: 1.3rem;
+            font-size: 1.2rem;
         }
 
-        /* Fade-in animation */
-        @keyframes fadeIn {
-            0% { opacity: 0; transform: translateY(-20px); }
-            100% { opacity: 1; transform: translateY(0); }
+        @media (max-width: 768px) {
+            .hero {
+                height: 80vh;
+            }
+            .hero h1 {
+                font-size: 2rem;
+            }
+            .hero p {
+                font-size: 1rem;
+            }
         }
 
         /* Custom Button */
@@ -66,7 +72,7 @@
             background-color: #ff4500;
             border: none;
             padding: 12px 24px;
-            font-size: 1.2rem;
+            font-size: 1rem;
             color: white;
             border-radius: 30px;
             transition: 0.3s ease-in-out;
@@ -95,6 +101,15 @@
             transform: translateY(-5px);
         }
 
+        @media (max-width: 768px) {
+            .services-section .row {
+                flex-direction: column;
+            }
+            .card-custom {
+                margin-bottom: 20px;
+            }
+        }
+
         /* TESTIMONIALS */
         .testimonials {
             padding: 60px 20px;
@@ -102,7 +117,7 @@
         }
 
         .testimonial-item {
-            font-size: 1.2rem;
+            font-size: 1rem;
             font-style: italic;
             color: #444;
         }
@@ -128,20 +143,20 @@
     <!-- SERVICES SECTION -->
     <div class="services-section">
         <h2>Why Register Your Student ID?</h2>
-        <div class="row mt-4">
-            <div class="col-md-4">
+        <div class="row mt-4 justify-content-center">
+            <div class="col-md-4 col-sm-10">
                 <div class="card card-custom shadow-sm p-4">
                     <h4>📋 Quick Application</h4>
                     <p>Fill out your details online in just a few minutes.</p>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-4 col-sm-10">
                 <div class="card card-custom shadow-sm p-4">
                     <h4>✅ Easy Approval</h4>
                     <p>Track your application progress through our system.</p>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-4 col-sm-10">
                 <div class="card card-custom shadow-sm p-4">
                     <h4>📜 Get Your ID Fast</h4>
                     <p>Receive your Student ID with a barcode for identification.</p>

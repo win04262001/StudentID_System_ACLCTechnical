@@ -2,9 +2,13 @@
 {% block title %}Manage Applications{% endblock %}
 
 {% block content %}
+
 <div class="container mt-4">
     <h2>📋 Manage Student Applications</h2>
     <table class="table table-bordered mt-3">
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary btn-lg">
+            <
+         </a>
         <thead class="table-dark">
             <tr>
                 <th>Student ID</th>
@@ -166,7 +170,7 @@
         document.getElementById("studentName").textContent = student.name;
         document.getElementById("studentCourse").textContent = student.course;
         document.getElementById("studentContact").textContent = student.contact;
-        document.getElementById("studentGuardian").textContent = student.mother_name;
+        document.getElementById("studentGuardian").textContent = student.guardian_name;
         document.getElementById("studentAddress").textContent = student.address;
         document.getElementById("statusDropdown").value = student.application_status;
 

@@ -1,4 +1,3 @@
-import functools
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import timedelta
@@ -9,6 +8,10 @@ import os
 import barcode
 from barcode.writer import ImageWriter
 from flask import send_from_directory
+import cv2
+import numpy as np
+import easyocr
+from concurrent.futures import ThreadPoolExecutor
 
 
 # ✅ Define Flask App
@@ -48,6 +51,76 @@ def login_required(role="student"):
             return fn(*args, **kwargs)
         return decorated_view
     return wrapper
+
+# ✅ Load EasyOCR model once to avoid reloading every request
+reader = easyocr.Reader(['en'], gpu=False)
+
+# ✅ Check if an image is blurry
+def is_blurry(image, threshold=80):
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
+    return laplacian_var < threshold
+
+# ✅ Check if a face is detected using OpenCV's Haar cascade
+def is_face_detected(image_path):
+    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+    image = cv2.imread(image_path)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+    return len(faces) > 0
+
+# ✅ Check if the background is plain using edge detection
+def is_plain_background(image_path, edge_threshold=5000):
+    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    edges = cv2.Canny(image, 50, 150)
+    return np.count_nonzero(edges) < edge_threshold
+
+# ✅ Check if a signature is valid using OCR
+def is_signature_valid(image_path):
+    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    _, binary = cv2.threshold(image, 128, 255, cv2.THRESH_BINARY_INV)
+    white_pixels = np.count_nonzero(binary)
+    return 1000 < white_pixels < 20000  # Adjust values if necessary
+
+# ✅ Validate Image (Profile & Signature)
+@app.route('/validate_image/<image_type>', methods=['POST'])
+def validate_image(image_type):
+    if image_type not in ["profile", "signature"]:
+        return jsonify({"valid": False, "error": "Invalid image type"}), 400
+
+    file = request.files.get(image_type)
+    if not file:
+        return jsonify({"valid": False, "error": "No image uploaded"}), 400
+
+    # Save the file before processing
+    filename = secure_filename(file.filename)
+    image_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+    file.save(image_path)
+
+    # Use ThreadPoolExecutor to process the image in parallel
+    with ThreadPoolExecutor() as executor:
+        if image_type == "profile":
+            face_result = executor.submit(is_face_detected, image_path)
+            bg_result = executor.submit(is_plain_background, image_path)
+            blur_result = executor.submit(is_blurry, cv2.imread(image_path))
+
+            if not face_result.result():
+                return jsonify({"valid": False, "error": "Profile picture must contain a visible face."})
+
+            if not bg_result.result():
+                return jsonify({"valid": False, "error": "Profile picture must have a plain background."})
+
+            if blur_result.result():
+                return jsonify({"valid": False, "error": "Profile picture is blurry."})
+
+        elif image_type == "signature":
+            signature_result = executor.submit(is_signature_valid, image_path)
+            if not signature_result.result():
+                return jsonify({"valid": False, "error": "Signature is not clear or readable."})
+
+    return jsonify({"valid": True})
+
+
 
 # ---------- Home Page ----------
 @app.route('/')
@@ -203,17 +276,22 @@ def admin_dashboard():
     cursor.execute("SELECT COUNT(*) as done FROM students WHERE application_status = 'done'")
     done = cursor.fetchone()["done"]
 
+    # Fetch receive applications
+    cursor.execute("SELECT COUNT(*) as receive FROM students WHERE application_status = 'receive'")
+    receive = cursor.fetchone()["receive"]
+
     conn.close()
 
     # Debugging Output
-    print(f"DEBUG - Pending: {pending}, Processing: {processing}, Done: {done}")
+    print(f"DEBUG - Pending: {pending}, Processing: {processing}, Done: {done}, receive: {receive}")
 
     return render_template(
         "admin_dashboard.html",
         total_students=total_students,
         pending=pending,
         processing=processing,
-        done=done
+        done=done,
+        receive=receive
     )
 
 
@@ -336,7 +414,7 @@ def update_application_status(student_id):
         cursor.execute("""
             INSERT INTO student_history (student_id, name, course, contact, guardian_name, address, profile_picture, signature, barcode, received_date)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
-        """, (student["student_id"], student["name"], student["course"], student["contact"], student["mother_name"],
+        """, (student["student_id"], student["name"], student["course"], student["contact"], student["guardian_name"],
               student["address"], student["profile_picture"], student["signature"], barcode_filename))
 
     # ✅ Update student status without changing barcode
@@ -426,7 +504,7 @@ def student_dashboard():
         "application_status": student["application_status"],
         "course": student["course"],
         "contact": student["contact"],
-        "guardian_name": student["mother_name"],
+        "guardian_name": student["guardian_name"],
         "address": student["address"],
         "profile_picture": student["profile_picture"],
         "signature": student["signature"]
@@ -491,7 +569,7 @@ def apply_student_id():
         cursor = conn.cursor()
         cursor.execute("""
             UPDATE students 
-            SET course=%s, contact=%s, mother_name=%s, address=%s, 
+            SET course=%s, contact=%s, guardian_name=%s, address=%s, 
                 profile_picture=%s, signature=%s, barcode=%s, application_status='Processing'
             WHERE student_id=%s
         """, (course, contact, guardian, address, profile_picture_filename, signature_filename, barcode_filename, student_id))
@@ -513,10 +591,14 @@ def apply_student_id():
 
 # ---------- Update Student Info ----------
 @app.route('/update_student_info', methods=['POST'])
-@login_required("student")
 def update_student_info():
     user_id = session.get('user_id')
-    
+    student_id = session.get('student_id')
+
+    if not student_id:
+        flash("Session expired. Please log in again.", "danger")
+        return redirect(url_for("login"))
+
     name = request.form.get("name")
     course = request.form.get("course")
     contact = request.form.get("contact")
@@ -526,25 +608,53 @@ def update_student_info():
     profile_picture = request.files.get("profile_picture")
     signature = request.files.get("signature")
 
-    # Save uploaded files
-    profile_picture_filename = secure_filename(profile_picture.filename) if profile_picture else None
-    signature_filename = secure_filename(signature.filename) if signature else None
+    if not profile_picture or not signature:
+        flash("Both profile picture and signature are required.", "danger")
+        return redirect(url_for("complete_student_profile"))
 
-    if profile_picture:
-        profile_picture.save(os.path.join(app.config["UPLOAD_FOLDER"], profile_picture_filename))
+    # Secure filenames
+    profile_picture_filename = secure_filename(profile_picture.filename)
+    signature_filename = secure_filename(signature.filename)
 
-    if signature:
-        signature.save(os.path.join(app.config["UPLOAD_FOLDER"], signature_filename))
+    # Save image files
+    profile_path = os.path.join(app.config["UPLOAD_FOLDER"], profile_picture_filename)
+    signature_path = os.path.join(app.config["UPLOAD_FOLDER"], signature_filename)
 
-    # Update database
+    profile_picture.save(profile_path)
+    signature.save(signature_path)
+
+    # Perform validation in parallel
+    with ThreadPoolExecutor() as executor:
+        blur_result = executor.submit(is_blurry, cv2.imread(profile_path))
+        face_result = executor.submit(is_face_detected, profile_path)
+        bg_result = executor.submit(is_plain_background, profile_path)
+        signature_result = executor.submit(is_signature_valid, signature_path)
+
+        if blur_result.result():
+            flash("Profile picture is blurry. Please upload a clear image.", "danger")
+            return redirect(url_for("complete_student_profile"))
+
+        if not face_result.result():
+            flash("Profile picture must contain a visible face.", "danger")
+            return redirect(url_for("complete_student_profile"))
+
+        if not bg_result.result():
+            flash("Profile picture must have a plain background.", "danger")
+            return redirect(url_for("complete_student_profile"))
+
+        if not signature_result.result():
+            flash("Signature must be clear and handwritten on a plain background.", "danger")
+            return redirect(url_for("complete_student_profile"))
+
+    # Save to the database
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
         UPDATE students 
-        SET name=%s, course=%s, contact=%s, mother_name=%s, address=%s, 
+        SET name=%s, course=%s, contact=%s, guardian_name=%s, address=%s, 
             profile_picture=%s, signature=%s, application_status='pending'
         WHERE student_id=%s
-    """, (name, course, contact, guardian_name, address, profile_picture_filename, signature_filename, session['student_id']))
+    """, (name, course, contact, guardian_name, address, profile_picture_filename, signature_filename, student_id))
     
     conn.commit()
     cursor.close()
@@ -552,6 +662,7 @@ def update_student_info():
 
     flash("✅ Profile updated successfully!", "success")
     return redirect(url_for("student_dashboard"))
+
 
 # ---------- Complete Info ----------
 @app.route('/complete_student_profile', methods=['GET'])

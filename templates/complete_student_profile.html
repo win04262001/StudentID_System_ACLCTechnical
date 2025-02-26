@@ -4,53 +4,148 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2 class="text-center">📋 Complete Your Student Profile</h2>
-    <p class="text-center text-muted">Fill out the necessary details to proceed.</p>
-
-    <form method="POST" action="{{ url_for('update_student_info') }}" enctype="multipart/form-data" class="shadow p-4 bg-white">
-        <div class="mb-3">
-            <label class="form-label">👤 Full Name</label>
-            <input type="text" name="name" class="form-control" value="{{ session['user_name'] }}" required>
+    <div class="card shadow-lg border-0">
+        <div class="card-header bg-primary text-white text-center">
+            <h2>📋 Complete Your Student Profile</h2>
+            <p class="mb-0">Fill out the necessary details to proceed.</p>
         </div>
-
-        <div class="mb-3">
-            <label class="form-label">📌 Student Number (USN)</label>
-            <input type="text" name="student_id" class="form-control" value="{{ session['student_id'] }}" disabled>
+        <div class="card-body bg-light p-4">
+            <form method="POST" action="{{ url_for('update_student_info') }}" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">👤 Full Name</label>
+                    <input type="text" name="name" class="form-control" required>
+                </div>
+            
+                <div class="mb-3">
+                    <label class="form-label fw-bold">📌 Student Number (USN)</label>
+                    <input type="text" name="student_id" class="form-control" value="{{ session['student_id'] }}" disabled>
+                </div>
+            
+                <div class="mb-3">
+                    <label class="form-label fw-bold">📚 Course</label>
+                    <input type="text" name="course" class="form-control" required>
+                </div>
+            
+                <div class="mb-3">
+                    <label class="form-label fw-bold">📞 Contact Number</label>
+                    <input type="text" name="contact" class="form-control" required>
+                </div>
+            
+                <div class="mb-3">
+                    <label class="form-label fw-bold">👨‍👩‍👦 Guardian Name</label>
+                    <input type="text" name="guardian_name" class="form-control" required>
+                </div>
+            
+                <div class="mb-3">
+                    <label class="form-label fw-bold">🏡 Address</label>
+                    <textarea name="address" class="form-control" required></textarea>
+                </div>
+            
+                <!-- Profile Picture Upload -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold">📷 Upload Profile Picture</label>
+                    <input type="file" name="profile_picture" class="form-control" id="profile_picture" required accept="image/*">
+                    <div id="profile_status">
+                        <small id="profile_loading" class="text-primary d-none">🔄 Checking...</small>
+                        <small id="profile_error" class="text-danger d-none"></small>
+                        <small id="profile_success" class="text-success d-none"></small>
+                    </div>
+                </div>
+            
+                <!-- Signature Upload -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold">✍️ Upload Signature</label>
+                    <input type="file" name="signature" class="form-control" id="signature" required accept="image/*">
+                    <div id="signature_status">
+                        <small id="signature_loading" class="text-primary d-none">🔄 Checking...</small>
+                        <small id="signature_error" class="text-danger d-none"></small>
+                        <small id="signature_success" class="text-success d-none"></small>
+                    </div>
+                </div>
+            
+                <!-- Submit Button (Initially Disabled) -->
+                <button type="submit" class="btn btn-success w-100 fw-bold" id="submit_button" disabled>✅ Submit Profile</button>
+            </form>
         </div>
-
-        <div class="mb-3">
-            <label class="form-label">📚 Course</label>
-            <input type="text" name="course" class="form-control" required>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">📞 Contact Number</label>
-            <input type="text" name="contact" class="form-control" required>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">👨‍👩‍👦 Guardian Name</label>
-            <input type="text" name="guardian_name" class="form-control" required>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">🏡 Address</label>
-            <textarea name="address" class="form-control" required></textarea>
-        </div>
-
-        <!-- Profile Picture Upload -->
-        <div class="mb-3">
-            <label class="form-label">📷 Upload Profile Picture</label>
-            <input type="file" name="profile_picture" class="form-control" required>
-        </div>
-
-        <!-- Signature Upload -->
-        <div class="mb-3">
-            <label class="form-label">✍️ Upload Signature</label>
-            <input type="file" name="signature" class="form-control" required>
-        </div>
-
-        <button type="submit" class="btn btn-primary w-100">✅ Submit Profile</button>
-    </form>
+    </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const profileInput = document.getElementById("profile_picture");
+    const signatureInput = document.getElementById("signature");
+    const submitButton = document.getElementById("submit_button");
+
+    function checkImages() {
+        if (profileInput.dataset.valid === "true" && signatureInput.dataset.valid === "true") {
+            submitButton.disabled = false;
+        } else {
+            submitButton.disabled = true;
+        }
+    }
+
+    function resetValidation(input, type) {
+        input.dataset.valid = "false";
+        document.getElementById(`${type}_loading`).classList.add("d-none");
+        document.getElementById(`${type}_error`).classList.add("d-none");
+        document.getElementById(`${type}_success`).classList.add("d-none");
+    }
+
+    function uploadAndValidate(input, type) {
+        const file = input.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append(type, file);
+
+        // Get elements
+        const loading = document.getElementById(`${type}_loading`);
+        const errorText = document.getElementById(`${type}_error`);
+        const successText = document.getElementById(`${type}_success`);
+
+        // Show loading
+        loading.classList.remove("d-none");
+        errorText.classList.add("d-none");
+        successText.classList.add("d-none");
+
+        // Send image to Flask server for validation
+        fetch(`/validate_image/${type}`, {
+            method: "POST",
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            loading.classList.add("d-none");
+            if (data.valid) {
+                successText.textContent = "✅ Image is valid!";
+                successText.classList.remove("d-none");
+                input.dataset.valid = "true";
+            } else {
+                errorText.textContent = `🚨 ${data.error}`;
+                errorText.classList.remove("d-none");
+                input.dataset.valid = "false";
+            }
+            checkImages();
+        })
+        .catch(error => {
+            loading.classList.add("d-none");
+            errorText.textContent = "❌ Server error, try again.";
+            errorText.classList.remove("d-none");
+            input.dataset.valid = "false";
+            checkImages();
+        });
+    }
+
+    profileInput.addEventListener("change", function () {
+        resetValidation(this, "profile");
+        uploadAndValidate(this, "profile");
+    });
+
+    signatureInput.addEventListener("change", function () {
+        resetValidation(this, "signature");
+        uploadAndValidate(this, "signature");
+    });
+});
+</script>
+
 {% endblock %}

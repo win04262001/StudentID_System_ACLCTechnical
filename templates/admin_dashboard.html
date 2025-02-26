@@ -3,38 +3,74 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2>🛡️ Admin Dashboard</h2>
+    <h2 class="text-center">🛡️ Admin Dashboard</h2>
+    <p class="text-center text-muted">Manage student applications and monitor progress</p>
 
-    <!-- Status Cards -->
-    <div class="row mt-4">
-        <div class="col-md-4">
-            <div class="card bg-warning text-white shadow-lg">
-                <div class="card-body text-center">
-                    <h4>Pending Applications</h4>
-                    <h2>{{ pending }}</h2>  <!-- ✅ Direct Jinja Rendering -->
+    <!-- Status Overview Cards -->
+    <style>
+        /* Animation for Hover Effect */
+        .card-hover {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .card-hover:hover {
+            transform: scale(1.05);
+            box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+    
+    <div class="row mt-4 text-center">
+        <div class="col-md-3">
+            <a href="{{ url_for('admin_applications') }}" class="text-decoration-none">
+                <div class="card shadow-lg border-0 bg-warning text-white card-hover">
+                    <div class="card-body">
+                        <h4>Pending</h4>
+                        <h2 class="display-5 fw-bold">{{ pending }}</h2>
+                        <span class="stretched-link"></span>
+                    </div>
                 </div>
-            </div>
+            </a>
         </div>
-        <div class="col-md-4">
-            <div class="card bg-info text-white shadow-lg">
-                <div class="card-body text-center">
-                    <h4>Processing Applications</h4>
-                    <h2>{{ processing }}</h2>  <!-- ✅ Direct Jinja Rendering -->
+        <div class="col-md-3">
+            <a href="{{ url_for('admin_applications') }}" class="text-decoration-none">
+                <div class="card shadow-lg border-0 bg-info text-white card-hover">
+                    <div class="card-body">
+                        <h4>Processing</h4>
+                        <h2 class="display-5 fw-bold">{{ processing }}</h2>
+                        <span class="stretched-link"></span>
+                    </div>
                 </div>
-            </div>
+            </a>
         </div>
-        <div class="col-md-4">
-            <div class="card bg-success text-white shadow-lg">
-                <div class="card-body text-center">
-                    <h4>Done Applications</h4>
-                    <h2>{{ done }}</h2>  <!-- ✅ Direct Jinja Rendering -->
+        <div class="col-md-3">
+            <a href="{{ url_for('admin_applications') }}" class="text-decoration-none">
+                <div class="card shadow-lg border-0 bg-success text-white card-hover">
+                    <div class="card-body">
+                        <h4>Completed</h4>
+                        <h2 class="display-5 fw-bold">{{ done }}</h2>
+                        <span class="stretched-link"></span>
+                    </div>
                 </div>
-            </div>
+            </a>
         </div>
+        <div class="col-md-3">
+            <a href="{{ url_for('admin_applications') }}" class="text-decoration-none">
+                <div class="card shadow-lg border-0 bg-primary text-white card-hover">
+                    <div class="card-body">
+                        <h4>Received</h4>
+                        <h2 class="display-5 fw-bold">{{ receive }}</h2>
+                        <span class="stretched-link"></span>
+                    </div>
+                </div>
+            </a>
+        </div>        
     </div>
+    
 
-    <!-- Student Applications -->
-    <h3 class="mt-4">📋 Manage Student Applications</h3>
-    <a href="{{ url_for('admin_applications') }}" class="btn btn-info mb-3">📋 View Applications</a>
+    <!-- Manage Student Applications Section -->
+    <div class="mt-5 text-center">
+        <h3>📋 Manage Student Applications</h3>
+        <p class="text-muted">View, process, and update student ID applications</p>
+
+    </div>
 </div>
 {% endblock %}
