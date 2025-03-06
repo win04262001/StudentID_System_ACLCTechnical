@@ -1,0 +1,271 @@
+@charset "UTF-8";
+/**
+* Eric Meyer's Reset CSS v2.0
+*/
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video, input, textarea {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font: inherit;
+  font-size: 100%;
+  vertical-align: baseline;
+}
+
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure,
+footer, header, menu, nav, section, time {
+  display: block;
+}
+
+body {
+  line-height: 1;
+  color: black;
+  background: white;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+ol, ul {
+  list-style: none;
+}
+
+blockquote, q {
+  quotes: none;
+}
+
+blockquote:before, blockquote:after,
+q:before, q:after {
+  content: '';
+  content: none;
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+/* meyerweb css reset end */
+
+textarea:focus, input:focus {
+  outline: 0;
+}
+
+input {
+  border-width: 0;
+}
+
+em {
+  font-style: italic;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: bold;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.group:before,
+.group:after {
+  content: " ";
+  display: table;
+}
+
+.group:after {
+  clear: both;
+}
+
+.group {
+  zoom: 1; /* ie 6/7 */
+}
+
+embed,
+img,
+object,
+video {
+  max-width: 100%;
+}
+sup {
+  font-size: 58.3%;
+  vertical-align: text-top;
+}
+sub {
+  font-size: 58.3%;
+  vertical-align: text-bottom;
+}
+.no-space-between-inline-blocks {
+  *letter-spacing: normal; /*reset IE < 8*/
+  letter-spacing: -0.31em; /*webkit*/
+  word-spacing: -0.43em; /*IE < 8 && gecko*/
+}
+/*restore spacing on inner elements*/
+.no-space-between-inline-blocks > * {
+  letter-spacing: normal;
+  word-spacing: normal;
+}
+.displace {
+  left: -5000px;
+  position: absolute;
+}
+html {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+*,
+*:after,
+*:before {
+  -webkit-box-sizing: inherit;
+  -moz-box-sizing: inherit;
+  box-sizing: inherit;
+}
+html {
+  font-size: 16px;
+}
+body {
+  min-width: 1383px;
+  color: #000000;
+  font-size: 0.75rem; /* 12px / 16px = 0.75rem */
+  font-style: normal;
+  font-weight: normal;
+  letter-spacing: 0;
+  text-decoration: none;
+}
+body {
+  float: none;
+  height: auto;
+  margin: 0 auto;
+  position: relative;
+  width: 100%; /* 1429px / 1429px = 100% */
+}
+.do-not-edit {
+  padding: 31px 0 357px;
+  position: relative;
+  background: #ffffff center 0;
+  background-position: center top;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+}
+.l-constrained {
+  margin: 0 auto;
+  position: relative;
+  width: 1383px;
+}
+.do-not-edit-holder {
+  height: 650px;
+  overflow: hidden;
+  position: relative;
+  width: 1383px;
+  background: url(images/do_not_edit.png) no-repeat;
+}
+.text {
+  left: 50%;
+  position: absolute;
+  top: 396px;
+  margin-left: -316.5px;
+}
+.vector-smart-object-copy-4 {
+  left: 50%;
+  position: absolute;
+  top: 158px;
+  margin-left: -86.5px;
+}
+.layer-3 {
+  left: 50%;
+  position: absolute;
+  top: 67px;
+  margin-left: -151.5px;
+}
+.vector-smart-object-copy-4-2 {
+  left: 50%;
+  position: absolute;
+  top: 20px;
+  margin-left: -653.5px;
+}
+.do-not-edit-holder-2 {
+  margin: -122px 0 0;
+  padding: 30px 0;
+  position: relative;
+  width: 1383px;
+  background: url(images/do_not_edit_2.png) no-repeat;
+}
+.text-2 {
+  display: block;
+  margin: 0 auto;
+}
+.row {
+  margin: 91px auto 0;
+  position: relative;
+  right: 13.5px;
+  width: 1280px;
+}
+.picture-border {
+  float: left;
+  margin: 0 42px 0 0;
+}
+.col-4 {
+  float: left;
+  margin: 72px 0 0;
+  position: relative;
+  width: 574px;
+}
+.do-not-edit-holder-3 {
+  padding: 35px 0 132px;
+  position: relative;
+  width: 573px;
+  background: url(images/do_not_edit_3.png) no-repeat;
+}
+.do-not-edit-2 {
+  display: block;
+  margin: 0 auto;
+}
+.do-not-edit-holder-4 {
+  margin: 2px 0 0;
+  padding: 32px 65px 17px;
+  position: relative;
+  width: 568px;
+  background: url(images/do_not_edit_5.png) no-repeat;
+}
+.text-3 {
+  display: block;
+  margin: 0 auto;
+  position: relative;
+  right: 18px;
+}
+.do-not-edit-3 {
+  display: block;
+  left: 11.5px;
+  margin: 266px auto 0;
+  position: relative;
+}
+.do-not-edit-4 {
+  display: block;
+  height: 7px;
+  left: 15px;
+  margin: 126px auto 0;
+  position: relative;
+  width: 1209px;
+  background-color: #090808; /*Layer's solid color*/
+}
+.do-not-edit-5 {
+  display: block;
+  left: 27px;
+  margin: 26px auto 0;
+  position: relative;
+}

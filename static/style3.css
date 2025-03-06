@@ -1,0 +1,413 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #f4f4f4;
+    padding: 20px;
+  }
+
+  h1 {
+    color: #333;
+    margin-bottom: 20px;
+  }
+
+  .container {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    width: 100%;
+    max-width: 1200px;
+  }
+
+  .section {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
+  }
+
+  /* Front ID Card Styles */
+  .id-card {
+    width: 311px;
+    height: 500px;
+    position: relative;
+    background: url('static/ID_layout.png') no-repeat center center;
+    background-size: cover;
+    border: 2px solid #000;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+    margin: 0 auto;
+  }
+
+  .photo-holder {
+    position: absolute;
+    top: 168px;
+    left: 13px;
+    width: 143px;
+    height: 140px;
+    background: rgba(255, 255, 255, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #00000091;
+    border-radius: 1px;
+    overflow: hidden;
+    flex-direction: column;
+    cursor: pointer;
+  }
+
+  .photo-holder:hover {
+    border-color: #007bff;
+  }
+
+  .photo-holder img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+  }
+
+  #photo-upload, #barcode-upload {
+    display: none;
+  }
+
+  .student-number input {
+  width: 42%;
+  padding: 5px;
+  font-size: 14px;
+  text-align: center;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-weight: bold;
+  color: rgb(255, 255, 255);
+  position: relative;
+  top: 191px;
+  left: 155px;
+}
+
+  .name-holder input {
+    width: 100%;
+    padding: 5px;
+    font-size: 23px;
+    text-align: center;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-weight: bold;
+    color: #05117c;
+    position: relative;
+    top: 275px;
+    font-family: 'Calibri', sans-serif;
+  }
+
+  .course-holder input {
+    width: 100%;
+    padding: 5px;
+    font-size: 15px;
+    text-align: center;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-weight: bold;
+    color: #05117c;
+    position: relative;
+    top: 263px;
+    left: 0;
+  }
+
+  .signature-container {
+  position: absolute;
+  top: 354px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  height: 74px;
+  cursor: move;
+} 
+
+  #signature-preview {
+    max-width: 100%;
+    max-height: 100%;
+    user-select: none;
+  }
+
+  #signature-indicator {
+    font-size: 12px;
+    color: #666;
+    text-align: center;
+    margin-top: 22px;
+  }
+
+  .selected {
+    border: 2px solid #007bff; /* Highlight the selected element */
+  }
+
+  .resize-handle {
+    position: absolute;
+    bottom: -5px;
+    right: -5px;
+    width: 10px;
+    height: 10px;
+    background: #007bff52;
+    cursor: se-resize;
+    border-radius: 50%;
+    z-index: 10;
+  }
+
+  .barcode-container {
+  position: absolute;
+  top: 421px;
+  left: 49%;
+  transform: translateX(-50%);
+  width: 79%;
+  height: 61px;
+  cursor: move;
+}
+
+  #barcode-preview {
+    max-width: 129%;
+    max-height: 109%;
+    user-select: none;
+  }
+
+  #barcode-resize-handle {
+    position: absolute;
+    bottom: -5px;
+    right: -5px;
+    width: 10px;
+    height: 10px;
+    background: #007bff4f;
+    cursor: se-resize;
+    border-radius: 50%;
+    z-index: 10;
+  }
+
+  .indicator-text {
+    font-size: 12px;
+    color: #666;
+    text-align: center;
+    margin-top: 5px;
+  }
+
+  /* Back ID Card Styles */
+  .id-card-back {
+    width: 300px;
+    height: auto;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    box-sizing: border-box;
+    text-align: left;
+    margin: 0 auto;
+  }
+
+  .id-card-back h3 {
+    font-size: 16px;
+    font-weight: bold;
+    margin: 0 0 10px 0;
+    color: #000;
+    text-align: center;
+  }
+
+  .id-card-back p {
+    font-size: 14px;
+    margin: 5px 0;
+    color: #000;
+    line-height: 1.4;
+  }
+
+  .id-card-back .important {
+    font-weight: bold;
+    text-align: center;
+    margin: 10px 0;
+  }
+
+  .id-card-back .contact-info > p:first-child {
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .id-card-back .contact-info span {
+    min-width: 60px;
+    margin-right: 10px;
+  }
+
+  .id-card-back .contact-info p {
+    display: flex;
+    align-items: center;
+    margin: 3px 0;
+  }
+
+  .id-card-back input {
+    font-size: 12px;
+    border: none;
+    border-bottom: 1px solid #000;
+    border-radius: 0;
+    padding: 3px 0;
+    flex: 1;
+    box-sizing: border-box;
+    background: transparent;
+    outline: none;
+  }
+
+  .id-card-back input:focus {
+    border-color: #1877f2;
+    outline: none;
+  }
+
+  .id-card-back .signature {
+    text-align: center;
+    margin-top: 10px;
+  }
+
+  .id-card-back .signature img {
+    width: 195px;
+    height: auto;
+  }
+
+  /* Signature Tool Modal Styles */
+  .modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+
+  .modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    width: 400px;
+    text-align: center;
+  }
+
+  .modal-content h2 {
+    margin-bottom: 20px;
+  }
+
+  .modal-content .controls {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .modal-content .controls label {
+    font-size: 14px;
+    color: #555;
+  }
+  .modal-content input,
+  .modal-content select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  .modal-content button {
+    margin-top: 10px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+  }
+  .modal-content button:hover {
+    background-color: #0056b3;
+  }
+
+  #barcode-svg {
+    margin-top: 20px;
+    max-width: 100%;
+  }
+
+  .modal-content .controls input[type="range"] {
+    width: 100%;
+  }
+
+  .modal-content .download-btn {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+  }
+
+  .modal-content .download-btn:hover {
+    background-color: #0056b3;
+  }
+
+  .modal-content .pass-signature-btn {
+    margin-top: 10px;
+    padding: 10px 20px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+  }
+
+  .modal-content .pass-signature-btn:hover {
+    background-color: #218838;
+  }
+
+  .open-modal-btn {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+  }
+
+  .open-modal-btn:hover {
+    background-color: #0056b3;
+  }
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+    .id-card, .id-card *,
+    .id-card-back, .id-card-back * {
+      visibility: visible;
+    }
+    .id-card, .id-card-back {
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+  }

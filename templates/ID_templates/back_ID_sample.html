@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ID Card Back Layout</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .id-card-back {
+            width: 300px;
+            height: auto;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: left;
+        }
+
+        .id-card-back h3 {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 0 0 10px 0;
+            color: #000;
+            text-align: center;
+        }
+
+        .id-card-back p {
+            font-size: 12px;
+            margin: 5px 0;
+            color: #000;
+            line-height: 1.4;
+        }
+
+        .id-card-back .important {
+            font-weight: bold;
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .id-card-back .contact-info {
+            margin-top: 15px;
+        }
+
+        .id-card-back .contact-info p {
+            margin: 3px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .id-card-back .school-director {
+            text-align: center;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        .id-card-back input {
+            font-size: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 3px;
+            margin-left: 5px;
+            flex: 1; /* Ensures input fields take up remaining space */
+            box-sizing: border-box;
+        }
+
+        .id-card-back input:focus {
+            border-color: #1877f2;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="id-card-back">
+        <!-- Back Side -->
+        <h3>IMPORTANT</h3>
+        <p class="important">THIS CARD IS NON-TRANSFERABLE</p>
+        <p>ALWAYS WEAR YOUR ID CARD WHILE INSIDE THE CAMPUS</p>
+        <p>IN CASE OF LOSS, REPORT TO THE STUDENT AFFAIRS OFFICE IMMEDIATELY</p>
+
+        <div class="contact-info">
+            <p>In case of Emergency, please notify:</p>
+            <p><span>Name:</span> <input type="text" placeholder="Enter Name"></p>
+            <p><span>Address:</span> <input type="text" placeholder="Enter Address"></p>
+            <p><span>TEL No.:</span> <input type="text" placeholder="Enter Phone Number"></p>
+            <p>ACLC College of Butuan City</p>
+            <p>999 HDS J.C. Aquino Avenue, Butuan City</p>
+            <p>(085) 300-1137</p>
+            <p>E-mail: aclcbuosas@gmail.com</p>
+        </div>
+
+        <p class="school-director">SCHOOL DIRECTOR</p>
+    </div>
+</body>
+</html>

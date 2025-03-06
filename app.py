@@ -15,7 +15,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 
 # ✅ Define Flask App
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static")
 app.secret_key = "123"
 app.permanent_session_lifetime = timedelta(hours=2)
 
@@ -127,6 +127,13 @@ def validate_image(image_type):
 def home():
     return render_template("home.html")
 
+@app.route('/ID_section')
+def ID_section():
+    return render_template("ID_section.html")
+
+@app.route('/sample_layout')
+def sample_layout():
+    return render_template("sample_layout.html")
 # ---------- User Authentication ----------
 @app.route('/register', methods=['GET', 'POST'])
 def register():

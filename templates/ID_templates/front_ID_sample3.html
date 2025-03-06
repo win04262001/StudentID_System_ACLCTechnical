@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ID Card</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+
+        .id-card {
+            width: 311px;
+            height: 500px;
+            position: relative;
+            background: url('Front_No_detailss.jpg') no-repeat center center;
+            background-size: cover;
+            border: 2px solid #000;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .photo-holder {
+            position: absolute;
+            top: 168px;
+            left: 13px;
+            width: 143px;
+            height: 140px;
+            background: rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed #000; /* Dashed border as indicator */
+            overflow: hidden;
+            flex-direction: column;
+            cursor: pointer; /* Change cursor to indicate interactivity */
+        }
+
+        .photo-holder:hover {
+            border-color: #007bff; /* Change border color on hover */
+        }
+
+        .photo-holder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+
+        #photo-upload, #signature-upload, #barcode-upload {
+            display: none;
+        }
+
+        /* Student Number Input */
+        .student-number input {
+            width: 100%;
+            padding: 5px;
+            font-size: 15px;
+            text-align: center;
+            border: none;
+            background: transparent;
+            outline: none;
+            font-weight: bold;
+            color: rgb(255, 255, 255);
+            position: relative;
+            top: 191px;
+            left: 75px;
+        }
+
+        /* Name Holder Input */
+        .name-holder input {
+            width: 100%;
+            padding: 5px;
+            font-size: 20px;
+            text-align: center;
+            border: none;
+            background: transparent;
+            outline: none;
+            font-weight: bold;
+            color: black;
+            position: relative;
+            top: 275px; /* Adjust as needed */
+        }
+
+        /* Course Holder Input */
+        .course-holder input {
+            width: 100%;
+            padding: 5px;
+            font-size: 14px; /* Match font size with name holder */
+            text-align: center;
+            border: none;
+            background: transparent;
+            outline: none;
+            font-weight: bold;
+            color: black;
+            position: relative;
+            top: 270px; /* Adjust position as needed */
+            left: 0; /* Align center */
+        }
+
+        .signature-holder {
+            position: absolute;
+            top: 376px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 84%;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 5px;
+            border: 2px dashed #000; /* Dashed border as indicator */
+            cursor: pointer; /* Change cursor to indicate interactivity */
+        }
+
+        .signature-holder:hover {
+            border-color: #007bff; /* Change border color on hover */
+        }
+
+        .barcode-holder {
+            position: absolute;
+            top: 422px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 66px; /* Adjust height to fit barcode */
+            text-align: center;
+            border: 2px dashed #000; /* Dashed border as indicator */
+            padding: 5px;
+            cursor: pointer; /* Change cursor to indicate interactivity */
+            overflow: hidden; /* Ensure barcode does not overflow */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .barcode-holder:hover {
+            border-color: #007bff; /* Change border color on hover */
+        }
+
+        #barcode-preview {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain; /* Ensure barcode fits within the holder */
+            display: none;
+        }
+
+        .indicator-text {
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="id-card">
+        <div class="photo-holder" id="photo-container" ondblclick="document.getElementById('photo-upload').click()">
+            <img id="photo-preview" alt="Uploaded Photo">
+            <div id="photo-indicator" class="indicator-text">Double-click to upload photo</div>
+        </div>
+
+        <div class="student-number">
+            <input type="text" id="student-number-input" placeholder="Enter Student No.">
+        </div>
+
+        <div class="name-holder">
+            <input type="text" id="student-name-input" placeholder="Enter Student Name">
+        </div>
+
+        <div class="course-holder">
+            <input type="text" id="course-input" placeholder="Enter Student Course">
+        </div>
+
+        <div class="signature-holder" ondblclick="document.getElementById('signature-upload').click()">
+            <input type="file" id="signature-upload" accept="image/*" onchange="previewSignature()">
+            <img id="signature-preview" style="width: 100%; height: auto; display: none;">
+            <div id="signature-indicator" class="indicator-text">Double-click to upload signature</div>
+        </div>
+
+        <div class="barcode-holder" ondblclick="document.getElementById('barcode-upload').click()">
+            <input type="file" id="barcode-upload" accept="image/*" onchange="previewBarcode()">
+            <img id="barcode-preview" alt="Uploaded Barcode">
+            <div id="barcode-indicator" class="indicator-text">Double-click to upload barcode</div>
+        </div>
+    </div>
+
+    <input type="file" id="photo-upload" accept="image/*" onchange="previewPhoto()">
+
+    <script>
+        function previewPhoto() {
+            const file = document.getElementById("photo-upload").files[0];
+            const reader = new FileReader();
+            const preview = document.getElementById("photo-preview");
+            const indicator = document.getElementById("photo-indicator");
+
+            reader.onload = function (e) {
+                preview.src = e.target.result;
+                preview.style.display = "block";
+                indicator.style.display = "none"; // Hide the indicator after upload
+            };
+
+            if (file) {
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function previewSignature() {
+            const file = document.getElementById("signature-upload").files[0];
+            const reader = new FileReader();
+            const preview = document.getElementById("signature-preview");
+            const indicator = document.getElementById("signature-indicator");
+
+            reader.onload = function (e) {
+                preview.src = e.target.result;
+                preview.style.display = "block";
+                indicator.style.display = "none"; // Hide the indicator after upload
+            };
+
+            if (file) {
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function previewBarcode() {
+            const file = document.getElementById("barcode-upload").files[0];
+            const reader = new FileReader();
+            const preview = document.getElementById("barcode-preview");
+            const indicator = document.getElementById("barcode-indicator");
+
+            reader.onload = function (e) {
+                preview.src = e.target.result;
+                preview.style.display = "block";
+                indicator.style.display = "none"; // Hide the indicator after upload
+            };
+
+            if (file) {
+                reader.readAsDataURL(file);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,192 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <title>ID Card Generator</title>
+  <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary btn-lg">
+    Back
+  </a>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+</head>
+<body>
+  <!-- Front ID Card -->
+  <div class="container">
+    <div class="section">
+      <h1>Front ID Card</h1>
+      <div class="id-card" id="front-id-card">
+        <!-- Header Section -->
+        <header class="header">
+          <img class="header-bg" src="static/blue.png" alt="Header Background">
+          <img class="logo-img" src="static/logo.png" alt="Logo">
+          <div class="title">
+            <img class="aclc-img" src="static/aclc.png" alt="ACLC title">
+            <img class="college-img" src="static/college1.png" alt="College subtitle">
+            <div class="member-text">
+              A member of AMA Education System
+            </div>
+          </div>
+        </header>
+
+        <!-- Navigation Bar -->
+        <nav class="navbar">
+          <span class="navbar-title">World-Class IT Education</span>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="content">
+          <!-- Left Box for Photo -->
+          <div class="left-box" onclick="document.getElementById('fileInput').click()">
+            <input type="file" id="fileInput" accept="image/*" onchange="previewImage(event)">
+            <img class="left-box-img" id="previewImg" src="static/student-photo.png" alt="Upload Photo">
+          </div>
+
+          <!-- Right Box for Student Number and Validity -->
+          <div class="right-box">
+            <div class="top-box">
+              <span class="top-box-text">STUDENT NO:</span>
+              <input type="text" class="student-number-input" placeholder="Student No">
+            </div>
+            <div class="bottom-box">
+              <p class="bottom-box-text">
+                <strong>Valid until<br>August 2025</strong><br>
+                S.Y. 2024-2025
+              </p>
+            </div>
+          </div>
+        </main>
+
+        <!-- Input Sections -->
+        <div class="section large-box">
+          <input type="text" class="name-input" placeholder="Enter Name">
+        </div>
+        <div class="section large-box">
+          <input type="text" class="course-input" placeholder="Enter Course">
+        </div>
+
+        <!-- Course Label Section -->
+        <div class="section medium-box">
+          <div class="small-box course-label-box">
+            <span class="course-label">Course</span>
+          </div>
+        </div>
+
+        
+        <!-- Barcode Holder Section -->
+        <div class="section large-footer barcode-holder">
+          <span class="barcode-text">Barcode</span>
+          <img id="barcode-preview" alt="Barcode" style="display: none;">
+        </div>
+
+
+        <!-- Inside the front ID card section -->
+                <!-- Signature Container -->
+                <div class="section signature-container">
+                    <div class="signature-box">
+                        <hr class="signature-line-front">
+                        <!-- Add a resizable & draggable container for the signature -->
+                        <div class="resizable-signature">
+                            <img id="signature-preview-front" alt="Signature" style="display: none; width: 100px; height: 50px;">
+                        </div>
+                    </div>
+                    <div class="signature-label-box">
+                        <span class="signature-label">Student's Signature</span>
+                    </div>
+                </div>
+    </div>
+
+      <!-- File Input for Photo -->
+      <input type="file" id="photo-upload" accept="image/*" onchange="previewPhoto()" style="display: none;">
+      <button onclick="downloadFront()">Download Front</button>
+      <button onclick="printFront()">Print Front</button>
+    </div>
+
+    <!-- Back ID Card -->
+    <div class="section">
+      <h1>Back ID Card</h1>
+      <div class="id-card-back" id="back-id-card">
+        <h3>IMPORTANT</h3>
+        <p class="important">THIS CARD IS NON-TRANSFERABLE</p>
+        <p>ALWAYS WEAR YOUR ID CARD WHILE INSIDE THE CAMPUS</p>
+        <p>IN CASE OF LOSS, REPORT TO THE STUDENT AFFAIRS OFFICE IMMEDIATELY</p>
+
+        <div class="contact-info">
+          <p>In case of Emergency, please notify:</p>
+          <p><span>Name:</span> <input type="text"></p>
+          <p><span>Address:</span> <input type="text"></p>
+          <p><span>TEL No.:</span> <input type="text"></p>
+          <p>ACLC College of Butuan City</p>
+          <p>999 HDS J.C. Aquino Avenue, Butuan City</p>
+          <p>(085) 300-1137</p>
+          <p>E-mail: aclcbxuosas@gmail.com</p>
+        </div>
+
+        <div class="signature-container-back" style="text-align: center; position: relative;">
+          <div style="display: flex; align-items: center; justify-content: center; width: 100%; position: relative;">
+              <span style="flex: 1; border-bottom: 4px solid black; margin-top: 17px;"></span>
+              <span style="font-weight: bold; font-size: 14px; background: white; padding: 0 5px; position: relative; z-index: 2; margin-top: 17px;">
+                  ALAN L. ATEGA
+              </span>
+              <span style="flex: 1; border-bottom: 4px solid black; margin-top: 17px;"></span>
+          </div>
+      
+          <!-- Signature Image (Positioned on top of the name) -->
+          <img src="static/signature.png" alt="Signature" class="signature-image-back"
+              style="position: absolute; top: -38px; left: 50%; transform: translateX(-50%); width: 77px; height: 73px; z-index: 3;">
+      
+          <!-- Designation -->
+          <div class="designation" style="margin-top: 13px; font-weight: bold;">SCHOOL DIRECTOR</div>
+      </div>
+      
+      
+    </div>
+      <button onclick="downloadBack()">Download Back</button>
+      <button onclick="printBack()">Print Back</button>
+    </div>
+  </div>
+
+  <!-- Open Modal Button -->
+  <button class="open-modal-btn" onclick="openModal()">Open Signature Tool</button>
+
+  <!-- Barcode Generator Modal -->
+  <div class="modal" id="barcodeModal">
+    <div class="modal-content">
+      <h2>Barcode Generator</h2>
+      <input type="text" id="barcode-input" placeholder="Enter barcode text" />
+      <select id="barcode-type">
+        <option value="CODE128">CODE128</option>
+        <option value="EAN13">EAN13</option>
+        <option value="UPC">UPC</option>
+        <option value="CODE39">CODE39</option>
+      </select>
+      <button onclick="generateBarcode()">Generate Barcode</button>
+      <svg id="barcode-svg" style="display: none;"></svg>
+      <button class="pass-barcode-btn" onclick="passBarcode()">Pass Barcode to ID Card</button>
+      <button class="download-btn" onclick="closeBarcodeModal()">Close</button>
+    </div>
+  </div>
+
+  <!-- Open Barcode Modal Button -->
+  <button class="open-modal-btn" onclick="openBarcodeModal()">Open Barcode Generator</button>
+
+  <!-- Signature Tool Modal -->
+  <div class="modal" id="signatureModal">
+    <div class="modal-content">
+      <h2>Signature Background Remover</h2>
+      <input type="file" id="imageInput" accept="image/*" />
+      <canvas id="canvas"></canvas>
+
+      <div class="controls">
+        <label for="thickness">Thickness: <span id="thicknessValue">1</span></label>
+        <input type="range" id="thickness" min="1" max="10" value="1" />
+      </div>
+
+      <button class="pass-signature-btn" onclick="passSignatureToFront()">Pass Signature to Front ID</button>
+      <button class="download-btn" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+  <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+
+  <title>ID Card Generator</title>
+  <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary btn-lg">
+    Back
+  </a>
+
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+</head>
+<body>
+  <!-- Front and Back ID Cards -->
+  <div class="container">
+    <div class="section">
+      <h1>Front ID Card</h1>
+      <div class="id-card" id="front-id-card">
+        <div class="photo-holder" id="photo-container" ondblclick="document.getElementById('photo-upload').click()">
+          <img id="photo-preview" alt="Uploaded Photo">
+          <div id="photo-indicator" class="indicator-text">Double-click to upload photo</div>
+        </div>
+
+        <div class="student-number">
+          <input type="text" id="student-number-input" placeholder="Enter Student No.">
+        </div>
+
+        <div class="name-holder">
+          <input type="text" id="student-name-input" placeholder="Enter Student Name">
+        </div>
+
+        <div class="course-holder">
+          <input type="text" id="course-input" placeholder="Enter Student Course">
+        </div>
+
+        <div class="signature-container" id="signature-container">
+          <img id="signature-preview" alt="Signature" style="display: none; position: absolute;">
+          <div id="signature-indicator" class="indicator-text">Signature Here</div>
+          <div class="resize-handle" id="resize-handle" onclick="selectElement('signature')"></div>
+        </div>
+
+        <div class="barcode-container" id="barcode-container" ondblclick="document.getElementById('barcode-upload').click()">
+          <img id="barcode-preview" alt="Barcode" style="display: none; position: absolute;">
+          <div id="barcode-indicator" class="indicator-text">Double-click to upload barcode</div>
+          <div class="resize-handle" id="barcode-resize-handle" onclick="selectElement('barcode')"></div>
+        </div>
+      </div>
+
+      <input type="file" id="photo-upload" accept="image/*" onchange="previewPhoto()">
+      <input type="file" id="barcode-upload" accept="image/*" onchange="previewBarcode()" style="display: none;">
+      <button onclick="downloadFront()">Download Front</button>
+      <button onclick="printFront()">Print Front</button>
+    </div>
+
+    <div class="section">
+      <h1>Back ID Card</h1>
+      <div class="id-card-back" id="back-id-card">
+        <h3>IMPORTANT</h3>
+        <p class="important">THIS CARD IS NON-TRANSFERABLE</p>
+        <p>ALWAYS WEAR YOUR ID CARD WHILE INSIDE THE CAMPUS</p>
+        <p>IN CASE OF LOSS, REPORT TO THE STUDENT AFFAIRS OFFICE IMMEDIATELY</p>
+
+        <div class="contact-info">
+          <p>In case of Emergency, please notify:</p>
+          <p><span>Name:</span> <input type="text"></p>
+          <p><span>Address:</span> <input type="text"></p>
+          <p><span>TEL No.:</span> <input type="text"></p>
+          <p>ACLC College of Butuan City</p>
+          <p>999 HDS J.C. Aquino Avenue, Butuan City</p>
+          <p>(085) 300-1137</p>
+          <p>E-mail: aclcbuosas@gmail.com</p>
+        </div>
+
+        <div class="signature">
+          <img src="static/signature.png" alt="School Director Signature">
+        </div>
+      </div>
+      <button onclick="downloadBack()">Download Back</button>
+      <button onclick="printBack()">Print Back</button>
+    </div>
+  </div>
+
+  <!-- Open Modal Button -->
+  <button class="open-modal-btn" onclick="openModal()">Open Signature Tool</button>
+
+  <!-- Barcode Generator Modal -->
+  <div class="modal" id="barcodeModal">
+    <div class="modal-content">
+      <h2>Barcode Generator</h2>
+      <input type="text" id="barcode-input" placeholder="Enter barcode text" />
+      <select id="barcode-type">
+        <option value="CODE128">CODE128</option>
+        <option value="EAN13">EAN13</option>
+        <option value="UPC">UPC</option>
+        <option value="CODE39">CODE39</option>
+      </select>
+      <button onclick="generateBarcode()">Generate Barcode</button>
+      <svg id="barcode-svg" style="display: none;"></svg>
+      <button class="pass-barcode-btn" onclick="passBarcode()">Pass Barcode to ID Card</button>
+      <button class="download-btn" onclick="closeBarcodeModal()">Close</button>
+    </div>
+  </div>
+
+  <!-- Open Barcode Modal Button -->
+  <button class="open-modal-btn" onclick="openBarcodeModal()">Open Barcode Generator</button>
+
+  <!-- Signature Tool Modal -->
+  <div class="modal" id="signatureModal">
+    <div class="modal-content">
+      <h2>Signature Background Remover</h2>
+      <input type="file" id="imageInput" accept="image/*" />
+      <canvas id="canvas"></canvas>
+
+      <div class="controls">
+        <label for="thickness">Thickness: <span id="thicknessValue">1</span></label>
+        <input type="range" id="thickness" min="1" max="10" value="1" />
+      </div>
+
+      <button class="pass-signature-btn" onclick="passSignature()">Pass Signature to ID Card</button>
+      <button class="download-btn" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ID Card Layout</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+
+        .id-card {
+            width: 320px;
+            background: white;
+            border: 2px solid #000;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .title-box {
+            flex: 1;
+        }
+
+        .title, .subtitle, .member {
+            background: #eee;
+            margin-bottom: 5px;
+            padding: 5px;
+            font-size: 14px;
+            border: 1px solid #000;
+        }
+
+        .world-class {
+            background: #ddd;
+            padding: 5px;
+            font-weight: bold;
+            border: 1px solid #000;
+            margin-top: 10px;
+        }
+
+        .content {
+            display: flex;
+            margin-top: 10px;
+        }
+
+        .photo-holder {
+            width: 120px;
+            height: 140px;
+            background: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+            border: 1px solid #000;
+        }
+
+        .info-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        input {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #000;
+            font-size: 12px;
+            text-align: center;
+            background: #fff;
+        }
+
+        .details {
+            margin-top: 10px;
+        }
+
+        .name-holder, .signature-holder, .barcode-holder {
+            width: 100%;
+            height: 30px;
+            margin-bottom: 5px;
+            border: 1px solid #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #ddd;
+        }
+
+        .course-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .course-holder, .career-holder {
+            width: 80%;
+            height: 25px;
+            border: 1px solid #000;
+            margin-bottom: 5px;
+            font-size: 12px;
+            text-align: center;
+            background: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="id-card">
+        <div class="header">
+            <div class="logo">Logo</div>
+            <div class="title-box">
+                <input type="text" class="title" placeholder="ACLC title">
+                <input type="text" class="subtitle" placeholder="COLLEGE sub title">
+                <input type="text" class="member" placeholder="A member of...">
+            </div>
+        </div>
+
+        <div class="world-class">World-Class...</div>
+
+        <div class="content">
+            <div class="photo-holder">Photo</div>
+            <div class="info-box">
+                <input type="text" class="student-info" placeholder="Student No.">
+                <input type="text" class="validity-info" placeholder="Valid until August 2025 S.Y. 2024-2025">
+            </div>
+        </div>
+
+        <div class="details">
+            <input type="text" class="name-holder" placeholder="Name">
+            
+            <div class="course-container">
+                <input type="text" class="course-holder" placeholder="Course">
+                <input type="text" class="career-holder" placeholder="Career">
+            </div>
+
+            <input type="text" class="signature-holder" placeholder="Signature">
+            <input type="text" class="barcode-holder" placeholder="Barcode">
+        </div>
+    </div>
+</body>
+</html>

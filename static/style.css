@@ -1,0 +1,805 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #f4f4f4;
+    padding: 20px;
+  }
+
+  h1 {
+    color: #333;
+    margin-bottom: 20px;
+  }
+
+  .container {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    width: 100%;
+    max-width: 1200px;
+  }
+
+  .section {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 100%;
+  }
+
+  .photo-holder {
+    position: absolute;
+    top: 168px;
+    left: 13px;
+    width: 143px;
+    height: 140px;
+    background: rgba(255, 255, 255, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #00000091;
+    border-radius: 1px;
+    overflow: hidden;
+    flex-direction: column;
+    cursor: pointer;
+  }
+
+  .photo-holder:hover {
+    border-color: #007bff;
+  }
+
+  .photo-holder img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+  }
+
+  #photo-upload, #barcode-upload {
+    display: none;
+  }
+
+  .student-number input {
+  width: 42%;
+  padding: 5px;
+  font-size: 14px;
+  text-align: center;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-weight: bold;
+  color: rgb(255, 255, 255);
+  position: relative;
+  top: 191px;
+  left: 155px;
+
+}
+
+
+
+  .course-holder input {
+    width: 100%;
+    padding: 5px;
+    font-size: 15px;
+    text-align: center;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-weight: bold;
+    color: #05117c;
+    position: relative;
+    top: 263px;
+    left: 0;
+  }
+
+  /* Barcode Holder */
+.barcode-holder {
+    width: 100%;
+    height: 72px;
+    margin-top: 7px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid rgba(0, 0, 0, 0.082);
+}
+
+/* Barcode Placeholder Text */
+.barcode-text {
+    font-weight: bold;
+    font-size: 14px;
+    color: black;
+}
+
+  .signature-container {
+  position: absolute;
+  top: 454px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  height: 61px;
+  cursor: move;
+} 
+
+  #signature-preview {
+    max-width: 100%;
+    max-height: 100%;
+    user-select: none;
+  }
+
+  #signature-indicator {
+    font-size: 12px;
+    color: #666;
+    text-align: center;
+    margin-top: 22px;
+  }
+  .signature-line-front {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 100%;
+}
+
+
+/* Resize Handle */
+.signature-container-back {
+    text-align: center;
+    margin-top: 40px;
+    position: relative;
+}
+
+.signature-line-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 100%;
+}
+
+.signature-line::before,
+.signature-line::after {
+    content: "";
+    flex: 1;
+    border-bottom: 3px solid black;
+    margin: 0 10px;
+}
+
+.signature-name-back {
+  font-weight: bold;
+    font-size: 14px;
+    background: white; /* White background to break the line */
+    padding: 0 10px; /* Adds spacing to make the break visible */
+    z-index: 2; /* Ensures it appears above the line */
+    position: relative;
+}
+
+
+
+  .selected {
+    border: 2px solid #007bff; /* Highlight the selected element */
+  }
+
+  .resizable-signature {
+    position: absolute; /* Allows dragging */
+    resize: both; /* Allows resizing */
+    overflow: hidden;
+    display: inline-block;
+    border: 1px dashed #000;
+    min-width: 50px;
+    min-height: 20px;
+    max-width: 200px;
+    max-height: 100px;
+    cursor: move; /* Shows move cursor */
+  }
+  
+  .resizable-signature img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  
+
+  .barcode-container {
+  position: absolute;
+  top: 421px;
+  left: 49%;
+  transform: translateX(-50%);
+  width: 79%;
+  height: 61px;
+  cursor: move;
+}
+
+  #barcode-preview {
+    max-width: 129%;
+    max-height: 109%;
+    user-select: none;
+  }
+
+  #barcode-resize-handle {
+    position: absolute;
+    bottom: -5px;
+    right: -5px;
+    width: 10px;
+    height: 10px;
+    background: #007bff4f;
+    cursor: se-resize;
+    border-radius: 50%;
+    z-index: 10;
+  }
+
+  .indicator-text {
+    font-size: 12px;
+    color: #666;
+    text-align: center;
+    margin-top: 5px;
+  }
+
+  /* Back ID Card Styles */
+  .id-card-back {
+    width: 360px;
+    height: 620px;
+    padding: 28px;
+    position: relative;
+    box-sizing: border-box;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.445);
+  }
+
+  .id-card-back h3 {
+    font-size: 20px;
+    font-weight: bold;
+    margin: 0 0 10px 0;
+    color: #000;
+    text-align: left;
+  }
+
+  .id-card-back p {
+    font-weight: bold;
+    font-size: 15px;
+    margin: 21px 0;
+    color: #000;
+    line-height: 1.4;
+  }
+
+  .id-card-back .important {
+    font-weight: bold;
+    text-align: left;
+    margin: 10px 0;
+  }
+
+  .id-card-back .contact-info > p:first-child {
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .id-card-back .contact-info span {
+    min-width: 60px;
+    margin-right: 10px;
+  }
+
+  .id-card-back .contact-info p {
+    display: flex;
+    align-items: center;
+    margin: 6px 0;
+  }
+
+  .id-card-back input {
+    font-size: 15px;
+    font-weight: bold;
+    border: none;
+    border-bottom: 1px solid #000;
+    border-radius: 0;
+    padding: 3px 0;
+    flex: 1;
+    box-sizing: border-box;
+    background: transparent;
+    outline: none;
+  }
+
+  .id-card-back input:focus {
+    border-color: #1877f2;
+    outline: none;
+  }
+
+  .id-card-back .signature {
+    text-align: center;
+    margin-top: 10px;
+  }
+
+  .id-card-back .signature img {
+    width: 195px;
+    height: auto;
+  }
+
+  /* Signature Tool Modal Styles */
+  .modal {
+    display: none; /* Hidden by default */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+  
+  .modal-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 400px;
+    margin: 10% auto;
+    text-align: center;
+  }
+  
+  .close {
+    float: right;
+    font-size: 20px;
+    cursor: pointer;
+  }
+  
+
+  .modal-content h2 {
+    margin-bottom: 20px;
+  }
+
+  .modal-content .controls {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .modal-content .controls label {
+    font-size: 14px;
+    color: #555;
+  }
+  .modal-content input,
+  .modal-content select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  .modal-content button {
+    margin-top: 10px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+  }
+  .modal-content button:hover {
+    background-color: #0056b3;
+  }
+
+  #barcode-svg {
+    margin-top: 20px;
+    max-width: 100%;
+  }
+
+  .modal-content .controls input[type="range"] {
+    width: 100%;
+  }
+
+  .modal-content .download-btn {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+  }
+
+  .modal-content .download-btn:hover {
+    background-color: #0056b3;
+  }
+
+  .modal-content .pass-signature-btn {
+    margin-top: 10px;
+    padding: 10px 20px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+  }
+
+  .modal-content .pass-signature-btn:hover {
+    background-color: #218838;
+  }
+
+  .open-modal-btn {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+  }
+
+  .open-modal-btn:hover {
+    background-color: #0056b3;
+  }
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+    .id-card, .id-card *,
+    .id-card-back, .id-card-back * {
+      visibility: visible;
+    }
+    .id-card, .id-card-back {
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+  }
+    /* Reset Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Centering the Page */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+/* ID Card Container */
+.id-card {
+    width: 360px;
+    height: 620px;
+    padding: 10px;
+    position: relative;
+    box-sizing: border-box;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.445);
+}
+
+/* === HEADER SECTION === */
+.header {
+    position: relative;
+    width: 100%;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Background Image for Header */
+.header-bg {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+}
+
+/* Individual Header Images */
+.logo-img {
+    width: 87px;
+    height: auto;
+    position: relative;
+    z-index: 2;
+    left: 19px;
+}
+
+/* ACLC Image */
+.aclc-img {
+    width: 178px;
+    height: auto;
+    position: relative;
+    z-index: 2;
+    left: 47px;
+}
+
+/* College Image */
+.college-img {
+    width: 155px;
+    height: auto;
+    position: relative;
+    z-index: 2;
+    left: 62px;
+    margin-top: 5px;
+}
+
+/* 🔹 Member Text Container */
+.member-text {
+    font-size: 11px; /* Match original image size */
+    font-family: "Times New Roman", serif; /* Match image font */
+    color: white; /* Text color same as image */
+    position: relative;
+    z-index: 2;
+    left: 9px;
+    margin-top: 5px;
+    white-space: nowrap; /* Prevent text from wrapping */
+    letter-spacing: 2px; /* Adds spacing between letters */
+
+}
+
+
+/* === NAVIGATION BAR === */
+.navbar {
+    width: 100%;
+    height: 30px;
+    background: #d70d0d; /* Same red background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 10px; /* Adds spacing below navbar */
+}
+
+/* Style for the "World-Class IT Education" text */
+.navbar-title {
+    font-size: 16px;
+    font-weight: bold;
+    font-family: "Times New Roman", serif; /* Match the font in the image */
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 3px; /* Adds spacing between letters */
+}
+
+
+
+/* === MAIN CONTENT === */
+.content {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+/* Left Box */
+/* 🔹 Left Box */
+.left-box {
+    width: 53%;
+    height: 157px;
+    margin-left: 9px;
+    border: 3px solid black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #dddddd;
+    cursor: pointer; /* Makes it look clickable */
+    position: relative;
+    overflow: hidden;
+}
+
+/* 🔹 Hide Default File Input */
+#fileInput {
+    display: none;
+}
+
+/* 🔹 Image inside Left Box */
+.left-box-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+
+/* Right Box */
+.right-box {
+    width: 40%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* 🔹 Container for the right box */
+.right-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 150px; /* Adjust width as needed */
+}
+
+/* 🔹 Top Box (Red Background) */
+.top-box {
+    width: 100%;
+    height: 60px; /* Increase height to fit input */
+    background: #d70d0d; /* Red background */
+    display: flex;
+    flex-direction: column; /* Stack text and input */
+    justify-content: center;
+    align-items: center;
+    border-bottom: 1px solid black;
+    padding-top: 5px; /* Adjust spacing */
+}
+
+/* 🔹 Text inside the Top Box */
+.top-box-text {
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    text-transform: uppercase;
+    font-family: Arial, sans-serif;
+    letter-spacing: 1px;
+    margin-bottom: 3px; /* Space between text and input */
+}
+
+/* 🔹 Student Number Input */
+.student-number-input {
+    width: 80%; /* Adjust width */
+    max-width: 180px; /* Prevent too wide input */
+    height: 25px;
+    font-size: 16px;
+    text-align: center;
+    border: none; /* Removes border */
+    outline: none; /* Removes focus outline */
+    background: transparent; /* Removes white background */
+    color: white; /* Makes text visible on red background */
+    font-weight: bold;
+}
+
+/* 🔹 Placeholder Styling */
+.student-number-input::placeholder {
+    color: rgba(255, 255, 255, 0.815); /* Ensures the placeholder text is visible */
+    opacity: 1; /* Fully visible placeholder */
+    font-weight: bold;
+}
+
+
+
+/* 🔹 Bottom Box (White Background) */
+.bottom-box {
+    width: 100%;
+    height: 60px; /* Adjust height */
+    background: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid black; /* Outline */
+
+}
+
+/* 🔹 Text inside the Bottom Box */
+.bottom-box-text {
+    font-size: 15px;
+    text-align: center;
+    font-family: Arial, sans-serif;
+}
+
+
+/* === FOOTER === */
+.large-footer {
+    height: 92px;
+    margin-top: 23px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+
+
+/* Small Boxes */
+.medium-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 30px;
+}
+
+
+
+/* Course Label Box */
+.course-label-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Course Label */
+.course-label {
+    font-weight: bold;
+    font-size: 14px;
+    text-align: center;
+    background-color: white;
+    padding: 2px 10px;
+    display: inline-block;
+    margin-top: -59px; /* Keeps the same position */
+}
+
+/* === INPUT SECTIONS === */
+
+
+/* 🔹 Name Input - Bold & Blue */
+.name-input {
+    width: 100%;
+    height: auto; /* Adjust height automatically */
+    margin-top: 0px;
+    margin-bottom: -30px; /* Adjusted to prevent cut-off */
+    padding: 5px 10px; /* Added padding for spacing */
+    border: none;
+    font-size: 28px; /* Slightly reduced font size */
+    text-align: center;
+    font-weight: bold; /* Bold text */
+    color: #00187d; /* Dark blue color */
+    font-family: Arial, sans-serif; /* Similar font */
+    text-transform: capitalize;
+    outline: none;
+    white-space: nowrap; /* Ensures text stays in one line */
+    overflow: hidden; /* Prevents cut-off */
+    display: block; /* Ensures it takes full width */
+}
+
+/* 🔹 Course Input - Blue & Normal Weight */
+.course-input {
+    width: 100%;
+    height: 4%;
+    margin-bottom: -1px;
+    padding: 5px;
+    border: none;
+    font-size: 15px; /* Adjust size */
+    text-align: center;
+    font-weight: bold; /* Bold */
+    color: #00187d; /* Dark blue color */
+    font-family: Arial, sans-serif; /* Similar font */
+    outline: none;
+    background: transparent; /* Removes background */
+}
+
+
+
+/* Signature Box */
+.signature-box {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Signature Line */
+.signature-line {
+    width: 80%; /* Adjust width as needed */
+    border: none;
+    border-bottom: 3px solid black; /* Creates a signature line */
+    margin: 0 auto;
+}
+
+/* Signature Label Box */
+.signature-label-box {
+    text-align: center;
+    margin-top: 5px; /* Adjust spacing */
+}
+
+/* Signature Label */
+.signature-label {
+    font-weight: bold;
+    font-size: 13px;
+    padding: 2px 5px;
+    display: inline-block;
+}

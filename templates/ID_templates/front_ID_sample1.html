@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ID Card</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+
+        .id-card {
+            width: 320px;
+            background: white;
+            border: 2px solid #000;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .header {
+            background: #0d47a1;
+            color: white;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .header img {
+            width: 50px;
+            vertical-align: middle;
+        }
+
+        .header h1 {
+            display: inline;
+            font-size: 18px;
+            margin-left: 10px;
+        }
+
+        .sub-header {
+            background: #c62828;
+            color: white;
+            padding: 5px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .content {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            padding: 10px;
+        }
+
+        .photo-holder {
+            width: 120px;
+            height: 140px;
+            background: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border: 1px solid #000;
+        }
+
+        .info-box {
+            background: #d32f2f;
+            color: white;
+            padding: 10px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .name-section {
+            background: #e3f2fd;
+            color: #0d47a1;
+            padding: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 10px;
+            border: 1px solid #000;
+        }
+
+        .signature-holder {
+            margin-top: 10px;
+            padding: 10px;
+            border-top: 1px solid black;
+            font-size: 12px;
+            color: gray;
+        }
+
+        .barcode-holder {
+            margin-top: 10px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="id-card">
+        <div class="header">
+            <img src="logo.png" alt="Logo">
+            <h1>ACLC COLLEGE</h1>
+            <p>A member of AMA Education System</p>
+        </div>
+
+        <div class="sub-header">World-Class IT Education</div>
+
+        <div class="content">
+            <div class="photo-holder">Photo place holder</div>
+            <div class="info-box">
+                <p><strong>STUDENT NO:</strong><br> 21000720200</p>
+                <p>Valid until August 2025<br>S.Y. 2024-2025</p>
+            </div>
+        </div>
+
+        <div class="name-section">
+            Mary June M. Garrido<br>
+            <span style="font-size: 14px; font-weight: normal;">BS in COMPUTER SCIENCE</span><br>
+            <span style="font-size: 12px;">Course</span>
+        </div>
+
+        <div class="signature-holder">Signature place holder</div>
+        <div class="barcode-holder">21000720200</div>
+    </div>
+</body>
+</html>

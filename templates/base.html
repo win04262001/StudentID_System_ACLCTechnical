@@ -165,6 +165,7 @@
                 <a href="{{ url_for('admin_dashboard') }}"><i class="fas fa-user-shield"></i> <span>Admin Dashboard</span></a>
                 <a href="{{ url_for('admin_applications') }}"><i class="fas fa-users"></i> <span>Manage Applications</span></a>
                 <a href="{{ url_for('student_id_history') }}"><i class="fas fa-clipboard-list"></i> <span>Student ID History</span></a>
+                <a href="{{ url_for('sample_layout') }}"><i class="fas fa-clipboard-list"></i> <span>create ID</span></a>
             {% elif session['user_role'] == 'student' %}
                 <a href="{{ url_for('student_dashboard') }}"><i class="fas fa-user"></i> <span>My Profile</span></a>
                 <a href="{{ url_for('my_application_status') }}"><i class="fas fa-info-circle"></i> <span>Application Status</span></a>

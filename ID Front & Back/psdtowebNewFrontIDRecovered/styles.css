@@ -1,0 +1,377 @@
+ body {
+  margin: 0;
+  padding: 0;
+ }
+ 
+ #background 
+{ 
+	 left: 0px; 
+	 top: 0px; 
+	 position: relative; 
+	 margin-left: auto; 
+	 margin-right: auto; 
+	 width: 1429px;
+	 height: 2282px; 
+	 overflow: hidden;
+	 z-index:0;
+	} 
+
+ #ColorFill1 
+{ 
+	 left: 0px; 
+	 top: 0px; 
+	 position: absolute; 
+	 width: 1429px;
+	 height: 2282px;
+	 z-index:1;
+} 
+
+ #DONOTEDIT 
+{ 
+	 left: 23px; 
+	 top: 31px; 
+	 position: absolute; 
+	 width: 1383px;
+	 height: 650px;
+	 z-index:2;
+} 
+
+ #DONOTEDIT_0 
+{ 
+	 left: 23px; 
+	 top: 559px; 
+	 position: absolute; 
+	 width: 1383px;
+	 height: 123px;
+	 z-index:3;
+} 
+
+ #DONOTEDIT_1 
+{ 
+	 left: 768px; 
+	 top: 845px; 
+	 position: absolute; 
+	 width: 573px;
+	 height: 214px;
+	 z-index:4;
+} 
+
+ #DONOTEDIT_2 
+{ 
+	 left: 125px; 
+	 top: 1849px; 
+	 position: absolute; 
+	 width: 1209px;
+	 height: 7px;
+	 z-index:5;
+} 
+
+ #DONOTEDIT_3 
+{ 
+	 left: 767px; 
+	 top: 1061px; 
+	 position: absolute; 
+	 width: 568px;
+	 height: 207px;
+	 z-index:6;
+} 
+
+ #DONOTEDIT_4 
+{ 
+	 left: 816px; 
+	 top: 880px; 
+	 position: absolute; 
+	 width: 479px;
+	 height: 47px;
+	 z-index:7;
+} 
+
+ #DONOTEDIT_5 
+{ 
+	 left: 622px; 
+	 top: 1684px; 
+	 position: absolute; 
+	 width: 208px;
+	 height: 39px;
+	 z-index:8;
+} 
+
+ #WorldClassITEducatio 
+{ 
+	 left: 79px; 
+	 top: 589px; 
+	 position: absolute; 
+	 width: 1268px;
+	 height: 63px;
+	 z-index:9;
+} 
+
+ #AmemberofAMAEducatio 
+{ 
+	 left: 398px; 
+	 top: 427px; 
+	 position: absolute; 
+	 width: 976px;
+	 height: 42px;
+	 z-index:10;
+} 
+
+ #VectorSmartObjectcop 
+{ 
+	 left: 628px; 
+	 top: 188px; 
+	 position: absolute; 
+	 width: 563px;
+	 height: 182px;
+	 z-index:11;
+} 
+
+ #Layer3 
+{ 
+	 left: 563px; 
+	 top: 98px; 
+	 position: absolute; 
+	 width: 650px;
+	 height: 166px;
+	 z-index:12;
+} 
+
+ #VectorSmartObjectcop_0 
+{ 
+	 left: 61px; 
+	 top: 56px; 
+	 position: absolute; 
+	 width: 415px;
+	 height: 412px;
+	 z-index:13;
+} 
+
+ #DONOTEDIT_6 
+{ 
+	 left: 496px; 
+	 top: 1882px; 
+	 position: absolute; 
+	 width: 491px;
+	 height: 43px;
+	 z-index:14;
+} 
+
+ #BSBAFinancialManagem 
+{ 
+	 left: 243px; 
+	 top: 1594px; 
+	 position: absolute; 
+	 width: 983px;
+	 height: 62px;
+	 z-index:15;
+} 
+
+ #BSinINFORMATIONTECHN 
+{ 
+	 left: 147px; 
+	 top: 1596px; 
+	 position: absolute; 
+	 width: 1177px;
+	 height: 48px;
+	 z-index:16;
+} 
+
+ #BSinCOMPUTERSCIENCE 
+{ 
+	 left: 290px; 
+	 top: 1602px; 
+	 position: absolute; 
+	 width: 868px;
+	 height: 47px;
+	 z-index:17;
+} 
+
+ #Barcode 
+{ 
+	 left: 148px; 
+	 top: 1959px; 
+	 position: absolute; 
+	 width: 1149px;
+	 height: 291px;
+	 z-index:18;
+} 
+
+ #barcode19 
+{ 
+	 left: 148px; 
+	 top: 1959px; 
+	 position: absolute; 
+	 width: 1153px;
+	 height: 291px;
+	 z-index:19;
+} 
+
+ #barcode20 
+{ 
+	 left: 148px; 
+	 top: 1959px; 
+	 position: absolute; 
+	 width: 1149px;
+	 height: 291px;
+	 z-index:20;
+} 
+
+ #barcode21 
+{ 
+	 left: 148px; 
+	 top: 1963px; 
+	 position: absolute; 
+	 width: 1144px;
+	 height: 287px;
+	 z-index:21;
+} 
+
+ #barcode22 
+{ 
+	 left: 148px; 
+	 top: 1963px; 
+	 position: absolute; 
+	 width: 1142px;
+	 height: 287px;
+	 z-index:22;
+} 
+
+ #Layer515 
+{ 
+	 left: 528px; 
+	 top: 1654px; 
+	 position: absolute; 
+	 width: 348px;
+	 height: 327px;
+	 z-index:23;
+} 
+
+ #Layer517 
+{ 
+	 left: 587px; 
+	 top: 1661px; 
+	 position: absolute; 
+	 width: 245px;
+	 height: 376px;
+	 z-index:24;
+} 
+
+ #Layer518 
+{ 
+	 left: 373px; 
+	 top: 1693px; 
+	 position: absolute; 
+	 width: 658px;
+	 height: 233px;
+	 z-index:25;
+} 
+
+ #Layer521 
+{ 
+	 left: 393px; 
+	 top: 1698px; 
+	 position: absolute; 
+	 width: 497px;
+	 height: 265px;
+	 z-index:26;
+} 
+
+ #Layer523 
+{ 
+	 left: 424px; 
+	 top: 1690px; 
+	 position: absolute; 
+	 width: 521px;
+	 height: 273px;
+	 z-index:27;
+} 
+
+ #StudentName 
+{ 
+	 left: 217px; 
+	 top: 1470px; 
+	 position: absolute; 
+	 width: 1033px;
+	 height: 87px;
+	 z-index:28;
+} 
+
+ #ValiduntilAugust2025 
+{ 
+	 left: 832px; 
+	 top: 1093px; 
+	 position: absolute; 
+	 width: 402px;
+	 height: 158px;
+	 z-index:29;
+} 
+
+ #StudentNo 
+{ 
+	 left: 818px; 
+	 top: 971px; 
+	 position: absolute; 
+	 width: 470px;
+	 height: 45px;
+	 z-index:30;
+} 
+
+ #71eb15eaef5042c5b38e 
+{ 
+	 left: -68px; 
+	 top: 730px; 
+	 position: absolute; 
+	 width: 623px;
+	 height: 608px;
+	 z-index:31;
+} 
+
+ #Layer516 
+{ 
+	 left: 61px; 
+	 top: 744px; 
+	 position: absolute; 
+	 width: 664px;
+	 height: 664px;
+	 z-index:32;
+} 
+
+ #Layer519 
+{ 
+	 left: 73px; 
+	 top: 776px; 
+	 position: absolute; 
+	 width: 638px;
+	 height: 638px;
+	 z-index:33;
+} 
+
+ #Layer520 
+{ 
+	 left: 74px; 
+	 top: 775px; 
+	 position: absolute; 
+	 width: 640px;
+	 height: 640px;
+	 z-index:34;
+} 
+
+ #Layer522 
+{ 
+	 left: 72px; 
+	 top: 776px; 
+	 position: absolute; 
+	 width: 642px;
+	 height: 642px;
+	 z-index:35;
+} 
+
+ #PictureBorder 
+{ 
+	 left: 64px; 
+	 top: 776px; 
+	 position: absolute; 
+	 width: 658px;
+	 height: 639px;
+	 z-index:36;
+} 
