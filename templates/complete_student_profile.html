@@ -3,148 +3,282 @@
 {% block title %}Complete Your Profile{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="card shadow-lg border-0">
-        <div class="card-header bg-primary text-white text-center">
-            <h2>📋 Complete Your Student Profile</h2>
-            <p class="mb-0">Fill out the necessary details to proceed.</p>
-        </div>
-        <div class="card-body bg-light p-4">
-            <form method="POST" action="{{ url_for('update_student_info') }}" enctype="multipart/form-data">
-                <div class="mb-3">
-                    <label class="form-label fw-bold">👤 Full Name</label>
-                    <input type="text" name="name" class="form-control" required>
-                </div>
-            
-                <div class="mb-3">
-                    <label class="form-label fw-bold">📌 Student Number (USN)</label>
-                    <input type="text" name="student_id" class="form-control" value="{{ session['student_id'] }}" disabled>
-                </div>
-            
-                <div class="mb-3">
-                    <label class="form-label fw-bold">📚 Course</label>
-                    <input type="text" name="course" class="form-control" required>
-                </div>
-            
-                <div class="mb-3">
-                    <label class="form-label fw-bold">📞 Contact Number</label>
-                    <input type="text" name="contact" class="form-control" required>
-                </div>
-            
-                <div class="mb-3">
-                    <label class="form-label fw-bold">👨‍👩‍👦 Guardian Name</label>
-                    <input type="text" name="guardian_name" class="form-control" required>
-                </div>
-            
-                <div class="mb-3">
-                    <label class="form-label fw-bold">🏡 Address</label>
-                    <textarea name="address" class="form-control" required></textarea>
-                </div>
-            
-                <!-- Profile Picture Upload -->
-                <div class="mb-3">
-                    <label class="form-label fw-bold">📷 Upload Profile Picture</label>
-                    <input type="file" name="profile_picture" class="form-control" id="profile_picture" required accept="image/*">
-                    <div id="profile_status">
-                        <small id="profile_loading" class="text-primary d-none">🔄 Checking...</small>
-                        <small id="profile_error" class="text-danger d-none"></small>
-                        <small id="profile_success" class="text-success d-none"></small>
+<div class="container d-flex justify-content-center align-items-center min-vh-100">
+    <div class="col-lg-6 col-md-8 col-12">
+        <div class="card shadow-lg border-0 rounded-3 bg-dark text-white">
+            <div class="card-header bg-dark text-white text-center border-bottom border-secondary">
+                <h2 class="fw-bold">📋 Complete Your Student Profile</h2>
+                <p class="mb-0 text-muted">Fill out the necessary details to proceed.</p>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('update_student_info') }}" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">👤 Full Name</label>
+                        <input type="text" name="name" class="form-control bg-dark text-white border-secondary" value="{{ student.name }}" required>
                     </div>
-                </div>
-            
-                <!-- Signature Upload -->
-                <div class="mb-3">
-                    <label class="form-label fw-bold">✍️ Upload Signature</label>
-                    <input type="file" name="signature" class="form-control" id="signature" required accept="image/*">
-                    <div id="signature_status">
-                        <small id="signature_loading" class="text-primary d-none">🔄 Checking...</small>
-                        <small id="signature_error" class="text-danger d-none"></small>
-                        <small id="signature_success" class="text-success d-none"></small>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">📌 Student Number (USN)</label>
+                        <input type="text" name="student_id" class="form-control bg-dark text-white border-secondary" value="{{ session['student_id'] }}" disabled>
                     </div>
-                </div>
-            
-                <!-- Submit Button (Initially Disabled) -->
-                <button type="submit" class="btn btn-success w-100 fw-bold" id="submit_button" disabled>✅ Submit Profile</button>
-            </form>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">📚 Course</label>
+                        <input type="text" name="course" class="form-control bg-dark text-white border-secondary" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">📞 Contact Number</label>
+                        <input type="text" name="contact" class="form-control bg-dark text-white border-secondary" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">👨‍👩‍👦 Guardian Name</label>
+                        <input type="text" name="guardian_name" class="form-control bg-dark text-white border-secondary" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">🏡 Address</label>
+                        <textarea name="address" class="form-control bg-dark text-white border-secondary" required></textarea>
+                    </div>
+
+                    <!-- Profile Picture Upload -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">📷 Upload Profile Picture</label>
+                        <input type="file" name="profile_picture" class="form-control bg-dark text-white border-secondary" id="profile_picture" required accept="image/*">
+                        <div id="profile_status">
+                            <small id="profile_loading" class="text-primary d-none">🔄 Checking...</small>
+                            <small id="profile_error" class="text-danger d-none"></small>
+                            <small id="profile_success" class="text-success d-none"></small>
+                        </div>
+                    </div>
+
+                    <!-- Signature Tool -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">✍️ Signature</label>
+                        <div class="card bg-dark text-white">
+                            <div class="card-body">
+                                <!-- Signature Canvas -->
+                                <canvas id="signatureCanvas" class="w-100" style="border: 1px solid #ddd; background-color: white; border-radius: 5px;"></canvas>
+
+                                <!-- Controls -->
+                                <div class="mt-3 text-center">
+                                    <button type="button" id="clearBtn" class="btn btn-danger">Clear</button>
+                                    <button type="button" id="saveSignatureBtn" class="btn btn-success">Save Signature</button>
+                                </div>
+
+                                <!-- Thickness Slider -->
+                                <div class="mt-3">
+                                    <label for="thicknessSlider" class="form-label">Thickness: <span id="thicknessValue">100%</span></label>
+                                    <input type="range" id="thicknessSlider" class="form-range" min="10" max="200" value="100">
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" name="signature" id="signatureInput">
+                        <div id="signature_status">
+                            <small id="signature_loading" class="text-primary d-none">🔄 Checking...</small>
+                            <small id="signature_error" class="text-danger d-none"></small>
+                            <small id="signature_success" class="text-success d-none"></small>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button (Initially Disabled) -->
+                    <button type="submit" class="btn btn-success w-100 fw-bold mt-3" id="submit_button" disabled>✅ Submit Profile</button>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    const profileInput = document.getElementById("profile_picture");
-    const signatureInput = document.getElementById("signature");
-    const submitButton = document.getElementById("submit_button");
+    const canvas = document.getElementById('signatureCanvas');
+    const ctx = canvas.getContext('2d');
+    const clearBtn = document.getElementById('clearBtn');
+    const saveSignatureBtn = document.getElementById('saveSignatureBtn');
+    const thicknessSlider = document.getElementById('thicknessSlider');
+    const thicknessValue = document.getElementById('thicknessValue');
+    const signatureInput = document.getElementById('signatureInput');
+    const submitButton = document.getElementById('submit_button');
+    let isDrawing = false;
+    let strokes = []; // Store all strokes (each stroke is an array of points)
+    let currentStroke = []; // Store points for the current stroke
+    let currentThickness = 2; // Default thickness
 
-    function checkImages() {
-        if (profileInput.dataset.valid === "true" && signatureInput.dataset.valid === "true") {
-            submitButton.disabled = false;
-        } else {
-            submitButton.disabled = true;
+    // Set initial canvas size
+    function setCanvasSize() {
+        const maxWidth = 400; // Maximum width for the canvas
+        const canvasWidth = Math.min(window.innerWidth * 0.9, maxWidth); // 90% of screen width or maxWidth
+        canvas.width = canvasWidth;
+        canvas.height = canvasWidth * 0.5; // Maintain aspect ratio
+    }
+
+    // Initialize canvas size
+    setCanvasSize();
+    window.addEventListener('resize', setCanvasSize);
+
+    // Set initial thickness
+    thicknessSlider.addEventListener('input', () => {
+        const thicknessPercent = parseInt(thicknessSlider.value);
+        thicknessValue.textContent = `${thicknessPercent}%`;
+        currentThickness = (thicknessPercent / 100) * 2; // Adjust base thickness (2px)
+        redrawSignature(); // Redraw the signature with the new thickness
+    });
+
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseout', stopDrawing);
+
+    canvas.addEventListener('touchstart', startDrawing);
+    canvas.addEventListener('touchmove', draw);
+    canvas.addEventListener('touchend', stopDrawing);
+
+    clearBtn.addEventListener('click', clearCanvas);
+    saveSignatureBtn.addEventListener('click', saveSignature);
+
+    function startDrawing(e) {
+        e.preventDefault(); // Prevent scrolling on touch devices
+        isDrawing = true;
+        currentStroke = []; // Start a new stroke
+        draw(e);
+    }
+
+    function draw(e) {
+        if (!isDrawing) return;
+
+        // Get the correct coordinates for mouse or touch
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width; // Scale for canvas width
+        const scaleY = canvas.height / rect.height; // Scale for canvas height
+        const x = (e.clientX || e.touches[0].clientX) - rect.left;
+        const y = (e.clientY || e.touches[0].clientY) - rect.top;
+
+        // Map the coordinates to the canvas
+        const canvasX = x * scaleX;
+        const canvasY = y * scaleY;
+
+        // Add the current point to the current stroke
+        currentStroke.push({ x: canvasX, y: canvasY });
+
+        // Redraw the entire signature
+        redrawSignature();
+    }
+
+    function stopDrawing() {
+        if (isDrawing) {
+            // Add the current stroke to the strokes array
+            if (currentStroke.length > 0) {
+                strokes.push(currentStroke);
+            }
+        }
+        isDrawing = false;
+        ctx.beginPath();
+    }
+
+    function clearCanvas() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        strokes = []; // Clear all strokes
+        currentStroke = []; // Clear the current stroke
+        signatureInput.value = ''; // Clear the hidden input
+        submitButton.disabled = true; // Disable submit button
+    }
+
+    function saveSignature() {
+        // Copy the canvas content to a temporary canvas
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+        tempCtx.drawImage(canvas, 0, 0);
+
+        // Remove the background and copy the result back to the main canvas
+        const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+        const data = imageData.data;
+
+        for (let i = 0; i < data.length; i += 4) {
+            const red = data[i];
+            const green = data[i + 1];
+            const blue = data[i + 2];
+
+            // Check if the pixel is white (background)
+            if (red > 240 && green > 240 && blue > 240) {
+                data[i + 3] = 0; // Set alpha to 0 (transparent)
+            }
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+
+        // Update the hidden input with the signature data
+        signatureInput.value = canvas.toDataURL('image/png');
+        submitButton.disabled = false; // Enable submit button
+
+        // Show success message
+        const signatureSuccess = document.getElementById('signature_success');
+        signatureSuccess.textContent = '✅ Signature saved successfully!';
+        signatureSuccess.classList.remove('d-none');
+    }
+
+    function redrawSignature() {
+        // Clear the canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Redraw all strokes
+        strokes.forEach(stroke => {
+            if (stroke.length > 1) {
+                const smoothedPoints = smoothPoints(stroke, 3); // Smooth the points
+                ctx.lineWidth = currentThickness;
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = '#000';
+                ctx.beginPath();
+                ctx.moveTo(smoothedPoints[0].x, smoothedPoints[0].y);
+                for (let i = 1; i < smoothedPoints.length; i++) {
+                    ctx.lineTo(smoothedPoints[i].x, smoothedPoints[i].y);
+                }
+                ctx.stroke();
+            } else if (stroke.length === 1) {
+                // Draw a dot for single-point strokes
+                const point = stroke[0];
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, currentThickness / 2, 0, Math.PI * 2); // Draw a dot
+                ctx.fillStyle = '#000';
+                ctx.fill();
+            }
+        });
+
+        // Redraw the current stroke (if drawing)
+        if (isDrawing && currentStroke.length > 0) {
+            const smoothedPoints = smoothPoints(currentStroke, 3); // Smooth the points
+            ctx.lineWidth = currentThickness;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#000';
+            ctx.beginPath();
+            ctx.moveTo(smoothedPoints[0].x, smoothedPoints[0].y);
+            for (let i = 1; i < smoothedPoints.length; i++) {
+                ctx.lineTo(smoothedPoints[i].x, smoothedPoints[i].y);
+            }
+            ctx.stroke();
         }
     }
 
-    function resetValidation(input, type) {
-        input.dataset.valid = "false";
-        document.getElementById(`${type}_loading`).classList.add("d-none");
-        document.getElementById(`${type}_error`).classList.add("d-none");
-        document.getElementById(`${type}_success`).classList.add("d-none");
-    }
+    function smoothPoints(points, smoothingLevel) {
+        const smoothed = [];
+        for (let i = 0; i < points.length; i++) {
+            const avg = { x: 0, y: 0 };
+            const count = Math.min(smoothingLevel, i, points.length - i - 1);
 
-    function uploadAndValidate(input, type) {
-        const file = input.files[0];
-        if (!file) return;
-
-        const formData = new FormData();
-        formData.append(type, file);
-
-        // Get elements
-        const loading = document.getElementById(`${type}_loading`);
-        const errorText = document.getElementById(`${type}_error`);
-        const successText = document.getElementById(`${type}_success`);
-
-        // Show loading
-        loading.classList.remove("d-none");
-        errorText.classList.add("d-none");
-        successText.classList.add("d-none");
-
-        // Send image to Flask server for validation
-        fetch(`/validate_image/${type}`, {
-            method: "POST",
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            loading.classList.add("d-none");
-            if (data.valid) {
-                successText.textContent = "✅ Image is valid!";
-                successText.classList.remove("d-none");
-                input.dataset.valid = "true";
-            } else {
-                errorText.textContent = `🚨 ${data.error}`;
-                errorText.classList.remove("d-none");
-                input.dataset.valid = "false";
+            // Average the current point with its neighbors
+            for (let j = -count; j <= count; j++) {
+                avg.x += points[i + j].x;
+                avg.y += points[i + j].y;
             }
-            checkImages();
-        })
-        .catch(error => {
-            loading.classList.add("d-none");
-            errorText.textContent = "❌ Server error, try again.";
-            errorText.classList.remove("d-none");
-            input.dataset.valid = "false";
-            checkImages();
-        });
+            avg.x /= (2 * count + 1);
+            avg.y /= (2 * count + 1);
+
+            smoothed.push(avg);
+        }
+        return smoothed;
     }
-
-    profileInput.addEventListener("change", function () {
-        resetValidation(this, "profile");
-        uploadAndValidate(this, "profile");
-    });
-
-    signatureInput.addEventListener("change", function () {
-        resetValidation(this, "signature");
-        uploadAndValidate(this, "signature");
-    });
 });
 </script>
 

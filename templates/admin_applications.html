@@ -4,12 +4,12 @@
 {% block content %}
 
 <div class="container mt-4">
-    <h2>📋 Manage Student Applications</h2>
-    <table class="table table-bordered mt-3">
-        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary btn-lg">
-            <
-         </a>
-        <thead class="table-dark">
+    <h2 class="text-white">📋 Manage Student Applications</h2>
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-light btn-sm mb-3">
+        &lt; Back to Dashboard
+    </a>
+    <table class="table table-dark table-hover">
+        <thead>
             <tr>
                 <th>Student ID</th>
                 <th>Name</th>
@@ -39,10 +39,9 @@
                         🎉 Received
                     {% endif %}
                 </span>
-                
                 </td>
                 <td>
-                    <button class="btn btn-info btn-sm" onclick="loadStudentDetails('{{ student.student_id }}')">
+                    <button class="btn btn-outline-info btn-sm" onclick="loadStudentDetails('{{ student.student_id }}')">
                         🔍 View
                     </button>
                 </td>
@@ -55,79 +54,100 @@
 <!-- Student Application Modal -->
 <div class="modal fade" id="studentModal" tabindex="-1" aria-labelledby="studentModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+        <div class="modal-content bg-dark text-white">
             <div class="modal-header">
                 <h5 class="modal-title">📄 Student Application</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <a href="/sample_layout" class="btn btn-outline-light btn-sm ms-2">
+                    🖼️ Go to ID
+                </a>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <!-- Profile, Barcode & Signature Section -->
                 <div class="row mb-3 text-center">
                     <!-- Profile Picture -->
                     <div class="col-md-4">
-                        <div class="card text-center mb-3">
+                        <div class="card bg-secondary text-white mb-3">
                             <div class="card-header">🖼️ Profile Picture</div>
                             <img id="profilePicture" src="" class="card-img-top border img-fluid" style="max-height: 200px; object-fit: cover;" alt="Profile Picture">
                             <div class="card-body">
-                                <a id="downloadProfile" href="#" download class="btn btn-sm btn-secondary">⬇️ Download</a>
+                                <button id="setProfile" class="btn btn-sm btn-outline-light">Set</button>
                             </div>
                         </div>
                     </div>
 
                     <!-- Barcode -->
                     <div class="col-md-4">
-                        <div class="card text-center mb-3">
+                        <div class="card bg-secondary text-white mb-3">
                             <div class="card-header">📌 Barcode</div>
                             <img id="barcodeImage" src="" class="card-img-top border img-fluid" style="max-height: 200px; object-fit: contain;" alt="Barcode">
                             <div class="card-body">
-                                <a id="downloadBarcode" href="#" download class="btn btn-sm btn-secondary">⬇️ Download</a>
+                                <button id="setBarcode" class="btn btn-sm btn-outline-light">Set</button>
                             </div>
                         </div>
                     </div>
 
                     <!-- Signature -->
                     <div class="col-md-4">
-                        <div class="card text-center mb-3">
+                        <div class="card bg-secondary text-white mb-3">
                             <div class="card-header">✍️ Signature</div>
                             <img id="signatureImage" src="" class="card-img-top border img-fluid" style="max-height: 200px; object-fit: cover;" alt="Signature">
                             <div class="card-body">
-                                <a id="downloadSignature" href="#" download class="btn btn-sm btn-secondary">⬇️ Download</a>
+                                <button id="setSignature" class="btn btn-sm btn-outline-light">Set</button>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Student Details Table -->
-                <table class="table table-bordered">
+                <table class="table table-bordered table-dark">
                     <tbody>
                         <tr>
                             <th>📌 Student ID:</th>
                             <td id="studentID"></td>
+                            <td>
+                                <button id="setStudentID" class="btn btn-sm btn-outline-light">Set</button>
+                            </td>
                         </tr>
                         <tr>
                             <th>👤 Name:</th>
                             <td id="studentName"></td>
+                            <td>
+                                <button id="setName" class="btn btn-sm btn-outline-light">Set</button>
+                            </td>
                         </tr>
                         <tr>
                             <th>🎓 Course:</th>
                             <td id="studentCourse"></td>
+                            <td>
+                                <button id="setCourse" class="btn btn-sm btn-outline-light">Set</button>
+                            </td>
                         </tr>
                         <tr>
                             <th>📞 Contact:</th>
                             <td id="studentContact"></td>
+                            <td>
+                                <button id="setContact" class="btn btn-sm btn-outline-light">Set</button>
+                            </td>
                         </tr>
                         <tr>
                             <th>👨‍👩‍👦 Guardian Name:</th>
                             <td id="studentGuardian"></td>
+                            <td>
+                                <button id="setGuardian" class="btn btn-sm btn-outline-light">Set</button>
+                            </td>
                         </tr>
                         <tr>
                             <th>🏠 Address:</th>
                             <td id="studentAddress"></td>
+                            <td>
+                                <button id="setAddress" class="btn btn-sm btn-outline-light">Set</button>
+                            </td>
                         </tr>
                         <tr>
                             <th>📌 Status:</th>
                             <td>
-                                <select id="statusDropdown" class="form-select">
+                                <select id="statusDropdown" class="form-select bg-secondary text-white">
                                     <option value="pending">Pending</option>
                                     <option value="processing">Processing</option>
                                     <option value="done">Done</option>
@@ -146,42 +166,42 @@
         </div>
     </div>
 </div>
+
 <script>
     function loadStudentDetails(studentId) {
-    fetch(`/get_student/${studentId}`)
-    .then(response => response.json())
-    .then(student => {
-        // ✅ Set profile picture
-        document.getElementById("profilePicture").src = student.profile_picture 
-            ? `/static/uploads/${student.profile_picture}` 
-            : "/static/default_profile.png";
+        fetch(`/get_student/${studentId}`)
+        .then(response => response.json())
+        .then(student => {
+            // Set profile picture
+            document.getElementById("profilePicture").src = student.profile_picture 
+                ? `/static/uploads/${student.profile_picture}` 
+                : "/static/default_profile.png";
 
-        // ✅ Set signature
-        document.getElementById("signatureImage").src = student.signature 
-            ? `/static/uploads/${student.signature}` 
-            : "/static/default_signature.png";
+            // Set signature
+            document.getElementById("signatureImage").src = student.signature 
+                ? `/static/uploads/${student.signature}` 
+                : "/static/default_signature.png";
 
-        // ✅ Fix barcode path (ensure correct database fetch)
-        document.getElementById("barcodeImage").src = student.barcode;
-        document.getElementById("downloadBarcode").href = student.barcode;
+            // Set barcode
+            document.getElementById("barcodeImage").src = student.barcode;
 
-        // ✅ Ensure other details load correctly
-        document.getElementById("studentID").textContent = student.student_id;
-        document.getElementById("studentName").textContent = student.name;
-        document.getElementById("studentCourse").textContent = student.course;
-        document.getElementById("studentContact").textContent = student.contact;
-        document.getElementById("studentGuardian").textContent = student.guardian_name;
-        document.getElementById("studentAddress").textContent = student.address;
-        document.getElementById("statusDropdown").value = student.application_status;
+            // Set other details
+            document.getElementById("studentID").textContent = student.student_id;
+            document.getElementById("studentName").textContent = student.name;
+            document.getElementById("studentCourse").textContent = student.course;
+            document.getElementById("studentContact").textContent = student.contact;
+            document.getElementById("studentGuardian").textContent = student.guardian_name;
+            document.getElementById("studentAddress").textContent = student.address;
+            document.getElementById("statusDropdown").value = student.application_status;
 
-        // ✅ Show modal
-        let studentModal = new bootstrap.Modal(document.getElementById("studentModal"));
-        studentModal.show();
-    })
-    .catch(error => console.error("Error fetching student details:", error));
-}
+            // Show modal
+            let studentModal = new bootstrap.Modal(document.getElementById("studentModal"));
+            studentModal.show();
+        })
+        .catch(error => console.error("Error fetching student details:", error));
+    }
 
-
+    // Save status changes
     document.getElementById("saveStatusBtn").addEventListener("click", function () {
         let studentId = document.getElementById("studentID").textContent;
         let newStatus = document.getElementById("statusDropdown").value;
@@ -198,7 +218,69 @@
         })
         .catch(error => console.error("Error:", error));
     });
-</script>
 
+    // Set profile picture
+    document.getElementById("setProfile").addEventListener("click", function () {
+        const profilePicture = document.getElementById("profilePicture").src;
+        localStorage.setItem("profilePicture", profilePicture);
+        alert("Profile picture set!");
+    });
+
+    // Set barcode
+    document.getElementById("setBarcode").addEventListener("click", function () {
+        const barcodeImage = document.getElementById("barcodeImage").src;
+        localStorage.setItem("barcodeImage", barcodeImage);
+        alert("Barcode set!");
+    });
+
+    // Set signature
+    document.getElementById("setSignature").addEventListener("click", function () {
+        const signatureImage = document.getElementById("signatureImage").src;
+        localStorage.setItem("signatureImage", signatureImage);
+        alert("Signature set!");
+    });
+
+    // Set Student ID
+        document.getElementById("setStudentID").addEventListener("click", function () {
+            const studentID = document.getElementById("studentID").textContent;
+            localStorage.setItem("studentID", studentID);
+            alert("Student ID set!");
+        });
+
+        // Set Name
+        document.getElementById("setName").addEventListener("click", function () {
+            const name = document.getElementById("studentName").textContent;
+            localStorage.setItem("studentName", name);
+            alert("Name set!");
+        });
+
+        // Set Course
+        document.getElementById("setCourse").addEventListener("click", function () {
+            const course = document.getElementById("studentCourse").textContent;
+            localStorage.setItem("studentCourse", course);
+            alert("Course set!");
+        });
+
+    // Set contact number
+    document.getElementById("setContact").addEventListener("click", function () {
+        const contact = document.getElementById("studentContact").textContent;
+        localStorage.setItem("contact", contact);
+        alert("Contact number set!");
+    });
+
+    // Set guardian name
+    document.getElementById("setGuardian").addEventListener("click", function () {
+        const guardian = document.getElementById("studentGuardian").textContent;
+        localStorage.setItem("guardian", guardian);
+        alert("Guardian name set!");
+    });
+
+    // Set address
+    document.getElementById("setAddress").addEventListener("click", function () {
+        const address = document.getElementById("studentAddress").textContent;
+        localStorage.setItem("address", address);
+        alert("Address set!");
+    });
+</script>
 
 {% endblock %}

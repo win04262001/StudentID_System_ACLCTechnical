@@ -134,6 +134,19 @@
     user-select: none;
   }
 
+  #signature-preview-front {
+    width: 200px;
+    height: auto;
+    border: 1px solid #ddd;
+    cursor: pointer;
+  }
+
+  canvas {
+    border: 1px solid black;
+    width: 100%;
+    max-width: 400px;
+  }
+
   #signature-indicator {
     font-size: 12px;
     color: #666;

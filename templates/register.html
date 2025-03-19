@@ -3,11 +3,11 @@
 
 {% block content %}
 <div class="container d-flex justify-content-center align-items-center min-vh-100">
-    <div class="col-lg-5 col-md-6 col-12"> 
-        <div class="card shadow-lg border-0 rounded-4">
+    <div class="col-lg-4 col-md-6 col-12">
+        <div class="card shadow-lg border-0 rounded-3 bg-dark text-white">
             <div class="card-body p-4">
-                <h4 class="text-center fw-bold text-primary">Create an Account</h4>
-                <p class="text-center text-muted">Fill in the details below to register</p>
+                <h4 class="text-center fw-bold mb-4">Create an Account</h4>
+                <p class="text-center text-muted mb-4">Fill in the details below to register</p>
 
                 <!-- Flash Messages -->
                 {% with messages = get_flashed_messages(with_categories=True) %}
@@ -22,19 +22,19 @@
                 <form id="registerForm" method="POST">
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Full Name</label>
-                        <input type="text" name="name" class="form-control" required placeholder="Enter your full name">
+                        <input type="text" name="name" class="form-control bg-dark text-white border-secondary" required placeholder="Enter your full name">
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Unique Student Number (USN)</label>
-                        <input type="text" name="usn" id="usn" class="form-control" pattern="\d{11}" required placeholder="Enter your USN">
+                        <input type="text" name="usn" id="usn" class="form-control bg-dark text-white border-secondary" pattern="\d{11}" required placeholder="Enter your USN">
                         <div class="invalid-feedback">USN must be exactly 11 digits.</div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Password</label>
                         <div class="input-group">
-                            <input type="password" name="password" id="password" class="form-control" required placeholder="Enter your password">
+                            <input type="password" name="password" id="password" class="form-control bg-dark text-white border-secondary" required placeholder="Enter your password">
                             <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('password')">
                                 <i class="fas fa-eye"></i>
                             </button>
@@ -45,7 +45,7 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Confirm Password</label>
                         <div class="input-group">
-                            <input type="password" name="confirm_password" id="confirm_password" class="form-control" required placeholder="Confirm your password">
+                            <input type="password" name="confirm_password" id="confirm_password" class="form-control bg-dark text-white border-secondary" required placeholder="Confirm your password">
                             <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('confirm_password')">
                                 <i class="fas fa-eye"></i>
                             </button>
@@ -53,7 +53,7 @@
                         <div class="invalid-feedback">Passwords do not match.</div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100 fw-bold">Register</button>
+                    <button type="submit" class="btn btn-primary w-100 fw-bold mt-3">Register</button>
                 </form>
 
                 <div class="text-center mt-3">
@@ -66,30 +66,51 @@
 
 <style>
 body {
-    background: url('/static/professional_bg.jpg') no-repeat center center/cover;
-    background-attachment: fixed;
+    background-color: #0d1117; /* GitHub's dark background color */
+    color: #c9d1d9; /* GitHub's light text color */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
 }
 
 .card {
-    background: #fff;
-    border-radius: 10px;
-    padding: 20px;
+    background-color: #161b22; /* GitHub's card background color */
+    border: 1px solid #30363d; /* GitHub's border color */
+    border-radius: 6px; /* GitHub's border radius */
 }
 
 .form-control {
-    border-radius: 8px;
+    background-color: #0d1117; /* GitHub's input background color */
+    border: 1px solid #30363d; /* GitHub's input border color */
+    color: #c9d1d9; /* GitHub's input text color */
+    border-radius: 6px; /* GitHub's input border radius */
 }
 
 .form-control:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 6px rgba(0, 123, 255, 0.3);
+    border-color: #58a6ff; /* GitHub's focus border color */
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.3); /* GitHub's focus shadow */
 }
 
-/* Adjust form width on smaller screens */
-@media (max-width: 768px) {
-    .col-lg-5, .col-md-6 {
-        width: 100%;
-    }
+.btn-primary {
+    background-color: #238636; /* GitHub's primary button color */
+    border: none;
+    border-radius: 6px; /* GitHub's button border radius */
+}
+
+.btn-primary:hover {
+    background-color: #2ea043; /* GitHub's primary button hover color */
+}
+
+.text-muted {
+    color: #8b949e !important; /* GitHub's muted text color */
+}
+
+.alert-danger {
+    background-color: #f85149; /* GitHub's danger alert background color */
+    border-color: #f85149; /* GitHub's danger alert border color */
+    color: #fff; /* GitHub's danger alert text color */
+}
+
+.alert-danger .btn-close {
+    filter: invert(1); /* Invert close button color for better visibility */
 }
 </style>
 

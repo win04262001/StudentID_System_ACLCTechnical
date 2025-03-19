@@ -15,8 +15,9 @@
 
     <style>
         body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f4f4f4;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+            background-color: #0d1117; /* GitHub's dark background color */
+            color: #c9d1d9; /* GitHub's light text color */
             transition: margin-left 0.3s ease-in-out;
         }
 
@@ -27,11 +28,12 @@
             left: 0;
             height: 100vh;
             width: 250px;
-            background-color: #222d32;
-            color: white;
+            background-color: #161b22; /* GitHub's card background color */
+            color: #c9d1d9; /* GitHub's light text color */
             padding-top: 20px;
-            transition: width 0.3s ease-in-out;
+            transition: width 0.3s ease-in-out, left 0.3s ease-in-out;
             z-index: 1000;
+            border-right: 1px solid #30363d; /* GitHub's border color */
         }
 
         .sidebar .logo {
@@ -39,19 +41,20 @@
             text-align: center;
             font-weight: bold;
             padding: 10px 0;
+            color: #c9d1d9; /* GitHub's light text color */
         }
 
         .sidebar a {
             display: flex;
             align-items: center;
-            color: white;
+            color: #c9d1d9; /* GitHub's light text color */
             padding: 12px 20px;
             text-decoration: none;
             transition: 0.3s;
         }
 
         .sidebar a:hover {
-            background-color: #1a2226;
+            background-color: #1a2226; /* Darker background on hover */
         }
 
         .sidebar a i {
@@ -88,11 +91,11 @@
             position: fixed;
             top: 10px;
             left: 260px;
-            background: #222d32;
-            color: white;
+            background: #161b22; /* GitHub's card background color */
+            color: #c9d1d9; /* GitHub's light text color */
             padding: 10px;
-            border: none;
-            border-radius: 5px;
+            border: 1px solid #30363d; /* GitHub's border color */
+            border-radius: 6px; /* GitHub's border radius */
             cursor: pointer;
             transition: left 0.3s ease-in-out;
             z-index: 1100;
@@ -126,6 +129,29 @@
             .menu-toggle.expanded {
                 left: 260px;
             }
+        }
+
+        /* Alert Messages */
+        .alert {
+            border-radius: 6px; /* GitHub's border radius */
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
+        .alert-danger {
+            background-color: #f85149; /* GitHub's danger alert background color */
+            border-color: #f85149; /* GitHub's danger alert border color */
+            color: #fff; /* GitHub's danger alert text color */
+        }
+
+        .alert-success {
+            background-color: #238636; /* GitHub's success alert background color */
+            border-color: #238636; /* GitHub's success alert border color */
+            color: #fff; /* GitHub's success alert text color */
+        }
+
+        .alert .btn-close {
+            filter: invert(1); /* Invert close button color for better visibility */
         }
 
         /* Image Styling */
@@ -165,7 +191,7 @@
                 <a href="{{ url_for('admin_dashboard') }}"><i class="fas fa-user-shield"></i> <span>Admin Dashboard</span></a>
                 <a href="{{ url_for('admin_applications') }}"><i class="fas fa-users"></i> <span>Manage Applications</span></a>
                 <a href="{{ url_for('student_id_history') }}"><i class="fas fa-clipboard-list"></i> <span>Student ID History</span></a>
-                <a href="{{ url_for('sample_layout') }}"><i class="fas fa-clipboard-list"></i> <span>create ID</span></a>
+                <a href="{{ url_for('sample_layout') }}"><i class="fas fa-clipboard-list"></i> <span>Create ID</span></a>
             {% elif session['user_role'] == 'student' %}
                 <a href="{{ url_for('student_dashboard') }}"><i class="fas fa-user"></i> <span>My Profile</span></a>
                 <a href="{{ url_for('my_application_status') }}"><i class="fas fa-info-circle"></i> <span>Application Status</span></a>
@@ -205,6 +231,19 @@
             content.classList.toggle("expanded");
             toggleButton.classList.toggle("expanded");
         }
+
+        // Automatically hide sidebar when clicking outside
+        document.addEventListener("click", function(event) {
+            let sidebar = document.getElementById("sidebar");
+            let toggleButton = document.querySelector(".menu-toggle");
+
+            // Check if the click is outside the sidebar and toggle button
+            if (!sidebar.contains(event.target) && !toggleButton.contains(event.target)) {
+                sidebar.classList.add("collapsed");
+                document.getElementById("main-content").classList.add("expanded");
+                toggleButton.classList.add("expanded");
+            }
+        });
     </script>
 </body>
 </html>

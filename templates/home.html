@@ -10,9 +10,11 @@
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
 
         body {
-            font-family: 'Poppins', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
             margin: 0;
             padding: 0;
+            background-color: #0d1117; /* GitHub's dark background color */
+            color: #c9d1d9; /* GitHub's light text color */
         }
 
         /* HERO SECTION */
@@ -69,17 +71,17 @@
 
         /* Custom Button */
         .btn-custom {
-            background-color: #ff4500;
+            background-color: #238636; /* GitHub's primary button color */
             border: none;
             padding: 12px 24px;
             font-size: 1rem;
             color: white;
-            border-radius: 30px;
+            border-radius: 6px; /* GitHub's border radius */
             transition: 0.3s ease-in-out;
         }
 
         .btn-custom:hover {
-            background-color: #e63900;
+            background-color: #2ea043; /* GitHub's primary button hover color */
             transform: scale(1.05);
         }
 
@@ -87,18 +89,28 @@
         .services-section {
             padding: 60px 20px;
             text-align: center;
-            background-color: #f8f9fa;
+            background-color: #161b22; /* GitHub's card background color */
+        }
+
+        .services-section h2 {
+            color: #c9d1d9; /* GitHub's light text color */
         }
 
         .card-custom {
-            border-radius: 15px;
-            border: none;
+            border-radius: 6px; /* GitHub's border radius */
+            border: 1px solid #30363d; /* GitHub's border color */
+            background-color: #0d1117; /* GitHub's dark background color */
+            color: #c9d1d9; /* GitHub's light text color */
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease-in-out;
         }
 
         .card-custom:hover {
             transform: translateY(-5px);
+        }
+
+        .card-custom h4 {
+            color: #58a6ff; /* GitHub's link color */
         }
 
         @media (max-width: 768px) {
@@ -114,17 +126,22 @@
         .testimonials {
             padding: 60px 20px;
             text-align: center;
+            background-color: #161b22; /* GitHub's card background color */
+        }
+
+        .testimonials h2 {
+            color: #c9d1d9; /* GitHub's light text color */
         }
 
         .testimonial-item {
             font-size: 1rem;
             font-style: italic;
-            color: #444;
+            color: #8b949e; /* GitHub's muted text color */
         }
 
         .carousel-control-prev-icon, 
         .carousel-control-next-icon {
-            background-color: #ff4500;
+            background-color: #238636; /* GitHub's primary button color */
             border-radius: 50%;
         }
     </style>

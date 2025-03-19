@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -5,12 +6,14 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <title>ID Card Generator</title>
-  <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary btn-lg">
+  <a href="{{ url_for('admin_applications') }}" class="btn btn-secondary btn-lg">
     Back
   </a>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <!-- Bootstrap CSS for Modal -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
+<body onload="loadDataToIdLayout()">
   <!-- Front ID Card -->
   <div class="container">
     <div class="section">
@@ -37,8 +40,7 @@
         <!-- Main Content -->
         <main class="content">
           <!-- Left Box for Photo -->
-          <div class="left-box" onclick="document.getElementById('fileInput').click()">
-            <input type="file" id="fileInput" accept="image/*" onchange="previewImage(event)">
+          <div class="left-box">
             <img class="left-box-img" id="previewImg" src="static/student-photo.png" alt="Upload Photo">
           </div>
 
@@ -46,7 +48,7 @@
           <div class="right-box">
             <div class="top-box">
               <span class="top-box-text">STUDENT NO:</span>
-              <input type="text" class="student-number-input" placeholder="Student No">
+              <input type="text" class="student-number-input" id="studentNumberInput" placeholder="Student No">
             </div>
             <div class="bottom-box">
               <p class="bottom-box-text">
@@ -59,10 +61,10 @@
 
         <!-- Input Sections -->
         <div class="section large-box">
-          <input type="text" class="name-input" placeholder="Enter Name">
+          <input type="text" class="name-input" id="nameInput" placeholder="Enter Name">
         </div>
         <div class="section large-box">
-          <input type="text" class="course-input" placeholder="Enter Course">
+          <input type="text" class="course-input" id="courseInput" placeholder="Enter Course">
         </div>
 
         <!-- Course Label Section -->
@@ -72,32 +74,27 @@
           </div>
         </div>
 
-        
         <!-- Barcode Holder Section -->
         <div class="section large-footer barcode-holder">
           <span class="barcode-text">Barcode</span>
           <img id="barcode-preview" alt="Barcode" style="display: none;">
         </div>
 
+        <!-- Signature Container -->
+        <div class="section signature-container">
+          <div class="signature-box">
+            <hr class="signature-line-front">
+            <div class="resizable-signature">
+              <img id="signature-preview-front" alt="Signature" style="display: none; width: 100px; height: 50px;">
+            </div>
+          </div>
+          <div class="signature-label-box">
+            <span class="signature-label">Student's Signature</span>
+          </div>
+        </div>
+      </div>
 
-        <!-- Inside the front ID card section -->
-                <!-- Signature Container -->
-                <div class="section signature-container">
-                    <div class="signature-box">
-                        <hr class="signature-line-front">
-                        <!-- Add a resizable & draggable container for the signature -->
-                        <div class="resizable-signature">
-                            <img id="signature-preview-front" alt="Signature" style="display: none; width: 100px; height: 50px;">
-                        </div>
-                    </div>
-                    <div class="signature-label-box">
-                        <span class="signature-label">Student's Signature</span>
-                    </div>
-                </div>
-    </div>
-
-      <!-- File Input for Photo -->
-      <input type="file" id="photo-upload" accept="image/*" onchange="previewPhoto()" style="display: none;">
+      <!-- Buttons -->
       <button onclick="downloadFront()">Download Front</button>
       <button onclick="printFront()">Print Front</button>
     </div>
@@ -113,9 +110,9 @@
 
         <div class="contact-info">
           <p>In case of Emergency, please notify:</p>
-          <p><span>Name:</span> <input type="text"></p>
-          <p><span>Address:</span> <input type="text"></p>
-          <p><span>TEL No.:</span> <input type="text"></p>
+          <p><span>Name:</span> <input type="text" id="emergencyName" value=""></p>
+          <p><span>Address:</span> <input type="text" id="emergencyAddress" value=""></p>
+          <p><span>TEL No.:</span> <input type="text" id="emergencyContact" value=""></p>
           <p>ACLC College of Butuan City</p>
           <p>999 HDS J.C. Aquino Avenue, Butuan City</p>
           <p>(085) 300-1137</p>
@@ -124,23 +121,21 @@
 
         <div class="signature-container-back" style="text-align: center; position: relative;">
           <div style="display: flex; align-items: center; justify-content: center; width: 100%; position: relative;">
-              <span style="flex: 1; border-bottom: 4px solid black; margin-top: 17px;"></span>
-              <span style="font-weight: bold; font-size: 14px; background: white; padding: 0 5px; position: relative; z-index: 2; margin-top: 17px;">
-                  ALAN L. ATEGA
-              </span>
-              <span style="flex: 1; border-bottom: 4px solid black; margin-top: 17px;"></span>
+            <span style="flex: 1; border-bottom: 4px solid black; margin-top: 17px;"></span>
+            <span style="font-weight: bold; font-size: 14px; background: white; padding: 0 5px; position: relative; z-index: 2; margin-top: 17px;">
+              ALAN L. ATEGA
+            </span>
+            <span style="flex: 1; border-bottom: 4px solid black; margin-top: 17px;"></span>
           </div>
-      
+
           <!-- Signature Image (Positioned on top of the name) -->
           <img src="static/signature.png" alt="Signature" class="signature-image-back"
-              style="position: absolute; top: -38px; left: 50%; transform: translateX(-50%); width: 77px; height: 73px; z-index: 3;">
-      
+            style="position: absolute; top: -38px; left: 50%; transform: translateX(-50%); width: 77px; height: 73px; z-index: 3;">
+
           <!-- Designation -->
           <div class="designation" style="margin-top: 13px; font-weight: bold;">SCHOOL DIRECTOR</div>
+        </div>
       </div>
-      
-      
-    </div>
       <button onclick="downloadBack()">Download Back</button>
       <button onclick="printBack()">Print Back</button>
     </div>
@@ -171,22 +166,186 @@
   <button class="open-modal-btn" onclick="openBarcodeModal()">Open Barcode Generator</button>
 
   <!-- Signature Tool Modal -->
-  <div class="modal" id="signatureModal">
-    <div class="modal-content">
-      <h2>Signature Background Remover</h2>
-      <input type="file" id="imageInput" accept="image/*" />
-      <canvas id="canvas"></canvas>
+  <div class="modal fade" id="signatureToolModal" tabindex="-1" aria-labelledby="signatureToolModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content bg-dark text-white">
+        <div class="modal-header">
+          <h5 class="modal-title">✍️ Signature Tool</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Before and After Sections -->
+          <div class="row">
+            <div class="col-md-6">
+              <h6>Before</h6>
+              <canvas id="beforeCanvas" class="border img-fluid"></canvas>
+            </div>
+            <div class="col-md-6">
+              <h6>After</h6>
+              <canvas id="afterCanvas" class="border img-fluid"></canvas>
+            </div>
+          </div>
 
-      <div class="controls">
-        <label for="thickness">Thickness: <span id="thicknessValue">1</span></label>
-        <input type="range" id="thickness" min="1" max="10" value="1" />
+          <!-- Thickness Slider -->
+          <div class="mt-3">
+            <label for="thicknessSlider">Thickness:</label>
+            <input type="range" id="thicknessSlider" min="1" max="10" value="1">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" onclick="applySignatureChanges()">Apply Changes</button>
+        </div>
       </div>
-
-      <button class="pass-signature-btn" onclick="passSignatureToFront()">Pass Signature to Front ID</button>
-      <button class="download-btn" onclick="closeModal()">Close</button>
     </div>
   </div>
-  <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+
+  <script>
+    // Function to load data from localStorage
+    function loadDataToIdLayout() {
+      const profilePicture = localStorage.getItem("profilePicture");
+      const studentID = localStorage.getItem("studentID");
+      const signatureImage = localStorage.getItem("signatureImage");
+      const barcodeImage = localStorage.getItem("barcodeImage");
+      const studentName = localStorage.getItem("studentName");
+      const studentCourse = localStorage.getItem("studentCourse");
+      const studentNumber = localStorage.getItem("studentNumber");
+
+      // Set data to the corresponding fields
+      if (profilePicture) {
+        document.getElementById("previewImg").src = profilePicture;
+      }
+      if (studentID) {
+        document.getElementById("studentNumberInput").value = studentID;
+      }
+      if (signatureImage) {
+        document.getElementById("signature-preview-front").src = signatureImage;
+        document.getElementById("signature-preview-front").style.display = "block";
+      }
+      if (barcodeImage) {
+        document.getElementById("barcode-preview").src = barcodeImage;
+        document.getElementById("barcode-preview").style.display = "block";
+      }
+      if (studentName) {
+        document.getElementById("nameInput").value = studentName;
+      }
+      if (studentCourse) {
+        document.getElementById("courseInput").value = studentCourse;
+      }
+      if (studentNumber) {
+        document.getElementById("studentNumberInput").value = studentNumber;
+      }
+    }
+
+    // Load emergency contact details
+    const contact = localStorage.getItem("contact");
+    const guardian = localStorage.getItem("guardian");
+    const address = localStorage.getItem("address");
+
+    if (contact) {
+      document.getElementById("emergencyContact").value = contact;
+    }
+    if (guardian) {
+      document.getElementById("emergencyName").value = guardian;
+    }
+    if (address) {
+      document.getElementById("emergencyAddress").value = address;
+    }
+
+    // Function to open the signature tool modal
+    function openSignatureTool() {
+      const signatureImg = document.getElementById("signature-preview-front");
+      const beforeCanvas = document.getElementById("beforeCanvas");
+      const afterCanvas = document.getElementById("afterCanvas");
+
+      // Set canvas dimensions to match the signature image
+      beforeCanvas.width = signatureImg.width;
+      beforeCanvas.height = signatureImg.height;
+      afterCanvas.width = signatureImg.width;
+      afterCanvas.height = signatureImg.height;
+
+      // Draw the original signature on the "before" canvas
+      const beforeCtx = beforeCanvas.getContext("2d");
+      beforeCtx.drawImage(signatureImg, 0, 0);
+
+      // Draw the signature on the "after" canvas with background removal
+      const afterCtx = afterCanvas.getContext("2d");
+      afterCtx.drawImage(signatureImg, 0, 0);
+
+      // Remove the background from the "after" canvas
+      removeBackground(afterCanvas);
+
+      // Show the modal
+      const signatureToolModal = new bootstrap.Modal(document.getElementById("signatureToolModal"));
+      signatureToolModal.show();
+    }
+
+    // Function to remove the background from the signature
+    function removeBackground(canvas) {
+      const ctx = canvas.getContext("2d");
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+
+      // Remove background based on a threshold (not just pure white)
+      for (let i = 0; i < data.length; i += 4) {
+        const red = data[i];
+        const green = data[i + 1];
+        const blue = data[i + 2];
+
+        // If the pixel is close to white, make it transparent
+        if (red > 200 && green > 200 && blue > 200) {
+          data[i + 3] = 0; // Set alpha to 0 (transparent)
+        }
+      }
+
+      // Put the modified image data back on the canvas
+      ctx.putImageData(imageData, 0, 0);
+    }
+
+    // Function to thicken the signature
+    function thickenSignature(canvas, thickness) {
+      const ctx = canvas.getContext("2d");
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const tempCanvas = document.createElement("canvas");
+      const tempCtx = tempCanvas.getContext("2d");
+
+      tempCanvas.width = canvas.width;
+      tempCanvas.height = canvas.height;
+      tempCtx.putImageData(imageData, 0, 0);
+
+      // Clear the original canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw thicker lines
+      ctx.lineWidth = thickness;
+      ctx.strokeStyle = "black";
+      ctx.drawImage(tempCanvas, 0, 0);
+    }
+
+    // Function to apply changes to the signature
+    function applySignatureChanges() {
+      const afterCanvas = document.getElementById("afterCanvas");
+      const signatureImg = document.getElementById("signature-preview-front");
+      const thickness = document.getElementById("thicknessSlider").value;
+
+      // Thicken the signature
+      thickenSignature(afterCanvas, thickness);
+
+      // Update the signature image with the modified version
+      signatureImg.src = afterCanvas.toDataURL();
+
+      // Close the modal
+      const signatureToolModal = new bootstrap.Modal(document.getElementById("signatureToolModal"));
+      signatureToolModal.hide();
+    }
+
+    // Add click event to the signature image
+    document.getElementById("signature-preview-front").addEventListener("click", openSignatureTool);
+  </script>
+
+  <!-- Bootstrap JS for Modal -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{{ url_for('static', filename='scriptss.js') }}"></script>
   <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
 </body>
 </html>

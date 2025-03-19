@@ -676,6 +676,7 @@ def update_student_info():
 @login_required("student")
 def complete_student_profile():
     user_id = session.get('user_id')
+    name = session.get('name')
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -684,7 +685,7 @@ def complete_student_profile():
     cursor.close()
     conn.close()
 
-    return render_template("complete_student_profile.html", student=student)
+    return render_template("complete_student_profile.html", student=student, name=student['name'])
 
 # ---------- Student Application Status ----------
 @app.route('/my_application_status')
