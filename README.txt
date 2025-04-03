@@ -1,4 +1,4 @@
-Hello! Welcome to the Student ID Generator System are you guys tired to create a new layout into photoshop for your ID?
+Hello! Welcome to the Student ID Generator System are you guys tired to create a new layout in photoshop for your ID?
 Dont worry this system is Design for lazy people ops sorry, i mean people who need to easy and auto generate for student ID.
 
 Introducing ACLC Technical Studet ID System!
