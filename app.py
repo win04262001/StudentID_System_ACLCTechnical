@@ -12,6 +12,10 @@ import cv2
 import numpy as np
 import easyocr
 from concurrent.futures import ThreadPoolExecutor
+import base64
+import re
+from PIL import Image
+import io
 
 
 # ✅ Define Flask App
@@ -82,6 +86,66 @@ def is_signature_valid(image_path):
     white_pixels = np.count_nonzero(binary)
     return 1000 < white_pixels < 20000  # Adjust values if necessary
 
+# ✅ Process Electronic Signature
+def process_esignature(base64_data, student_id):
+    """
+    Process electronic signature from canvas:
+    1. Convert base64 to image
+    2. Remove background
+    3. Auto-correct signature (enhance contrast, smooth edges)
+    4. Save processed signature
+    """
+    try:
+        # Extract the base64 data (remove the data:image/png;base64, prefix)
+        base64_data = re.sub('^data:image/.+;base64,', '', base64_data)
+        
+        # Convert base64 to image
+        img_data = base64.b64decode(base64_data)
+        img = Image.open(io.BytesIO(img_data))
+        
+        # Convert to numpy array for OpenCV processing
+        img_array = np.array(img)
+        
+        # If image has alpha channel, use it for transparency
+        if img_array.shape[2] == 4:
+            # Extract alpha channel
+            alpha = img_array[:, :, 3]
+            # Convert to RGB
+            img_array = cv2.cvtColor(img_array, cv2.COLOR_RGBA2RGB)
+        else:
+            # Create mask based on white background
+            gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
+            _, alpha = cv2.threshold(gray, 240, 255, cv2.THRESH_BINARY_INV)
+        
+        # Remove background (make white pixels transparent)
+        # Create a new RGBA image
+        height, width = img_array.shape[:2]
+        rgba = np.zeros((height, width, 4), dtype=np.uint8)
+        rgba[:, :, 0:3] = img_array
+        rgba[:, :, 3] = alpha
+        
+        # Enhance contrast to make signature more visible
+        alpha_enhanced = cv2.equalizeHist(alpha)
+        
+        # Apply slight Gaussian blur to smooth edges
+        alpha_enhanced = cv2.GaussianBlur(alpha_enhanced, (3, 3), 0)
+        
+        # Update alpha channel with enhanced version
+        rgba[:, :, 3] = alpha_enhanced
+        
+        # Convert back to PIL Image
+        processed_img = Image.fromarray(rgba)
+        
+        # Save the processed signature
+        filename = f"{student_id}_signature.png"
+        filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        processed_img.save(filepath)
+        
+        return filename
+    except Exception as e:
+        print(f"Error processing signature: {str(e)}")
+        return None
+
 # ✅ Validate Image (Profile & Signature)
 @app.route('/validate_image/<image_type>', methods=['POST'])
 def validate_image(image_type):
@@ -120,6 +184,39 @@ def validate_image(image_type):
 
     return jsonify({"valid": True})
 
+# ✅ Process and Save Electronic Signature
+@app.route('/process_signature', methods=['POST'])
+def process_signature():
+    if 'student_id' not in session:
+        return jsonify({"success": False, "error": "Not logged in"}), 401
+    
+    data = request.json
+    signature_data = data.get('signature')
+    student_id = session.get('student_id')
+    
+    if not signature_data:
+        return jsonify({"success": False, "error": "No signature data provided"}), 400
+    
+    # Process the signature
+    filename = process_esignature(signature_data, student_id)
+    
+    if not filename:
+        return jsonify({"success": False, "error": "Failed to process signature"}), 500
+    
+    # Update the database with the new signature
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("UPDATE students SET signature = %s WHERE student_id = %s", 
+                      (filename, student_id))
+        conn.commit()
+        return jsonify({"success": True, "filename": filename})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
 
 
 # ---------- Home Page ----------
@@ -132,6 +229,7 @@ def ID_section():
     return render_template("ID_section.html")
 
 @app.route('/sample_layout')
+@login_required("admin")
 def sample_layout():
     return render_template("sample_layout.html")
 # ---------- User Authentication ----------
@@ -613,29 +711,31 @@ def update_student_info():
     address = request.form.get("address")
 
     profile_picture = request.files.get("profile_picture")
-    signature = request.files.get("signature")
+    signature_data = request.form.get("signature")  # This will be base64 data from canvas
 
-    if not profile_picture or not signature:
-        flash("Both profile picture and signature are required.", "danger")
+    if not profile_picture:
+        flash("Profile picture is required.", "danger")
         return redirect(url_for("complete_student_profile"))
 
-    # Secure filenames
+    # Process profile picture
     profile_picture_filename = secure_filename(profile_picture.filename)
-    signature_filename = secure_filename(signature.filename)
-
-    # Save image files
     profile_path = os.path.join(app.config["UPLOAD_FOLDER"], profile_picture_filename)
-    signature_path = os.path.join(app.config["UPLOAD_FOLDER"], signature_filename)
-
     profile_picture.save(profile_path)
-    signature.save(signature_path)
 
-    # Perform validation in parallel
+    # Process signature from canvas
+    signature_filename = None
+    if signature_data:
+        signature_filename = process_esignature(signature_data, student_id)
+    
+    if not signature_filename:
+        flash("Signature is required. Please draw your signature.", "danger")
+        return redirect(url_for("complete_student_profile"))
+
+    # Perform validation for profile picture
     with ThreadPoolExecutor() as executor:
         blur_result = executor.submit(is_blurry, cv2.imread(profile_path))
         face_result = executor.submit(is_face_detected, profile_path)
         bg_result = executor.submit(is_plain_background, profile_path)
-        signature_result = executor.submit(is_signature_valid, signature_path)
 
         if blur_result.result():
             flash("Profile picture is blurry. Please upload a clear image.", "danger")
@@ -647,10 +747,6 @@ def update_student_info():
 
         if not bg_result.result():
             flash("Profile picture must have a plain background.", "danger")
-            return redirect(url_for("complete_student_profile"))
-
-        if not signature_result.result():
-            flash("Signature must be clear and handwritten on a plain background.", "danger")
             return redirect(url_for("complete_student_profile"))
 
     # Save to the database
@@ -708,3 +804,4 @@ def my_application_status():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
+

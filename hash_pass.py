@@ -6,7 +6,7 @@ conn = mysql.connector.connect(
     host="localhost",
     user="root",
     password="",
-    database="studentid"
+    database="appointment_system"
 )
 cursor = conn.cursor()
 
@@ -16,7 +16,7 @@ hashed_password = generate_password_hash("admin123")
 # Update admin password
 try:
     cursor.execute("""
-        UPDATE users SET password = %s WHERE student_id = 'admin001'
+        UPDATE users SET password = %s WHERE student_id = 'admin1'
     """, (hashed_password,))
 
     conn.commit()

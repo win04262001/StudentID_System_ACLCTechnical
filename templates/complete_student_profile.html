@@ -207,16 +207,62 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
 
-        ctx.putImageData(imageData, 0, 0);
+        tempCtx.putImageData(imageData, 0, 0);
 
         // Update the hidden input with the signature data
-        signatureInput.value = canvas.toDataURL('image/png');
-        submitButton.disabled = false; // Enable submit button
+        signatureInput.value = tempCanvas.toDataURL('image/png');
+        
+        // Process the signature on the server
+        processSignature(signatureInput.value);
+    }
 
-        // Show success message
-        const signatureSuccess = document.getElementById('signature_success');
-        signatureSuccess.textContent = '✅ Signature saved successfully!';
-        signatureSuccess.classList.remove('d-none');
+    function processSignature(signatureData) {
+        // Show loading indicator
+        document.getElementById('signature_loading').classList.remove('d-none');
+        document.getElementById('signature_error').classList.add('d-none');
+        document.getElementById('signature_success').classList.add('d-none');
+        
+        // Send signature data to server for processing
+        fetch('/process_signature', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ signature: signatureData }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Hide loading indicator
+            document.getElementById('signature_loading').classList.add('d-none');
+            
+            if (data.success) {
+                // Show success message
+                const successMsg = document.getElementById('signature_success');
+                successMsg.textContent = '✅ Signature processed successfully!';
+                successMsg.classList.remove('d-none');
+                
+                // Enable submit button
+                submitButton.disabled = false;
+            } else {
+                // Show error message
+                const errorMsg = document.getElementById('signature_error');
+                errorMsg.textContent = `❌ ${data.error || 'Failed to process signature'}`;
+                errorMsg.classList.remove('d-none');
+                
+                // Keep submit button disabled
+                submitButton.disabled = true;
+            }
+        })
+        .catch(error => {
+            // Hide loading indicator and show error
+            document.getElementById('signature_loading').classList.add('d-none');
+            const errorMsg = document.getElementById('signature_error');
+            errorMsg.textContent = `❌ Network error: ${error.message}`;
+            errorMsg.classList.remove('d-none');
+            
+            // Keep submit button disabled
+            submitButton.disabled = true;
+        });
     }
 
     function redrawSignature() {
@@ -283,3 +329,4 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 
 {% endblock %}
+
