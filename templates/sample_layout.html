@@ -60,15 +60,15 @@
         </main>
 
         <!-- Input Sections -->
-        <div class="section large-box">
-          <input type="text" class="name-input" id="nameInput" placeholder="Enter Name">
+        <div>
+          <input type="text" class="name-input1" id="nameInput" placeholder="Enter Name">
         </div>
-        <div class="section large-box">
+        <div>
           <input type="text" class="course-input" id="courseInput" placeholder="Enter Course">
         </div>
 
         <!-- Course Label Section -->
-        <div class="section medium-box">
+        <div>
           <div class="small-box course-label-box">
             <span class="course-label">Course</span>
           </div>
@@ -181,7 +181,7 @@
     </div>
   </div>
 
-  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
   <script>
     // Function to load data from localStorage
     function loadDataToIdLayout() {
@@ -199,6 +199,9 @@
       }
       if (studentID) {
         document.getElementById("studentNumberInput").value = studentID;
+      } else if (localStorage.getItem("studentNumber")) {
+        // Also check for studentNumber as a fallback
+        document.getElementById("studentNumberInput").value = localStorage.getItem("studentNumber");
       }
       if (signatureImage) {
         document.getElementById("signature-preview-front").src = signatureImage;
@@ -217,6 +220,16 @@
       if (studentNumber) {
         document.getElementById("studentNumberInput").value = studentNumber;
       }
+
+      console.log("Loading data from localStorage:", {
+        profilePicture: localStorage.getItem("profilePicture"),
+        studentID: localStorage.getItem("studentID"),
+        studentNumber: localStorage.getItem("studentNumber"),
+        signatureImage: localStorage.getItem("signatureImage"),
+        barcodeImage: localStorage.getItem("barcodeImage"),
+        studentName: localStorage.getItem("studentName"),
+        studentCourse: localStorage.getItem("studentCourse")
+      });
     }
 
     // Load emergency contact details
@@ -385,6 +398,33 @@
           win.print();
           win.close();
         };
+      });
+    }
+
+    function formatNameBeforeDownload() {
+      const nameInput = document.getElementById('nameInput');
+      if (nameInput) {
+        // Convert to uppercase and trim extra spaces
+        nameInput.value = nameInput.value.toUpperCase().trim();
+        
+        // Ensure the name fits by reducing font size if needed
+        const nameLength = nameInput.value.length;
+        if (nameLength > 20) {
+          nameInput.style.fontSize = '18px';
+        } else {
+          nameInput.style.fontSize = '22px';
+        }
+      }
+    }
+    
+    // Modify your download functions to call this first
+    function downloadFront() {
+      formatNameBeforeDownload();
+      html2canvas(document.getElementById("front-id-card")).then(canvas => {
+        const link = document.createElement("a");
+        link.download = "student_id_front.png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
       });
     }
   </script>

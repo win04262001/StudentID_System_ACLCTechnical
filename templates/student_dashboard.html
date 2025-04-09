@@ -3,102 +3,360 @@
 {% block title %}Student Dashboard{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2 class="text-center fw-bold text-primary">📌 Student ID Application Status</h2>
-    <p class="text-center text-muted">Track the progress of your student ID application.</p>
-
-    <div class="row mt-4 g-3">
-        <!-- Pending -->
-        <div class="col-md-3">
-            <div class="card shadow-lg text-center border-0 rounded-3 {% if session.application_status == 'pending' %}bg-warning text-dark{% else %}bg-dark text-white{% endif %}">
-                <div class="card-body">
-                    <h4>⏳ Pending</h4>
-                    <p>Your application is awaiting review.</p>
+<div class="container-fluid py-3 py-md-4">
+    <!-- Application Status Cards -->
+    <div class="mb-4">
+        <h2 class="fw-bold mb-2 fs-3">Student ID Application Status</h2>
+        <p class="text-muted mb-3">Track the progress of your student ID application.</p>
+        
+        <div class="row g-3">
+            <!-- Pending Card -->
+            <div class="col-6 col-md-6 col-lg-3">
+                <div class="card h-100 {% if session.application_status == 'pending' %}bg-warning text-dark{% endif %}">
+                    <div class="card-body p-3 text-center">
+                        <h4 class="card-title d-flex justify-content-center align-items-center gap-2 fs-5">
+                            <i class="fas fa-clock"></i> Pending
+                        </h4>
+                        <p class="card-text small">Your application is awaiting review.</p>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Processing -->
-        <div class="col-md-3">
-            <div class="card shadow-lg text-center border-0 rounded-3 {% if session.application_status == 'processing' %}bg-info text-white{% else %}bg-dark text-white{% endif %}">
-                <div class="card-body">
-                    <h4>🔄 Processing</h4>
-                    <p>Your application is currently being processed.</p>
+            <!-- Processing Card -->
+            <div class="col-6 col-md-6 col-lg-3">
+                <div class="card h-100 {% if session.application_status == 'processing' %}bg-info text-white{% endif %}">
+                    <div class="card-body p-3 text-center">
+                        <h4 class="card-title d-flex justify-content-center align-items-center gap-2 fs-5">
+                            <i class="fas fa-sync-alt"></i> Processing
+                        </h4>
+                        <p class="card-text small">Your application is being processed.</p>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Done -->
-        <div class="col-md-3">
-            <div class="card shadow-lg text-center border-0 rounded-3 {% if session.application_status == 'done' %}bg-success text-white{% else %}bg-dark text-white{% endif %}">
-                <div class="card-body">
-                    <h4>✅ Done</h4>
-                    <p>Your student ID is ready for pickup.</p>
+            <!-- Done Card -->
+            <div class="col-6 col-md-6 col-lg-3">
+                <div class="card h-100 {% if session.application_status == 'done' %}bg-success text-white{% endif %}">
+                    <div class="card-body p-3 text-center">
+                        <h4 class="card-title d-flex justify-content-center align-items-center gap-2 fs-5">
+                            <i class="fas fa-check-circle"></i> Done
+                        </h4>
+                        <p class="card-text small">Your student ID is ready for pickup.</p>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Received -->
-        <div class="col-md-3">
-            <div class="card shadow-lg text-center border-0 rounded-3 {% if session.application_status == 'receive' %}bg-primary text-white{% else %}bg-dark text-white{% endif %}">
-                <div class="card-body">
-                    <h4>🎉 Received</h4>
-                    {% if session.application_status == 'receive' %}
-                        <p>Congratulations! You have received your student ID.</p>
-                    {% else %}
-                        <p>Pick up your ID and this will be updated.</p>
-                    {% endif %}
+            <!-- Received Card -->
+            <div class="col-6 col-md-6 col-lg-3">
+                <div class="card h-100 {% if session.application_status == 'receive' %}bg-primary text-white{% endif %}">
+                    <div class="card-body p-3 text-center">
+                        <h4 class="card-title d-flex justify-content-center align-items-center gap-2 fs-5">
+                            <i class="fas fa-award"></i> Received
+                        </h4>
+                        {% if session.application_status == 'receive' %}
+                            <p class="card-text small">You have received your student ID.</p>
+                        {% else %}
+                            <p class="card-text small">Pick up your ID to update status.</p>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+    
+    <!-- Welcome Section -->
+    <div class="card mb-4">
+        <div class="card-body p-3">
+            <h1 class="fw-bold mb-1 fs-4">Welcome, {{ session.user_name }}</h1>
+        </div>
+    </div>
+    
+    <!-- Profile and Application Details -->
+    <div class="row g-3 mb-4">
+        <!-- Student Profile Card -->
+        <div class="col-12 col-md-6">
+            <div class="card h-100">
+                <div class="card-header py-2">
+                    <h5 class="card-title mb-0 fs-5">Your Profile</h5>
+                </div>
+                <div class="card-body p-3">
+                    <div class="d-flex flex-column flex-sm-row">
+                        <div class="text-center mb-3 mb-sm-0 me-sm-4">
+                            {% if session.profile_picture %}
+                                <img src="{{ url_for('static', filename='uploads/' + session.profile_picture) }}" 
+                                    class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover;">
+                            {% else %}
+                                <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" 
+                                    style="width: 100px; height: 100px; margin: 0 auto;">
+                                    <i class="fas fa-user fa-3x text-dark"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="info-row mb-2">
+                                <span class="info-label fw-bold me-2">Name:</span>
+                                <span>{{ session.user_name }}</span>
+                            </div>
+                            <div class="info-row mb-2">
+                                <span class="info-label fw-bold me-2">Student ID:</span>
+                                <span>{{ session.student_id }}</span>
+                            </div>
+                            <div class="info-row mb-2">
+                                <span class="info-label fw-bold me-2">Course:</span>
+                                <span>{{ session.course }}</span>
+                            </div>
+                            <div class="info-row mb-2">
+                                <span class="info-label fw-bold me-2">Contact:</span>
+                                <span>{{ session.contact }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Application Details Card -->
+        <div class="col-12 col-md-6">
+            <div class="card h-100">
+                <div class="card-header py-2">
+                    <h5 class="card-title mb-0 fs-5">Application Details</h5>
+                </div>
+                <div class="card-body p-3">
+                    <div class="info-row mb-2">
+                        <span class="info-label fw-bold me-2">Status:</span>
+                        <span class="fw-bold 
+                            {% if session.application_status == 'pending' %}
+                                text-warning
+                            {% elif session.application_status == 'processing' %}
+                                text-info
+                            {% elif session.application_status == 'done' %}
+                                text-success
+                            {% elif session.application_status == 'receive' %}
+                                text-primary
+                            {% endif %}">
+                            {{ session.application_status|capitalize }}
+                        </span>
+                    </div>
+                    <div class="info-row mb-2">
+                        <span class="info-label fw-bold me-2">Guardian:</span>
+                        <span>{{ session.guardian_name }}</span>
+                    </div>
+                    <div class="info-row mb-2">
+                        <span class="info-label fw-bold me-2">Address:</span>
+                        <span class="text-break">{{ session.address }}</span>
+                    </div>
+                    <div class="info-row mb-2">
+                        <span class="info-label fw-bold me-2">Signature:</span>
+                        {% if session.signature %}
+                            <span class="text-success fw-medium">✓ Uploaded</span>
+                        {% else %}
+                            <span class="text-danger fw-medium">✗ Missing</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer py-2">
+                    <small class="text-muted">Last updated: Today</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="card mb-4">
+        <div class="card-header py-2">
+            <h5 class="card-title mb-0 fs-5">Quick Actions</h5>
+        </div>
+        <div class="card-body p-3 d-flex flex-wrap gap-2">
+            <a href="{{ url_for('complete_student_profile') }}" class="btn btn-primary">
+                <i class="fas fa-edit me-2"></i> Update Information
+            </a>
+            <a href="{{ url_for('student_support_messages') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-headset me-2"></i> Contact Support
+            </a>
+        </div>
+    </div>
 
-    <!-- Profile & Support -->
-    <div class="text-center mt-4 d-flex justify-content-center gap-3">
-        <a href="{{ url_for('complete_student_profile') }}" class="btn btn-primary">✏️ Update Information</a>
-        <a href="#" class="btn btn-outline-secondary">📩 Contact Support</a>
+    <!-- Application Progress -->
+    <div class="card mb-4">
+        <div class="card-header py-2">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="card-title mb-0 fs-5">Application Progress</h5>
+                <span class="status-badge">
+                    {% set progress = 25 %}
+                    {% if session.application_status == 'pending' %}
+                        {% set progress = 25 %}
+                    {% elif session.application_status == 'processing' %}
+                        {% set progress = 50 %}
+                    {% elif session.application_status == 'done' %}
+                        {% set progress = 75 %}
+                    {% elif session.application_status == 'receive' %}
+                        {% set progress = 100 %}
+                    {% endif %}
+                    {{ progress }}% Complete
+                </span>
+            </div>
+        </div>
+        <div class="card-body p-3">
+            <div class="progress" style="height: 10px;">
+                <div class="progress-bar bg-primary" role="progressbar" style="width: {{ progress }}%;" 
+                    aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+        </div>
+    </div>
+
+<!-- Support Modal -->
+<div class="modal fade" id="supportModal" tabindex="-1" aria-labelledby="supportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="supportModalLabel"><i class="fas fa-headset me-2"></i>Contact Support</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="supportForm">
+                    <div class="mb-3">
+                        <label for="supportSubject" class="form-label">Subject</label>
+                        <input type="text" class="form-control" id="supportSubject" placeholder="How can we help you?">
+                        <div class="invalid-feedback" id="subjectFeedback">Please enter a subject</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="supportMessage" class="form-label">Message</label>
+                        <textarea class="form-control" id="supportMessage" rows="5" placeholder="Describe your issue..."></textarea>
+                        <div class="invalid-feedback" id="messageFeedback">Please enter a message</div>
+                    </div>
+                </form>
+                <div class="alert alert-success d-none" id="supportSuccess">
+                    <i class="fas fa-check-circle me-2"></i> Your message has been sent successfully! We'll get back to you soon.
+                </div>
+                <div class="alert alert-danger d-none" id="supportError">
+                    <i class="fas fa-exclamation-circle me-2"></i> <span id="errorMessage">An error occurred. Please try again.</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="sendSupportMessage">
+                    <span id="sendButtonText"><i class="fas fa-paper-plane me-2"></i>Send Message</span>
+                    <span id="sendButtonSpinner" class="d-none">
+                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Sending...
+                    </span>
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
-<style>
-    body {
-        background-color: #0d1117; /* GitHub's dark background color */
-        color: #c9d1d9; /* GitHub's light text color */
-    }
-
-    .card {
-        background-color: #161b22; /* GitHub's card background color */
-        border: 1px solid #30363d; /* GitHub's border color */
-    }
-
-    .btn-primary {
-        background-color: #238636; /* GitHub's primary button color */
-        border: none;
-        border-radius: 6px; /* GitHub's border radius */
-        transition: background-color 0.3s ease-in-out;
-    }
-
-    .btn-primary:hover {
-        background-color: #2ea043; /* GitHub's primary button hover color */
-    }
-
-    .btn-outline-secondary {
-        border-color: #30363d; /* GitHub's border color */
-        color: #c9d1d9; /* GitHub's light text color */
-        border-radius: 6px; /* GitHub's border radius */
-    }
-
-    .btn-outline-secondary:hover {
-        background-color: #30363d; /* GitHub's border color */
-        color: #c9d1d9; /* GitHub's light text color */
-    }
-
-    .text-primary {
-        color: #58a6ff !important; /* GitHub's link color */
-    }
-
-    .text-muted {
-        color: #8b949e !important; /* GitHub's muted text color */
-    }
-</style>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Support form submission
+        const supportForm = document.getElementById('supportForm');
+        const supportSubject = document.getElementById('supportSubject');
+        const supportMessage = document.getElementById('supportMessage');
+        const sendButton = document.getElementById('sendSupportMessage');
+        const sendButtonText = document.getElementById('sendButtonText');
+        const sendButtonSpinner = document.getElementById('sendButtonSpinner');
+        const supportSuccess = document.getElementById('supportSuccess');
+        const supportError = document.getElementById('supportError');
+        const errorMessage = document.getElementById('errorMessage');
+        const supportModal = new bootstrap.Modal(document.getElementById('supportModal'));
+        
+        sendButton.addEventListener('click', function() {
+            // Reset validation state
+            supportSubject.classList.remove('is-invalid');
+            supportMessage.classList.remove('is-invalid');
+            supportSuccess.classList.add('d-none');
+            supportError.classList.add('d-none');
+            
+            // Validate form
+            let isValid = true;
+            
+            if (!supportSubject.value.trim()) {
+                supportSubject.classList.add('is-invalid');
+                isValid = false;
+            }
+            
+            if (!supportMessage.value.trim()) {
+                supportMessage.classList.add('is-invalid');
+                isValid = false;
+            }
+            
+            if (!isValid) {
+                return;
+            }
+            
+            // Show loading state
+            sendButtonText.classList.add('d-none');
+            sendButtonSpinner.classList.remove('d-none');
+            sendButton.disabled = true;
+            
+            // Send AJAX request
+            fetch('/submit_support_message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    subject: supportSubject.value.trim(),
+                    message: supportMessage.value.trim()
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide loading state
+                sendButtonText.classList.remove('d-none');
+                sendButtonSpinner.classList.add('d-none');
+                sendButton.disabled = false;
+                
+                if (data.success) {
+                    // Show success message
+                    supportSuccess.classList.remove('d-none');
+                    
+                    // Reset form
+                    supportForm.reset();
+                    
+                    // Close modal after 2 seconds
+                    setTimeout(() => {
+                        supportModal.hide();
+                        
+                        // Reset UI after modal is closed
+                        setTimeout(() => {
+                            supportSuccess.classList.add('d-none');
+                        }, 500);
+                    }, 2000);
+                    
+                    // Show toast notification
+                    showToast('Your message has been sent to support. We will get back to you soon.', 'success');
+                } else {
+                    // Show error message
+                    errorMessage.textContent = data.error || 'An error occurred. Please try again.';
+                    supportError.classList.remove('d-none');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                
+                // Hide loading state
+                sendButtonText.classList.remove('d-none');
+                sendButtonSpinner.classList.add('d-none');
+                sendButton.disabled = false;
+                
+                // Show error message
+                errorMessage.textContent = 'Network error. Please check your connection and try again.';
+                supportError.classList.remove('d-none');
+            });
+        });
+        
+        // Reset form when modal is closed
+        document.getElementById('supportModal').addEventListener('hidden.bs.modal', function () {
+            supportForm.reset();
+            supportSubject.classList.remove('is-invalid');
+            supportMessage.classList.remove('is-invalid');
+            supportSuccess.classList.add('d-none');
+            supportError.classList.add('d-none');
+            sendButtonText.classList.remove('d-none');
+            sendButtonSpinner.classList.add('d-none');
+            sendButton.disabled = false;
+        });
+    });
+</script>
 {% endblock %}

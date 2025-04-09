@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Train Photo Validator{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="card bg-dark text-white shadow-lg border-0 rounded-3">
+                <div class="card-header bg-dark text-white text-center border-bottom border-secondary">
+                    <h2 class="fw-bold">🤖 Train Photo Validator</h2>
+                    <p class="mb-0 text-muted">Train the AI model to recognize valid and invalid ID photos</p>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Model Status -->
+                    <div class="alert {% if model_exists %}alert-success{% else %}alert-warning{% endif %} mb-4">
+                        {% if model_exists %}
+                            <i class="fas fa-check-circle me-2"></i> Model is trained and ready to use
+                        {% else %}
+                            <i class="fas fa-exclamation-triangle me-2"></i> No trained model found. Please upload training data and train the model.
+                        {% endif %}
+                    </div>
+
+                    <!-- Training Data Stats -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card bg-dark border-success mb-3">
+                                <div class="card-header text-success border-success">
+                                    <i class="fas fa-check-circle me-2"></i> Valid Photos
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ valid_count }} photos</h5>
+                                    <p class="card-text">These are examples of acceptable ID photos</p>
+                                    
+                                    <!-- Upload Valid Photos Form -->
+                                    <form action="{{ url_for('upload_training_data') }}" method="POST" enctype="multipart/form-data">
+                                        <input type="hidden" name="data_type" value="valid">
+                                        <div class="mb-3">
+                                            <input class="form-control bg-dark text-white" type="file" name="photos" multiple accept="image/*">
+                                        </div>
+                                        <button type="submit" class="btn btn-success">
+                                            <i class="fas fa-upload me-2"></i> Upload Valid Photos
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card bg-dark border-danger mb-3">
+                                <div class="card-header text-danger border-danger">
+                                    <i class="fas fa-times-circle me-2"></i> Invalid Photos
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ invalid_count }} photos</h5>
+                                    <p class="card-text">These are examples of unacceptable ID photos</p>
+                                    
+                                    <!-- Upload Invalid Photos Form -->
+                                    <form action="{{ url_for('upload_training_data') }}" method="POST" enctype="multipart/form-data">
+                                        <input type="hidden" name="data_type" value="invalid">
+                                        <div class="mb-3">
+                                            <input class="form-control bg-dark text-white" type="file" name="photos" multiple accept="image/*">
+                                        </div>
+                                        <button type="submit" class="btn btn-danger">
+                                            <i class="fas fa-upload me-2"></i> Upload Invalid Photos
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Train Model Button -->
+                    <div class="text-center mb-4">
+                        <form action="{{ url_for('train_validator') }}" method="POST">
+                            <button type="submit" class="btn btn-primary btn-lg" {% if valid_count < 5 or invalid_count < 5 %}disabled{% endif %}>
+                                <i class="fas fa-brain me-2"></i> Train Model
+                            </button>
+                            {% if valid_count < 5 or invalid_count < 5 %}
+                                <div class="text-warning mt-2">
+                                    <small>You need at least 5 valid and 5 invalid photos to train the model</small>
+                                </div>
+                            {% endif %}
+                        </form>
+                    </div>
+                    
+                    <!-- Test Model Section -->
+                    <div class="card bg-dark border-info mb-3">
+                        <div class="card-header text-info border-info">
+                            <i class="fas fa-vial me-2"></i> Test the Model
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">Upload a photo to test if it would be accepted or rejected</p>
+                            
+                            <!-- Test Photo Form -->
+                            <form action="{{ url_for('test_validator') }}" method="POST" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <input class="form-control bg-dark text-white" type="file" name="test_photo" accept="image/*" {% if not model_exists %}disabled{% endif %}>
+                                </div>
+                                <button type="submit" class="btn btn-info" {% if not model_exists %}disabled{% endif %}>
+                                    <i class="fas fa-check-circle me-2"></i> Test Photo
+                                </button>
+                                {% if not model_exists %}
+                                    <div class="text-warning mt-2">
+                                        <small>You need to train a model first before testing</small>
+                                    </div>
+                                {% endif %}
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Instructions -->
+                    <div class="card bg-dark border-secondary">
+                        <div class="card-header text-secondary border-secondary">
+                            <i class="fas fa-info-circle me-2"></i> How to Train the Model
+                        </div>
+                        <div class="card-body">
+                            <ol class="text-secondary">
+                                <li>Upload at least 5 examples of valid ID photos (clear face, white background, etc.)</li>
+                                <li>Upload at least 5 examples of invalid ID photos (blurry, no face, busy background, etc.)</li>
+                                <li>Click the "Train Model" button to create a machine learning model</li>
+                                <li>Test the model with new photos to see if it correctly identifies them</li>
+                                <li>Add more training examples if the model makes mistakes</li>
+                            </ol>
+                            <p class="text-secondary">The more examples you provide, the better the model will perform!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

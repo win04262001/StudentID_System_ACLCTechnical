@@ -1,286 +1,1150 @@
 {% extends "base.html" %}
-{% block title %}Manage Applications{% endblock %}
+
+{% block title %}Manage Student Applications{% endblock %}
 
 {% block content %}
-
-<div class="container mt-4">
-    <h2 class="text-white">📋 Manage Student Applications</h2>
-    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-light btn-sm mb-3">
-        &lt; Back to Dashboard
-    </a>
-    <table class="table table-dark table-hover">
-        <thead>
-            <tr>
-                <th>Student ID</th>
-                <th>Name</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for student in applications %}
-            <tr>
-                <td>{{ student.student_id }}</td>
-                <td>{{ student.name }}</td>
-                <td>
-                    <span class="badge 
-                    {% if student.application_status == 'pending' %}bg-warning text-dark
-                    {% elif student.application_status == 'processing' %}bg-info text-white
-                    {% elif student.application_status == 'done' %}bg-success text-white
-                    {% elif student.application_status == 'receive' %}bg-primary text-white
-                    {% endif %}">
-                    {% if student.application_status == 'pending' %}
-                        ⏳ Pending
-                    {% elif student.application_status == 'processing' %}
-                        🔄 Processing
-                    {% elif student.application_status == 'done' %}
-                        ✅ Done
-                    {% elif student.application_status == 'receive' %}
-                        🎉 Received
-                    {% endif %}
-                </span>
-                </td>
-                <td>
-                    <button class="btn btn-outline-info btn-sm" onclick="loadStudentDetails('{{ student.student_id }}')">
-                        🔍 View
-                    </button>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-<!-- Student Application Modal -->
-<div class="modal fade" id="studentModal" tabindex="-1" aria-labelledby="studentModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content bg-dark text-white">
-            <div class="modal-header">
-                <h5 class="modal-title">📄 Student Application</h5>
-                <a href="/sample_layout" class="btn btn-outline-light btn-sm ms-2">
-                    🖼️ Go to ID
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="mb-0">📋 Manage Student Applications</h1>
+            <div class="d-flex gap-2">
+                <button id="themeToggle" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-sun-fill"></i>
+                    <span class="visually-hidden">Toggle theme</span>
+                </button>
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-house-fill me-1"></i> Back to Dashboard
                 </a>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <!-- Profile, Barcode & Signature Section -->
-                <div class="row mb-3 text-center">
-                    <!-- Profile Picture -->
-                    <div class="col-md-4">
-                        <div class="card bg-secondary text-white mb-3">
-                            <div class="card-header">🖼️ Profile Picture</div>
-                            <img id="profilePicture" src="" class="card-img-top border img-fluid" style="max-height: 200px; object-fit: cover;" alt="Profile Picture">
-                            <div class="card-body">
-                                <button id="setProfile" class="btn btn-sm btn-outline-light">Set</button>
-                            </div>
+        </div>
+
+        <ul class="nav nav-tabs mb-4" id="mainTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="applications-tab" data-bs-toggle="tab" data-bs-target="#applications" type="button" role="tab" aria-controls="applications" aria-selected="true">
+                    <i class="bi bi-people-fill me-1"></i> Applications
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completed" type="button" role="tab" aria-controls="completed" aria-selected="false">
+                    <i class="bi bi-check-circle-fill me-1"></i> Completed
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="mainTabsContent">
+            <!-- Applications Tab -->
+            <div class="tab-pane fade show active fade-in" id="applications" role="tabpanel" aria-labelledby="applications-tab">
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3 mb-md-0">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" id="searchInput" class="form-control" placeholder="Search by ID, name or course...">
                         </div>
                     </div>
-
-                    <!-- Barcode -->
-                    <div class="col-md-4">
-                        <div class="card bg-secondary text-white mb-3">
-                            <div class="card-header">📌 Barcode</div>
-                            <img id="barcodeImage" src="" class="card-img-top border img-fluid" style="max-height: 200px; object-fit: contain;" alt="Barcode">
-                            <div class="card-body">
-                                <button id="setBarcode" class="btn btn-sm btn-outline-light">Set</button>
-                            </div>
+                    <div class="col-md-6 d-flex justify-content-md-end gap-2">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-funnel me-1"></i> Filter
+                                <span id="filterBadge" class="badge bg-primary d-none">0</span>
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="filterDropdown">
+                                <li class="px-3 py-2">
+                                    <h6 class="dropdown-header px-0">Filter by Status</h6>
+                                    <div class="form-check">
+                                        <input class="form-check-input status-filter" type="checkbox" value="pending" id="filterPending">
+                                        <label class="form-check-label" for="filterPending">Pending</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input status-filter" type="checkbox" value="processing" id="filterProcessing">
+                                        <label class="form-check-label" for="filterProcessing">Processing</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input status-filter" type="checkbox" value="done" id="filterDone">
+                                        <label class="form-check-label" for="filterDone">Done</label>
+                                    </div>
+                                    <div class="dropdown-divider"></div>
+                                    <button id="clearFilters" class="btn btn-sm btn-outline-secondary w-100">
+                                        <i class="bi bi-x me-1"></i> Clear Filters
+                                    </button>
+                                </li>
+                            </ul>
                         </div>
-                    </div>
-
-                    <!-- Signature -->
-                    <div class="col-md-4">
-                        <div class="card bg-secondary text-white mb-3">
-                            <div class="card-header">✍️ Signature</div>
-                            <img id="signatureImage" src="" class="card-img-top border img-fluid" style="max-height: 200px; object-fit: cover;" alt="Signature">
-                            <div class="card-body">
-                                <button id="setSignature" class="btn btn-sm btn-outline-light">Set</button>
-                            </div>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-sort-down me-1"></i> Sort
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="sortDropdown">
+                                <li><button class="dropdown-item sort-option" data-field="student_id">Student ID</button></li>
+                                <li><button class="dropdown-item sort-option" data-field="name">Name</button></li>
+                                <li><button class="dropdown-item sort-option" data-field="course">Course</button></li>
+                            </ul>
                         </div>
                     </div>
                 </div>
 
-                <!-- Student Details Table -->
-                <table class="table table-bordered table-dark">
-                    <tbody>
-                        <tr>
-                            <th>📌 Student ID:</th>
-                            <td id="studentID"></td>
-                            <td>
-                                <button id="setStudentID" class="btn btn-sm btn-outline-light">Set</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>👤 Name:</th>
-                            <td id="studentName"></td>
-                            <td>
-                                <button id="setName" class="btn btn-sm btn-outline-light">Set</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>🎓 Course:</th>
-                            <td id="studentCourse"></td>
-                            <td>
-                                <button id="setCourse" class="btn btn-sm btn-outline-light">Set</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>📞 Contact:</th>
-                            <td id="studentContact"></td>
-                            <td>
-                                <button id="setContact" class="btn btn-sm btn-outline-light">Set</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>👨‍👩‍👦 Guardian Name:</th>
-                            <td id="studentGuardian"></td>
-                            <td>
-                                <button id="setGuardian" class="btn btn-sm btn-outline-light">Set</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>🏠 Address:</th>
-                            <td id="studentAddress"></td>
-                            <td>
-                                <button id="setAddress" class="btn btn-sm btn-outline-light">Set</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>📌 Status:</th>
-                            <td>
-                                <select id="statusDropdown" class="form-select bg-secondary text-white">
-                                    <option value="pending">Pending</option>
-                                    <option value="processing">Processing</option>
-                                    <option value="done">Done</option>
-                                    <option value="receive">Received</option>
-                                </select>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="card mb-4">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th class="cursor-pointer" data-sort="student_id">
+                                            Student ID <span class="sort-indicator" data-field="student_id"></span>
+                                        </th>
+                                        <th class="cursor-pointer" data-sort="name">
+                                            Name <span class="sort-indicator" data-field="name"></span>
+                                        </th>
+                                        <th class="cursor-pointer" data-sort="course">
+                                            Course <span class="sort-indicator" data-field="course"></span>
+                                        </th>
+                                        <th>Status</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="applicationsTable">
+                                    {% for student in applications %}
+                                    {% if student.application_status != 'receive' %}
+                                    <tr>
+                                        <td class="fw-medium">{{ student.student_id }}</td>
+                                        <td>{{ student.name }}</td>
+                                        <td>{{ student.course }}</td>
+                                        <td>
+                                            <span class="status-badge 
+                                            {% if student.application_status == 'pending' %}status-pending
+                                            {% elif student.application_status == 'processing' %}status-processing
+                                            {% elif student.application_status == 'done' %}status-done
+                                            {% endif %}">
+                                            {% if student.application_status == 'pending' %}
+                                                <i class="bi bi-clock"></i> Pending
+                                            {% elif student.application_status == 'processing' %}
+                                                <i class="bi bi-arrow-repeat"></i> Processing
+                                            {% elif student.application_status == 'done' %}
+                                                <i class="bi bi-check-lg"></i> Done
+                                            {% endif %}
+                                            </span>
+                                        </td>
+                                        <td class="text-end">
+                                            <button class="btn btn-outline-secondary btn-sm view-student" onclick="loadStudentDetails('{{ student.student_id }}')">
+                                                <i class="bi bi-eye me-1"></i> View
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
 
-                <!-- Save Changes Button -->
-                <div class="text-end">
-                    <button id="saveStatusBtn" class="btn btn-primary">💾 Save Changes</button>
+                <!-- Pagination -->
+                <nav aria-label="Applications pagination">
+                    <ul class="pagination justify-content-center" id="pagination">
+                        <!-- Pagination will be populated here -->
+                    </ul>
+                </nav>
+            </div>
+            
+            <!-- Completed Tab -->
+            <div class="tab-pane fade fade-in" id="completed" role="tabpanel" aria-labelledby="completed-tab">
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3 mb-md-0">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" id="searchCompletedInput" class="form-control" placeholder="Search completed applications...">
+                        </div>
+                    </div>
+                    <div class="col-md-6 d-flex justify-content-md-end">
+                        <a href="{{ url_for('student_id_history') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-clock-history me-1"></i> View Full History
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Student ID</th>
+                                        <th>Name</th>
+                                        <th>Course</th>
+                                        <th>Received Date</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="completedTable">
+                                    {% for student in applications %}
+                                    {% if student.application_status == 'receive' %}
+                                    <tr>
+                                        <td class="fw-medium">{{ student.student_id }}</td>
+                                        <td>{{ student.name }}</td>
+                                        <td>{{ student.course }}</td>
+                                        <td>{{ student.received_date|default('Recently', true) }}</td>
+                                        <td class="text-end">
+                                            <button class="btn btn-outline-secondary btn-sm view-student" onclick="loadStudentDetails('{{ student.student_id }}')">
+                                                <i class="bi bi-eye me-1"></i> View
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <!-- Student Details Modal -->
+        <div class="modal fade" id="studentModal" tabindex="-1" aria-labelledby="studentModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="studentModalLabel">📄 Student Application</h5>
+                        <div class="ms-auto me-2">
+                            <a href="{{ url_for('sample_layout') }}" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-grid-3x3-gap me-1"></i> Go to ID
+                            </a>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <ul class="nav nav-tabs mb-4" id="studentTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab" aria-controls="details" aria-selected="true">
+                                    Student Details
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="media-tab" data-bs-toggle="tab" data-bs-target="#media" type="button" role="tab" aria-controls="media" aria-selected="false">
+                                    Media & Documents
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content" id="studentTabsContent">
+                            <!-- Details Tab -->
+                            <div class="tab-pane fade show active" id="details" role="tabpanel" aria-labelledby="details-tab">
+                                <div class="row">
+                                    <div class="col-md-6 mb-4">
+                                        <div class="card mb-4">
+                                            <div class="card-header">
+                                                <h6 class="card-title mb-0">Personal Information</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <span class="fw-bold">📌 Student ID:</span>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <span id="studentID"></span>
+                                                        <button class="btn btn-sm btn-outline-secondary set-local-storage" data-key="studentID" 
+                                                onclick="localStorage.setItem('studentNumber', document.getElementById('studentID').textContent); showToast('Item Saved', 'studentNumber has been saved to local storage.');">Set</button>
+                                                    </div>
+                                                </div>
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <span class="fw-bold">👤 Name:</span>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <span id="studentName"></span>
+                                                        <button class="btn btn-sm btn-outline-secondary set-local-storage" data-key="studentName">Set</button>
+                                                    </div>
+                                                </div>
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span class="fw-bold">🎓 Course:</span>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <span id="studentCourse"></span>
+                                                        <button class="btn btn-sm btn-outline-secondary set-local-storage" data-key="studentCourse">Set</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h6 class="card-title mb-0">Contact Information</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <span class="fw-bold">📞 Contact:</span>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <span id="studentContact"></span>
+                                                        <button class="btn btn-sm btn-outline-secondary set-local-storage" data-key="contact">Set</button>
+                                                    </div>
+                                                </div>
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <span class="fw-bold">👨‍👩‍👦 Guardian:</span>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <span id="studentGuardian"></span>
+                                                        <button class="btn btn-sm btn-outline-secondary set-local-storage" data-key="guardian">Set</button>
+                                                    </div>
+                                                </div>
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span class="fw-bold">🏠 Address:</span>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <span id="studentAddress" class="text-truncate" style="max-width: 200px;"></span>
+                                                        <button class="btn btn-sm btn-outline-secondary set-local-storage" data-key="address">Set</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-4">
+                                        <div class="card mb-4">
+                                            <div class="card-header">
+                                                <h6 class="card-title mb-0">Application Status</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="mb-3">
+                                                    <label for="statusSelect" class="form-label">Current Status</label>
+                                                    <select class="form-select" id="statusSelect">
+                                                        <option value="pending">
+                                                            <i class="bi bi-clock"></i> Pending
+                                                        </option>
+                                                        <option value="processing">
+                                                            <i class="bi bi-arrow-repeat"></i> Processing
+                                                        </option>
+                                                        <option value="done">
+                                                            <i class="bi bi-check-lg"></i> Done
+                                                        </option>
+                                                        <option value="receive">
+                                                            <i class="bi bi-emoji-smile"></i> Received
+                                                        </option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="mt-4">
+                                                    <label class="form-label text-muted small">Application Timeline</label>
+                                                    <div class="timeline" id="applicationTimeline">
+                                                        <!-- Timeline will be populated here -->
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <button id="saveStatusBtn" class="btn btn-primary w-100">
+                                                    <i class="bi bi-save me-1"></i> Save Changes
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Media Tab -->
+                            <div class="tab-pane fade" id="media" role="tabpanel" aria-labelledby="media-tab">
+                                <div class="row">
+                                    <!-- Profile Picture -->
+                                    <div class="col-md-4 mb-4">
+                                        <div class="card h-100">
+                                            <div class="card-header">
+                                                <h6 class="card-title mb-0">
+                                                    <i class="bi bi-person-fill me-1"></i> Profile Picture
+                                                </h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="img-container mb-3">
+                                                    <img id="profilePicture" src="/static/default_profile.png" alt="Profile Picture">
+                                                </div>
+                                                <button class="btn btn-outline-secondary btn-sm w-100 set-local-storage" data-key="profilePicture">Set</button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Barcode -->
+                                    <div class="col-md-4 mb-4">
+                                        <div class="card h-100">
+                                            <div class="card-header">
+                                                <h6 class="card-title mb-0">
+                                                    <i class="bi bi-upc-scan me-1"></i> Barcode
+                                                </h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="img-container mb-3">
+                                                    <img id="barcodeImage" src="/static/default_barcode.jpg" class="img-contain" alt="Barcode">
+                                                </div>
+                                                <button class="btn btn-outline-secondary btn-sm w-100 set-local-storage" data-key="barcodeImage">Set</button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Signature -->
+                                    <div class="col-md-4 mb-4">
+                                        <div class="card h-100">
+                                            <div class="card-header">
+                                                <h6 class="card-title mb-0">
+                                                    <i class="bi bi-pen-fill me-1"></i> Signature
+                                                </h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="img-container mb-3">
+                                                    <img id="signatureImage" src="/static/default_signature.png" alt="Signature">
+                                                </div>
+                                                <button class="btn btn-outline-secondary btn-sm w-100 set-local-storage" data-key="signatureImage">Set</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Container -->
+        <div class="toast-container"></div>
     </div>
-</div>
 
-<script>
-    function loadStudentDetails(studentId) {
-        fetch(`/get_student/${studentId}`)
-        .then(response => response.json())
-        .then(student => {
-            // Set profile picture
-            document.getElementById("profilePicture").src = student.profile_picture 
-                ? `/static/uploads/${student.profile_picture}` 
-                : "/static/default_profile.png";
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        // Global variables
+        let applications = [];
+        let filteredApplications = [];
+        let selectedStudent = null;
+        let currentPage = 1;
+        let itemsPerPage = 10;
+        let sortField = "student_id";
+        let sortDirection = "asc";
+        let statusFilter = [];
+        let searchQuery = "";
 
-            // Set signature
-            document.getElementById("signatureImage").src = student.signature 
-                ? `/static/uploads/${student.signature}` 
-                : "/static/default_signature.png";
+        // DOM Elements
+        const applicationsTable = document.getElementById('applicationsTable');
+        const completedTable = document.getElementById('completedTable');
+        const pagination = document.getElementById('pagination');
+        const searchInput = document.getElementById('searchInput');
+        const searchCompletedInput = document.getElementById('searchCompletedInput');
+        const clearFiltersBtn = document.getElementById('clearFilters');
+        const statusFilterCheckboxes = document.querySelectorAll('.status-filter');
+        const sortOptions = document.querySelectorAll('.sort-option');
+        const sortableHeaders = document.querySelectorAll('th[data-sort]');
+        const themeToggleBtn = document.getElementById('themeToggle');
+        const saveStatusBtn = document.getElementById('saveStatusBtn');
+        const statusSelect = document.getElementById('statusSelect');
+        const setLocalStorageBtns = document.querySelectorAll('.set-local-storage');
+        const filterBadge = document.getElementById('filterBadge');
+        
+        // Initialize Bootstrap components
+        const studentModal = new bootstrap.Modal(document.getElementById('studentModal'));
+        const mainTabs = document.getElementById('mainTabs');
+        const applicationTab = document.getElementById('applications-tab');
 
-            // Set barcode
-            document.getElementById("barcodeImage").src = student.barcode;
+        // Helper functions
+        function getStatusBadge(status) {
+            let badgeClass = '';
+            let icon = '';
+            let text = '';
 
-            // Set other details
-            document.getElementById("studentID").textContent = student.student_id;
-            document.getElementById("studentName").textContent = student.name;
-            document.getElementById("studentCourse").textContent = student.course;
-            document.getElementById("studentContact").textContent = student.contact;
-            document.getElementById("studentGuardian").textContent = student.guardian_name;
-            document.getElementById("studentAddress").textContent = student.address;
-            document.getElementById("statusDropdown").value = student.application_status;
+            switch(status) {
+                case 'pending':
+                    badgeClass = 'status-pending';
+                    icon = '<i class="bi bi-clock"></i>';
+                    text = 'Pending';
+                    break;
+                case 'processing':
+                    badgeClass = 'status-processing';
+                    icon = '<i class="bi bi-arrow-repeat"></i>';
+                    text = 'Processing';
+                    break;
+                case 'done':
+                    badgeClass = 'status-done';
+                    icon = '<i class="bi bi-check-lg"></i>';
+                    text = 'Done';
+                    break;
+                case 'receive':
+                    badgeClass = 'status-receive';
+                    icon = '<i class="bi bi-emoji-smile"></i>';
+                    text = 'Received';
+                    break;
+                default:
+                    badgeClass = '';
+                    icon = '';
+                    text = status;
+            }
 
-            // Show modal
-            let studentModal = new bootstrap.Modal(document.getElementById("studentModal"));
-            studentModal.show();
-        })
-        .catch(error => console.error("Error fetching student details:", error));
-    }
+            return `<span class="status-badge ${badgeClass}">${icon} ${text}</span>`;
+        }
 
-    // Save status changes
-    document.getElementById("saveStatusBtn").addEventListener("click", function () {
-        let studentId = document.getElementById("studentID").textContent;
-        let newStatus = document.getElementById("statusDropdown").value;
+        function showToast(title, message, type = 'success') {
+            const toastContainer = document.querySelector('.toast-container');
+            const toastId = 'toast-' + Date.now();
+            const bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
+            
+            const toastHTML = `
+                <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-header ${bgClass} text-white">
+                        <strong class="me-auto">${title}</strong>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                </div>
+            `;
+            
+            toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, { autohide: true, delay: 3000 });
+            toast.show();
+            
+            // Remove toast from DOM after it's hidden
+            toastElement.addEventListener('hidden.bs.toast', function () {
+                toastElement.remove();
+            });
+        }
 
-        fetch(`/update_application_status/${studentId}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status: newStatus }),
-        })
-        .then(response => response.json())
-        .then(() => {
-            alert("✅ Status Updated!");
-            location.reload();
-        })
-        .catch(error => console.error("Error:", error));
-    });
+        function updateStats() {
+            // Fetch stats from the server or calculate from applications array
+            fetch('/get_all_students')
+                .then(response => response.json())
+                .then(data => {
+                    applications = data;
+                    filteredApplications = applications.filter(app => app.application_status !== 'receive');
+                    
+                    // Apply initial filtering and sorting
+                    filterAndSortApplications();
+                })
+                .catch(error => {
+                    console.error('Error fetching students:', error);
+                    showToast('Error', 'Failed to load student data', 'error');
+                });
+        }
 
-    // Set profile picture
-    document.getElementById("setProfile").addEventListener("click", function () {
-        const profilePicture = document.getElementById("profilePicture").src;
-        localStorage.setItem("profilePicture", profilePicture);
-        alert("Profile picture set!");
-    });
+        function filterAndSortApplications() {
+            let result = filteredApplications;
+            
+            // Apply search filter
+            if (searchQuery) {
+                result = result.filter(student => 
+                    student.student_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    (student.name && student.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                    (student.course && student.course.toLowerCase().includes(searchQuery.toLowerCase()))
+                );
+            }
+            
+            // Apply status filter
+            if (statusFilter.length > 0) {
+                result = result.filter(student => statusFilter.includes(student.application_status));
+            }
+            
+            // Apply sorting
+            result.sort((a, b) => {
+                // Handle null values
+                const aValue = a[sortField] || '';
+                const bValue = b[sortField] || '';
+                
+                if (sortDirection === "asc") {
+                    return aValue > bValue ? 1 : -1;
+                } else {
+                    return aValue < bValue ? 1 : -1;
+                }
+            });
+            
+            filteredApplications = result;
+            renderPagination();
+        }
 
-    // Set barcode
-    document.getElementById("setBarcode").addEventListener("click", function () {
-        const barcodeImage = document.getElementById("barcodeImage").src;
-        localStorage.setItem("barcodeImage", barcodeImage);
-        alert("Barcode set!");
-    });
+        function renderPagination() {
+            const totalPages = Math.ceil(filteredApplications.length / itemsPerPage);
+            
+            pagination.innerHTML = '';
+            
+            if (totalPages <= 1) {
+                return;
+            }
+            
+            // Previous button
+            const prevLi = document.createElement('li');
+            prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+            prevLi.innerHTML = `
+                <button class="page-link" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </button>
+            `;
+            pagination.appendChild(prevLi);
+            
+            // Page numbers
+            for (let i = 1; i <= totalPages; i++) {
+                const pageLi = document.createElement('li');
+                pageLi.className = `page-item ${currentPage === i ? 'active' : ''}`;
+                pageLi.innerHTML = `<button class="page-link">${i}</button>`;
+                pagination.appendChild(pageLi);
+            }
+            
+            // Next button
+            const nextLi = document.createElement('li');
+            nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+            nextLi.innerHTML = `
+                <button class="page-link" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </button>
+            `;
+            pagination.appendChild(nextLi);
+            
+            // Add event listeners to pagination buttons
+            document.querySelectorAll('.page-link').forEach((button, index) => {
+                button.addEventListener('click', function() {
+                    if (index === 0) {
+                        // Previous button
+                        if (currentPage > 1) {
+                            currentPage--;
+                        }
+                    } else if (index === totalPages + 1) {
+                        // Next button
+                        if (currentPage < totalPages) {
+                            currentPage++;
+                        }
+                    } else {
+                        // Page number
+                        currentPage = index;
+                    }
+                });
+            });
+        }
 
-    // Set signature
-    document.getElementById("setSignature").addEventListener("click", function () {
-        const signatureImage = document.getElementById("signatureImage").src;
-        localStorage.setItem("signatureImage", signatureImage);
-        alert("Signature set!");
-    });
+        function loadStudentDetails(studentId) {
+            // Fetch student details from the server
+            fetch(`/get_student/${studentId}`)
+                .then(response => response.json())
+                .then(student => {
+                    selectedStudent = student;
+                    
+                    // Set student details in modal
+                    document.getElementById('studentID').textContent = student.student_id;
+                    document.getElementById('studentName').textContent = student.name || 'Not specified';
+                    document.getElementById('studentCourse').textContent = student.course || 'Not specified';
+                    document.getElementById('studentContact').textContent = student.contact || 'Not specified';
+                    document.getElementById('studentGuardian').textContent = student.guardian_name || 'Not specified';
+                    document.getElementById('studentAddress').textContent = student.address || 'Not specified';
+                    
+                    // Set status dropdown
+                    statusSelect.value = student.application_status;
+                    
+                    // Set images
+                    document.getElementById('profilePicture').src = student.profile_picture 
+                        ? `/static/uploads/${student.profile_picture}` 
+                        : "/static/default_profile.png";
+                    
+                    document.getElementById('signatureImage').src = student.signature 
+                        ? `/static/uploads/${student.signature}` 
+                        : "/static/default_signature.png";
+                    
+                    document.getElementById('barcodeImage').src = student.barcode || "/static/default_barcode.jpg";
+                    
+                    // Render timeline
+                    renderTimeline(student.application_status);
+                    
+                    // Show modal
+                    studentModal.show();
+                })
+                .catch(error => {
+                    console.error('Error fetching student details:', error);
+                    showToast('Error', 'Failed to load student details', 'error');
+                });
+        }
 
-    // Set Student ID
-        document.getElementById("setStudentID").addEventListener("click", function () {
-            const studentID = document.getElementById("studentID").textContent;
-            localStorage.setItem("studentID", studentID);
-            alert("Student ID set!");
+        function renderTimeline(status) {
+            const timeline = document.getElementById('applicationTimeline');
+            timeline.innerHTML = '';
+            
+            // Submitted
+            const submittedItem = document.createElement('div');
+            submittedItem.className = 'timeline-item';
+            submittedItem.innerHTML = `
+                <div class="timeline-marker timeline-marker-pending">
+                    <i class="bi bi-clock"></i>
+                </div>
+                <div>
+                    <p class="fw-medium mb-0">Application Submitted</p>
+                    <p class="small text-muted">Student submitted application</p>
+                </div>
+            `;
+            timeline.appendChild(submittedItem);
+            
+            // Processing
+            if (status === 'processing' || status === 'done' || status === 'receive') {
+                const processingItem = document.createElement('div');
+                processingItem.className = 'timeline-item';
+                processingItem.innerHTML = `
+                    <div class="timeline-marker timeline-marker-processing">
+                        <i class="bi bi-arrow-repeat"></i>
+                    </div>
+                    <div>
+                        <p class="fw-medium mb-0">Processing Started</p>
+                        <p class="small text-muted">Status updated to processing</p>
+                    </div>
+                `;
+                timeline.appendChild(processingItem);
+            }
+            
+            // Done
+            if (status === 'done' || status === 'receive') {
+                const doneItem = document.createElement('div');
+                doneItem.className = 'timeline-item';
+                doneItem.innerHTML = `
+                    <div class="timeline-marker timeline-marker-done">
+                        <i class="bi bi-check-lg"></i>
+                    </div>
+                    <div>
+                        <p class="fw-medium mb-0">Processing Completed</p>
+                        <p class="small text-muted">ID card is ready for pickup</p>
+                    </div>
+                `;
+                timeline.appendChild(doneItem);
+            }
+            
+            // Received
+            if (status === 'receive') {
+                const receivedItem = document.createElement('div');
+                receivedItem.className = 'timeline-item';
+                receivedItem.innerHTML = `
+                    <div class="timeline-marker timeline-marker-receive">
+                        <i class="bi bi-emoji-smile"></i>
+                    </div>
+                    <div>
+                        <p class="fw-medium mb-0">ID Card Received</p>
+                        <p class="small text-muted">Student has received their ID card</p>
+                    </div>
+                `;
+                timeline.appendChild(receivedItem);
+            }
+        }
+
+        function saveStatusChanges() {
+            const newStatus = statusSelect.value;
+            const oldStatus = selectedStudent.application_status;
+            
+            // Send status update to server
+            fetch(`/update_application_status/${selectedStudent.student_id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ status: newStatus }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update local data
+                    applications = applications.map(student => 
+                        student.student_id === selectedStudent.student_id 
+                            ? {...student, application_status: newStatus} 
+                            : student
+                    );
+                    
+                    // If status changed to or from 'receive', update filtered applications
+                    if (newStatus === 'receive' || oldStatus === 'receive') {
+                        filteredApplications = applications.filter(app => app.application_status !== 'receive');
+                    }
+                    
+                    // Show success toast
+                    showToast('Status Updated', `${selectedStudent.name}'s application status has been updated to ${newStatus}.`);
+                    
+                    // Close modal
+                    studentModal.hide();
+                    
+                    // Update UI
+                    updateStats();
+                    
+                    // If status changed to 'receive', refresh the page to update both tabs
+                    if (newStatus === 'receive') {
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
+                    }
+                } else {
+                    showToast('Error', data.error || 'Failed to update status', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating status:', error);
+                showToast('Error', 'Failed to update status', 'error');
+            });
+        }
+
+        function setToLocalStorage(key, value) {
+            localStorage.setItem(key, value);
+            showToast('Item Saved', `${key} has been saved to local storage.`);
+        }
+
+        function clearFilters() {
+            searchQuery = '';
+            statusFilter = [];
+            currentPage = 1;
+            
+            // Reset UI
+            searchInput.value = '';
+            statusFilterCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            // Update filter badge
+            updateFilterBadge();
+            
+            // Re-filter applications
+            filterAndSortApplications();
+        }
+
+        function updateFilterBadge() {
+            if (statusFilter.length > 0) {
+                filterBadge.textContent = statusFilter.length;
+                filterBadge.classList.remove('d-none');
+            } else {
+                filterBadge.classList.add('d-none');
+            }
+        }
+
+        function updateSortIndicators() {
+            document.querySelectorAll('.sort-indicator').forEach(indicator => {
+                const field = indicator.getAttribute('data-field');
+                if (field === sortField) {
+                    indicator.textContent = sortDirection === 'asc' ? ' ↑' : ' ↓';
+                } else {
+                    indicator.textContent = '';
+                }
+            });
+        }
+
+        function searchCompletedApplications(query) {
+            const rows = completedTable.querySelectorAll('tr');
+            
+            rows.forEach(row => {
+                const studentId = row.cells[0]?.textContent || '';
+                const name = row.cells[1]?.textContent || '';
+                const course = row.cells[2]?.textContent || '';
+                
+                const matches = 
+                    studentId.toLowerCase().includes(query.toLowerCase()) ||
+                    name.toLowerCase().includes(query.toLowerCase()) ||
+                    course.toLowerCase().includes(query.toLowerCase());
+                
+                row.style.display = matches ? '' : 'none';
+            });
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize UI
+            updateStats();
+            updateSortIndicators();
+            
+            // Theme toggle
+            themeToggleBtn.addEventListener('click', function() {
+                document.body.classList.toggle('dark-mode');
+                const isDarkMode = document.body.classList.contains('dark-mode');
+                themeToggleBtn.innerHTML = isDarkMode ? 
+                    '<i class="bi bi-moon-fill"></i>' : 
+                    '<i class="bi bi-sun-fill"></i>';
+            });
+            
+            // Search input
+            searchInput.addEventListener('input', function() {
+                searchQuery = this.value;
+                currentPage = 1;
+                filterAndSortApplications();
+            });
+            
+            // Search completed input
+            searchCompletedInput.addEventListener('input', function() {
+                searchCompletedApplications(this.value);
+            });
+            
+            // Status filter checkboxes
+            statusFilterCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const status = this.value;
+                    
+                    if (this.checked) {
+                        statusFilter.push(status);
+                    } else {
+                        statusFilter = statusFilter.filter(s => s !== status);
+                    }
+                    
+                    updateFilterBadge();
+                    currentPage = 1;
+                    filterAndSortApplications();
+                });
+            });
+            
+            // Clear filters button
+            clearFiltersBtn.addEventListener('click', clearFilters);
+            
+            // Sort options
+            sortOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    const field = this.getAttribute('data-field');
+                    
+                    if (sortField === field) {
+                        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        sortField = field;
+                        sortDirection = 'asc';
+                    }
+                    
+                    updateSortIndicators();
+                    filterAndSortApplications();
+                });
+            });
+            
+            // Sortable table headers
+            sortableHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const field = this.getAttribute('data-sort');
+                    
+                    if (sortField === field) {
+                        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        sortField = field;
+                        sortDirection = 'asc';
+                    }
+                    
+                    updateSortIndicators();
+                    filterAndSortApplications();
+                });
+            });
+            
+            // Save status button
+            saveStatusBtn.addEventListener('click', saveStatusChanges);
+            
+            // Set local storage buttons
+            setLocalStorageBtns.forEach(button => {
+                button.addEventListener('click', function() {
+                    const key = this.getAttribute('data-key');
+                    let value;
+                    
+                    switch(key) {
+                        case 'studentID':
+                            value = document.getElementById('studentID').textContent;
+                            break;
+                        case 'studentName':
+                            value = document.getElementById('studentName').textContent;
+                            break;
+                        case 'studentCourse':
+                            value = document.getElementById('studentCourse').textContent;
+                            break;
+                        case 'contact':
+                            value = document.getElementById('studentContact').textContent;
+                            break;
+                        case 'guardian':
+                            value = document.getElementById('studentGuardian').textContent;
+                            break;
+                        case 'address':
+                            value = document.getElementById('studentAddress').textContent;
+                            break;
+                        case 'profilePicture':
+                            value = document.getElementById('profilePicture').src;
+                            break;
+                        case 'barcodeImage':
+                            value = document.getElementById('barcodeImage').src;
+                            break;
+                        case 'signatureImage':
+                            value = document.getElementById('signatureImage').src;
+                            break;
+                    }
+                    
+                    setToLocalStorage(key, value);
+                });
+            });
         });
 
-        // Set Name
-        document.getElementById("setName").addEventListener("click", function () {
-            const name = document.getElementById("studentName").textContent;
-            localStorage.setItem("studentName", name);
-            alert("Name set!");
-        });
-
-        // Set Course
-        document.getElementById("setCourse").addEventListener("click", function () {
-            const course = document.getElementById("studentCourse").textContent;
-            localStorage.setItem("studentCourse", course);
-            alert("Course set!");
-        });
-
-    // Set contact number
-    document.getElementById("setContact").addEventListener("click", function () {
-        const contact = document.getElementById("studentContact").textContent;
-        localStorage.setItem("contact", contact);
-        alert("Contact number set!");
-    });
-
-    // Set guardian name
-    document.getElementById("setGuardian").addEventListener("click", function () {
-        const guardian = document.getElementById("studentGuardian").textContent;
-        localStorage.setItem("guardian", guardian);
-        alert("Guardian name set!");
-    });
-
-    // Set address
-    document.getElementById("setAddress").addEventListener("click", function () {
-        const address = document.getElementById("studentAddress").textContent;
-        localStorage.setItem("address", address);
-        alert("Address set!");
-    });
-</script>
-
+        // Make loadStudentDetails available globally
+        window.loadStudentDetails = loadStudentDetails;
+    </script>
+    
+    <style>
+        /* Status badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .status-pending {
+            background-color: rgba(255, 193, 7, 0.2);
+            color: #856404;
+        }
+        
+        .status-processing {
+            background-color: rgba(13, 202, 240, 0.2);
+            color: #055160;
+        }
+        
+        .status-done {
+            background-color: rgba(25, 135, 84, 0.2);
+            color: #0f5132;
+        }
+        
+        .status-receive {
+            background-color: rgba(13, 110, 253, 0.2);
+            color: #084298;
+        }
+        
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0.5rem;
+            width: 2px;
+            background-color: #dee2e6;
+        }
+        
+        .timeline-item {
+            position: relative;
+            padding-bottom: 1.5rem;
+        }
+        
+        .timeline-marker {
+            position: absolute;
+            left: -2rem;
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.75rem;
+        }
+        
+        .timeline-marker-pending {
+            background-color: #ffc107;
+        }
+        
+        .timeline-marker-processing {
+            background-color: #0dcaf0;
+        }
+        
+        .timeline-marker-done {
+            background-color: #198754;
+        }
+        
+        .timeline-marker-receive {
+            background-color: #0d6efd;
+        }
+        
+        /* Image containers */
+        .img-container {
+            width: 100%;
+            height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+        }
+        
+        .img-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+        }
+        
+        .img-contain {
+            object-fit: contain !important;
+        }
+        
+        /* Cursor pointer */
+        .cursor-pointer {
+            cursor: pointer;
+        }
+        
+        /* Fade in animation */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* Dark mode */
+        body.dark-mode {
+            background-color: #212529;
+            color: #f8f9fa;
+        }
+        
+        body.dark-mode .card {
+            background-color: #343a40;
+            border-color: #495057;
+        }
+        
+        body.dark-mode .card-header {
+            background-color: #343a40;
+            border-color: #495057;
+        }
+        
+        body.dark-mode .table {
+            color: #f8f9fa;
+        }
+        
+        body.dark-mode .table-hover tbody tr:hover {
+            background-color: rgba(255, 255, 255, 0.075);
+        }
+        
+        body.dark-mode .modal-content {
+            background-color: #343a40;
+            border-color: #495057;
+        }
+        
+        body.dark-mode .form-control,
+        body.dark-mode .form-select {
+            background-color: #495057;
+            border-color: #6c757d;
+            color: #f8f9fa;
+        }
+        
+        body.dark-mode .nav-tabs .nav-link.active {
+            background-color: #343a40;
+            color: #f8f9fa;
+            border-color: #495057 #495057 #343a40;
+        }
+        
+        body.dark-mode .nav-tabs {
+            border-color: #495057;
+        }
+        
+        body.dark-mode .nav-tabs .nav-link:hover {
+            border-color: #495057 #495057 #343a40;
+        }
+        
+        body.dark-mode .dropdown-menu {
+            background-color: #343a40;
+            border-color: #495057;
+        }
+        
+        body.dark-mode .dropdown-item {
+            color: #f8f9fa;
+        }
+        
+        body.dark-mode .dropdown-item:hover {
+            background-color: #495057;
+        }
+        
+        body.dark-mode .dropdown-divider {
+            border-color: #495057;
+        }
+        
+        body.dark-mode .text-muted {
+            color: #adb5bd !important;
+        }
+    </style>
 {% endblock %}
+

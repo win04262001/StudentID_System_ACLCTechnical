@@ -2,185 +2,672 @@
 {% block title %}Student ID History{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2 class="text-white">📜 Student ID History</h2>
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <div>
+      <h2 class="fw-bold">
+          <i class="fas fa-history me-2 text-primary"></i> Student ID History
+          <span class="admin-badge">Admin View</span>
+      </h2>
+      <p class="text-muted">Track and manage student ID issuance history</p>
+  </div>
+  <div>
+      <div class="input-group">
+          <span class="input-group-text bg-primary text-white border-0">
+              <i class="fas fa-search"></i>
+          </span>
+          <input type="text" id="searchInput" class="form-control shadow-sm" placeholder="Search by Student ID or Name...">
+      </div>
+  </div>
+</div>
 
-    <!-- Search Bar -->
-    <input type="text" id="searchInput" class="form-control mb-3 bg-dark text-white" placeholder="🔍 Search by Student ID or Name...">
-
-    <!-- Student History Table -->
-    <table class="table table-dark table-hover">
-        <thead>
-            <tr>
-                <th>Student ID</th>
-                <th>Name</th>
-                <th>Received Date</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody id="studentHistoryTable">
-            {% for student in student_history %}
-            <tr>
-                <td>{{ student.student_id }}</td>
-                <td>{{ student.name }}</td>
-                <td>{{ student.received_date.strftime('%B %d, %Y') }}</td>
-                <td>
-                    <button class="btn btn-outline-info btn-sm" onclick="loadStudentHistory('{{ student.student_id }}')">
-                        🔍 View Details
-                    </button>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<!-- Student History Table -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body p-0">
+      <div class="table-responsive">
+          <table class="table table-hover modern-table mb-0">
+              <thead class="table-dark">
+                  <tr>
+                      <th class="ps-4">Student ID</th>
+                      <th>Name</th>
+                      <th>Received Date</th>
+                      <th class="text-end pe-4">Actions</th>
+                  </tr>
+              </thead>
+              <tbody id="studentHistoryTable">
+                  {% for student in student_history %}
+                  <tr class="fade-in">
+                      <td class="ps-4">{{ student.student_id }}</td>
+                      <td>{{ student.name }}</td>
+                      <td>{{ student.received_date.strftime('%B %d, %Y') }}</td>
+                      <td class="text-end pe-4">
+                          <button class="btn btn-primary btn-sm rounded-pill px-3" onclick="loadStudentHistory('{{ student.student_id }}')">
+                              <i class="fas fa-eye me-1"></i> View Details
+                          </button>
+                      </td>
+                  </tr>
+                  {% endfor %}
+                  {% if not student_history %}
+                  <tr>
+                      <td colspan="4" class="text-center py-5">
+                          <div class="empty-state">
+                              <i class="fas fa-history"></i>
+                              <h5>No ID History Found</h5>
+                              <p class="text-muted">No student ID records are available at this time.</p>
+                          </div>
+                      </td>
+                  </tr>
+                  {% endif %}
+              </tbody>
+          </table>
+      </div>
+  </div>
 </div>
 
 <!-- Student ID History Modal -->
 <div class="modal fade" id="studentHistoryModal" tabindex="-1" aria-labelledby="studentHistoryModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content bg-dark text-white">
-            <div class="modal-header">
-                <h5 class="modal-title">📄 Student ID Details</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <!-- Profile, Barcode & Download -->
-                <div class="row mb-3 text-center">
-                    <!-- Profile Picture -->
-                    <div class="col-md-4">
-                        <div class="card bg-secondary text-white mb-3">
-                            <div class="card-header">🖼️ Profile Picture</div>
-                            <img id="profilePicture" src="" class="card-img-top border img-fluid" style="max-height: 200px; object-fit: cover;" alt="Profile Picture">
-                            <div class="card-body">
-                                <a id="downloadProfile" href="#" download class="btn btn-sm btn-outline-light">⬇️ Download</a>
-                            </div>
-                        </div>
-                    </div>
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+          <div class="modal-header border-0 bg-primary text-white">
+              <h5 class="modal-title" id="studentHistoryModalLabel">
+                  <i class="fas fa-id-card me-2"></i> Student ID Details
+              </h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-4">
+              <!-- Profile, Barcode & Signature -->
+              <div class="row mb-4">
+                  <!-- Profile Picture -->
+                  <div class="col-md-4 mb-3 mb-md-0">
+                      <div class="card h-100 border-0 shadow-sm">
+                          <div class="card-header bg-transparent border-0 py-3">
+                              <h6 class="mb-0 fw-bold text-primary">
+                                  <i class="fas fa-user me-2"></i> Profile Picture
+                              </h6>
+                          </div>
+                          <div class="card-body text-center p-3">
+                              <div class="position-relative mb-3 mx-auto" style="width: 120px; height: 120px;">
+                                  <img id="profilePicture" src="/placeholder.svg" class="img-preview rounded-circle object-fit-cover w-100 h-100 border shadow-sm" alt="Profile Picture">
+                              </div>
+                              <a id="downloadProfile" href="#" download class="btn btn-sm btn-outline-primary rounded-pill mt-2">
+                                  <i class="fas fa-download me-1"></i> Download
+                              </a>
+                          </div>
+                      </div>
+                  </div>
 
-                    <!-- Barcode -->
-                    <div class="col-md-4">
-                        <div class="card bg-secondary text-white mb-3">
-                            <div class="card-header">📌 Barcode</div>
-                            <img id="barcodeImage" src="" class="card-img-top border img-fluid" style="max-height: 200px; object-fit: contain;" alt="Barcode">
-                            <div class="card-body">
-                                <a id="downloadBarcode" href="#" download class="btn btn-sm btn-outline-light">⬇️ Download</a>
-                            </div>
-                        </div>
-                    </div>
+                  <!-- Barcode -->
+                  <div class="col-md-4 mb-3 mb-md-0">
+                      <div class="card h-100 border-0 shadow-sm">
+                          <div class="card-header bg-transparent border-0 py-3">
+                              <h6 class="mb-0 fw-bold text-primary">
+                                  <i class="fas fa-barcode me-2"></i> Barcode
+                              </h6>
+                          </div>
+                          <div class="card-body text-center p-3">
+                              <div class="position-relative mb-3 mx-auto" style="height: 120px;">
+                                  <img id="barcodeImage" src="/placeholder.svg" class="img-preview img-fluid h-100 border rounded shadow-sm" style="object-fit: contain;" alt="Barcode">
+                              </div>
+                              <a id="downloadBarcode" href="#" download class="btn btn-sm btn-outline-primary rounded-pill mt-2">
+                                  <i class="fas fa-download me-1"></i> Download
+                              </a>
+                          </div>
+                      </div>
+                  </div>
 
-                    <!-- Signature -->
-                    <div class="col-md-4">
-                        <div class="card bg-secondary text-white mb-3">
-                            <div class="card-header">🖊️ Signature</div>
-                            <img id="signatureImage" src="" class="card-img-top border img-fluid" style="max-height: 200px; object-fit: cover;" alt="Signature">
-                            <div class="card-body">
-                                <a id="downloadSignature" href="#" download class="btn btn-sm btn-outline-light">⬇️ Download</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                  <!-- Signature -->
+                  <div class="col-md-4">
+                      <div class="card h-100 border-0 shadow-sm">
+                          <div class="card-header bg-transparent border-0 py-3">
+                              <h6 class="mb-0 fw-bold text-primary">
+                                  <i class="fas fa-signature me-2"></i> Signature
+                              </h6>
+                          </div>
+                          <div class="card-body text-center p-3">
+                              <div class="position-relative mb-3 mx-auto" style="height: 120px;">
+                                  <img id="signatureImage" src="/placeholder.svg" class="img-preview img-fluid h-100 border rounded shadow-sm" style="object-fit: contain;" alt="Signature">
+                              </div>
+                              <a id="downloadSignature" href="#" download class="btn btn-sm btn-outline-primary rounded-pill mt-2">
+                                  <i class="fas fa-download me-1"></i> Download
+                              </a>
+                          </div>
+                      </div>
+                  </div>
+              </div>
 
-                <!-- Student Details Table -->
-                <table class="table table-bordered table-dark">
-                    <tbody>
-                        <tr>
-                            <th>📌 Student ID:</th>
-                            <td id="studentID"></td>
-                        </tr>
-                        <tr>
-                            <th>👤 Name:</th>
-                            <td id="studentName"></td>
-                        </tr>
-                        <tr>
-                            <th>🎓 Course:</th>
-                            <td id="studentCourse"></td>
-                        </tr>
-                        <tr>
-                            <th>📞 Contact:</th>
-                            <td id="studentContact"></td>
-                        </tr>
-                        <tr>
-                            <th>👨‍👩‍👦 Guardian Name:</th>
-                            <td id="studentGuardian"></td>
-                        </tr>
-                        <tr>
-                            <th>🏠 Address:</th>
-                            <td id="studentAddress"></td>
-                        </tr>
-                        <tr>
-                            <th>📅 Received Date:</th>
-                            <td id="receivedDate"></td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <!-- Download as Image -->
-                <div class="text-end">
-                    <button id="downloadHistory" class="btn btn-primary">📥 Download as Image</button>
-                </div>
-            </div>
-        </div>
-    </div>
+              <!-- Student Details -->
+              <div class="card border-0 shadow-sm mb-4">
+                  <div class="card-header bg-transparent border-0 py-3">
+                      <h6 class="mb-0 fw-bold text-primary">
+                          <i class="fas fa-info-circle me-2"></i> Student Information
+                      </h6>
+                  </div>
+                  <div class="card-body p-0">
+                      <div class="table-responsive">
+                          <table class="table table-hover mb-0">
+                              <tbody>
+                                  <tr>
+                                      <th class="ps-4" style="width: 30%;">Student ID</th>
+                                      <td id="studentID" class="pe-4"></td>
+                                  </tr>
+                                  <tr>
+                                      <th class="ps-4">Name</th>
+                                      <td id="studentName" class="pe-4"></td>
+                                  </tr>
+                                  <tr>
+                                      <th class="ps-4">Course</th>
+                                      <td id="studentCourse" class="pe-4"></td>
+                                  </tr>
+                                  <tr>
+                                      <th class="ps-4">Contact</th>
+                                      <td id="studentContact" class="pe-4"></td>
+                                  </tr>
+                                  <tr>
+                                      <th class="ps-4">Guardian Name</th>
+                                      <td id="studentGuardian" class="pe-4"></td>
+                                  </tr>
+                                  <tr>
+                                      <th class="ps-4">Address</th>
+                                      <td id="studentAddress" class="pe-4"></td>
+                                  </tr>
+                                  <tr>
+                                      <th class="ps-4">Received Date</th>
+                                      <td id="receivedDate" class="pe-4"></td>
+                                  </tr>
+                              </tbody>
+                          </table>
+                      </div>
+                  </div>
+              </div>
+              
+              <!-- Status History -->
+              <div class="card border-0 shadow-sm mb-4">
+                  <div class="card-header bg-transparent border-0 py-3">
+                      <h6 class="mb-0 fw-bold text-primary">
+                          <i class="fas fa-clock-rotate-left me-2"></i> Status History
+                      </h6>
+                  </div>
+                  <div class="card-body p-0">
+                      <div class="table-responsive">
+                          <table class="table table-hover mb-0">
+                              <thead>
+                                  <tr>
+                                      <th class="ps-4">Status</th>
+                                      <th>Date</th>
+                                      <th class="pe-4">Updated By</th>
+                                  </tr>
+                              </thead>
+                              <tbody id="statusHistoryTable">
+                                  <!-- Status history will be populated here -->
+                              </tbody>
+                          </table>
+                      </div>
+                  </div>
+              </div>
+          </div>
+          <div class="modal-footer border-0">
+              <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+              <button id="downloadHistory" class="btn btn-primary rounded-pill px-4">
+                  <i class="fas fa-download me-2"></i> Download as Image
+              </button>
+          </div>
+      </div>
+  </div>
 </div>
 
-<!-- ✅ JavaScript for Fetch API & Modal -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
-    function loadStudentHistory(studentId) {
-        fetch(`/get_student_history/${studentId}`)
-        .then(response => response.json())
-        .then(student => {
-            document.getElementById("profilePicture").src = student.profile_picture ? `/static/uploads/${student.profile_picture}` : "/static/default_profile.png";
-            document.getElementById("signatureImage").src = student.signature ? `/static/uploads/${student.signature}` : "/static/default_signature.png";
-
-            // ✅ Load stored barcode image
-            if (student.barcode) {
-                document.getElementById("barcodeImage").src = `/static/barcodes/${student.barcode}`;
-                document.getElementById("downloadBarcode").href = `/static/barcodes/${student.barcode}`;
-                document.getElementById("downloadBarcode").download = student.barcode;
-            } else {
-                document.getElementById("barcodeImage").src = "/static/default_barcode.jpg";
-                document.getElementById("downloadBarcode").href = "#";
-            }
-
-            document.getElementById("downloadProfile").href = `/static/uploads/${student.profile_picture}`;
-            document.getElementById("downloadSignature").href = `/static/uploads/${student.signature}`;
-
-            document.getElementById("studentID").textContent = student.student_id;
-            document.getElementById("studentName").textContent = student.name;
-            document.getElementById("studentCourse").textContent = student.course;
-            document.getElementById("studentContact").textContent = student.contact;
-            document.getElementById("studentGuardian").textContent = student.guardian_name;
-            document.getElementById("studentAddress").textContent = student.address;
-            document.getElementById("receivedDate").textContent = student.received_date;
-
-            let studentHistoryModal = new bootstrap.Modal(document.getElementById("studentHistoryModal"));
-            studentHistoryModal.show();
-        })
-        .catch(error => console.error("Error fetching student history:", error));
-    }
-
-    // 📥 Download Modal Content as an Image (JPG/PNG)
-    document.getElementById("downloadHistory").addEventListener("click", function () {
-        let modalElement = document.querySelector("#studentHistoryModal .modal-content");
-        html2canvas(modalElement, { scale: 3, logging: true, useCORS: true }).then(canvas => {
-            let link = document.createElement("a");
-            link.href = canvas.toDataURL("image/png");
-            link.download = document.getElementById("studentName").textContent + "_ID_History.png";
-            link.click();
-        });
-    });
-
-    // 🔍 Search Functionality
-    document.getElementById("searchInput").addEventListener("keyup", function () {
-        let filter = this.value.toLowerCase();
-        let rows = document.querySelectorAll("#studentHistoryTable tr");
-        rows.forEach(row => {
-            let studentID = row.cells[0].textContent.toLowerCase();
-            let studentName = row.cells[1].textContent.toLowerCase();
-            row.style.display = (studentID.includes(filter) || studentName.includes(filter)) ? "" : "none";
-        });
-    });
+  document.addEventListener('DOMContentLoaded', function() {
+      // Create toast container
+      const toastContainer = document.createElement('div');
+      toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+      document.body.appendChild(toastContainer);
+      
+      // Function to load student history details
+      window.loadStudentHistory = function(studentId) {
+          fetch(`/get_student_history/${studentId}`)
+          .then(response => {
+              if (!response.ok) {
+                  throw new Error('Network response was not ok');
+              }
+              return response.json();
+          })
+          .then(student => {
+              // Set profile picture
+              const profilePicture = document.getElementById("profilePicture");
+              if (student.profile_picture) {
+                  profilePicture.src = `/static/uploads/${student.profile_picture}`;
+                  document.getElementById("downloadProfile").href = `/static/uploads/${student.profile_picture}`;
+                  document.getElementById("downloadProfile").download = student.profile_picture;
+              } else {
+                  profilePicture.src = "/static/default_profile.png";
+                  document.getElementById("downloadProfile").href = "/static/default_profile.png";
+                  document.getElementById("downloadProfile").download = "default_profile.png";
+              }
+              
+              // Set signature
+              const signatureImage = document.getElementById("signatureImage");
+              if (student.signature) {
+                  signatureImage.src = `/static/uploads/${student.signature}`;
+                  document.getElementById("downloadSignature").href = `/static/uploads/${student.signature}`;
+                  document.getElementById("downloadSignature").download = student.signature;
+              } else {
+                  signatureImage.src = "/static/default_signature.png";
+                  document.getElementById("downloadSignature").href = "/static/default_signature.png";
+                  document.getElementById("downloadSignature").download = "default_signature.png";
+              }
+              
+              // Set barcode
+              const barcodeImage = document.getElementById("barcodeImage");
+              if (student.barcode) {
+                  barcodeImage.src = `/static/barcodes/${student.barcode}`;
+                  document.getElementById("downloadBarcode").href = `/static/barcodes/${student.barcode}`;
+                  document.getElementById("downloadBarcode").download = student.barcode;
+              } else {
+                  barcodeImage.src = "/static/default_barcode.jpg";
+                  document.getElementById("downloadBarcode").href = "/static/default_barcode.jpg";
+                  document.getElementById("downloadBarcode").download = "default_barcode.jpg";
+              }
+              
+              // Set student details
+              document.getElementById("studentID").textContent = student.student_id || 'N/A';
+              document.getElementById("studentName").textContent = student.name || 'N/A';
+              document.getElementById("studentCourse").textContent = student.course || 'N/A';
+              document.getElementById("studentContact").textContent = student.contact || 'N/A';
+              document.getElementById("studentGuardian").textContent = student.guardian_name || 'N/A';
+              document.getElementById("studentAddress").textContent = student.address || 'N/A';
+              document.getElementById("receivedDate").textContent = formatDate(student.received_date) || 'N/A';
+              
+              // Populate status history table
+              populateStatusHistory(student.status_history || []);
+              
+              // Show the modal
+              const studentHistoryModal = new bootstrap.Modal(document.getElementById("studentHistoryModal"));
+              studentHistoryModal.show();
+              
+              // Show success toast
+              showToast('Student details loaded successfully', 'success');
+          })
+          .catch(error => {
+              console.error("Error fetching student history:", error);
+              showToast('Error loading student details. Please try again.', 'error');
+          });
+      };
+      
+      // Function to populate status history table
+      function populateStatusHistory(history) {
+          const statusHistoryTable = document.getElementById('statusHistoryTable');
+          statusHistoryTable.innerHTML = '';
+          
+          if (!history || history.length === 0) {
+              // If no history is available, create a default entry for "received" status
+              const receivedDate = document.getElementById("receivedDate").textContent;
+              statusHistoryTable.innerHTML = `
+                  <tr>
+                      <td class="ps-4"><span class="badge badge-receive"><i class="fas fa-smile"></i> Received</span></td>
+                      <td>${receivedDate}</td>
+                      <td class="pe-4">System</td>
+                  </tr>
+              `;
+              return;
+          }
+          
+          // Sort history by date (newest first)
+          history.sort((a, b) => new Date(b.date) - new Date(a.date));
+          
+          history.forEach(entry => {
+              const statusBadge = getStatusBadge(entry.status);
+              const row = document.createElement('tr');
+              row.innerHTML = `
+                  <td class="ps-4">${statusBadge}</td>
+                  <td>${formatDate(entry.date)}</td>
+                  <td class="pe-4">${entry.updated_by || 'System'}</td>
+              `;
+              statusHistoryTable.appendChild(row);
+          });
+      }
+      
+      // Function to get status badge HTML
+      function getStatusBadge(status) {
+          let badgeClass = '';
+          let icon = '';
+          let text = '';
+          
+          switch(status) {
+              case 'pending':
+                  badgeClass = 'badge-pending';
+                  icon = '<i class="fas fa-clock"></i>';
+                  text = 'Pending';
+                  break;
+              case 'processing':
+                  badgeClass = 'badge-processing';
+                  icon = '<i class="fas fa-cogs"></i>';
+                  text = 'Processing';
+                  break;
+              case 'done':
+                  badgeClass = 'badge-done';
+                  icon = '<i class="fas fa-check-circle"></i>';
+                  text = 'Done';
+                  break;
+              case 'receive':
+                  badgeClass = 'badge-receive';
+                  icon = '<i class="fas fa-smile"></i>';
+                  text = 'Received';
+                  break;
+              default:
+                  badgeClass = 'badge-secondary';
+                  icon = '<i class="fas fa-info-circle"></i>';
+                  text = status || 'Unknown';
+          }
+          
+          return `<span class="badge ${badgeClass}">${icon} ${text}</span>`;
+      }
+      
+      // Function to format date
+      function formatDate(dateString) {
+          if (!dateString) return 'N/A';
+          
+          const date = new Date(dateString);
+          if (isNaN(date.getTime())) {
+              // Try to parse MySQL datetime format
+              const parts = dateString.split(/[- :]/);
+              if (parts.length >= 3) {
+                  const newDate = new Date(parts[0], parts[1]-1, parts[2], 
+                                         parts[3] || 0, parts[4] || 0, parts[5] || 0);
+                  if (!isNaN(newDate.getTime())) {
+                      return newDate.toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                      });
+                  }
+              }
+              return dateString; // Return as is if parsing fails
+          }
+          
+          return date.toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+          });
+      }
+      
+      // Download Modal Content as an Image
+      document.getElementById("downloadHistory").addEventListener("click", function() {
+          const modalElement = document.querySelector("#studentHistoryModal .modal-content");
+          const studentName = document.getElementById("studentName").textContent;
+          const studentId = document.getElementById("studentID").textContent;
+          
+          // Add loading state to button
+          const originalButtonText = this.innerHTML;
+          this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Generating...';
+          this.disabled = true;
+          
+          html2canvas(modalElement, { 
+              scale: 2, 
+              logging: false, 
+              useCORS: true,
+              backgroundColor: document.body.classList.contains('dark-mode') ? '#1e1e1e' : '#ffffff'
+          }).then(canvas => {
+              // Create download link
+              const link = document.createElement("a");
+              link.href = canvas.toDataURL("image/png");
+              link.download = `${studentId}_${studentName.replace(/\s+/g, '_')}_ID_History.png`;
+              link.click();
+              
+              // Reset button state
+              this.innerHTML = originalButtonText;
+              this.disabled = false;
+              
+              // Show success toast
+              showToast('Image downloaded successfully', 'success');
+          }).catch(error => {
+              console.error("Error generating image:", error);
+              this.innerHTML = originalButtonText;
+              this.disabled = false;
+              showToast('Error generating image. Please try again.', 'error');
+          });
+      });
+      
+      // Search Functionality
+      document.getElementById("searchInput").addEventListener("keyup", function() {
+          const filter = this.value.toLowerCase();
+          const rows = document.querySelectorAll("#studentHistoryTable tr:not(.empty-row)");
+          let hasResults = false;
+          
+          rows.forEach(row => {
+              if (row.cells && row.cells.length > 0) {
+                  const studentID = row.cells[0].textContent.toLowerCase();
+                  const studentName = row.cells[1].textContent.toLowerCase();
+                  const isVisible = (studentID.includes(filter) || studentName.includes(filter));
+                  
+                  row.style.display = isVisible ? "" : "none";
+                  if (isVisible) hasResults = true;
+              }
+          });
+          
+          // Check if we need to show "no results" message
+          let emptyRow = document.querySelector(".empty-row");
+          if (!hasResults) {
+              if (!emptyRow) {
+                  const tbody = document.getElementById("studentHistoryTable");
+                  emptyRow = document.createElement("tr");
+                  emptyRow.className = "empty-row";
+                  emptyRow.innerHTML = `
+                      <td colspan="4" class="text-center py-5">
+                          <div class="empty-state">
+                              <i class="fas fa-search"></i>
+                              <h5>No Results Found</h5>
+                              <p class="text-muted">Try adjusting your search criteria</p>
+                          </div>
+                      </td>
+                  `;
+                  tbody.appendChild(emptyRow);
+              }
+              emptyRow.style.display = "";
+          } else if (emptyRow) {
+              emptyRow.style.display = "none";
+          }
+      });
+      
+      // Image preview hover effect
+      document.querySelectorAll('.img-preview').forEach(img => {
+          img.addEventListener('mouseover', function() {
+              this.style.transform = 'scale(1.05)';
+          });
+          
+          img.addEventListener('mouseout', function() {
+              this.style.transform = 'scale(1)';
+          });
+      });
+      
+      // Toast notification function
+      function showToast(message, type = 'info') {
+          // Set icon and background based on type
+          let icon, bgClass;
+          switch(type) {
+              case 'success':
+                  icon = 'fas fa-check-circle';
+                  bgClass = 'bg-success';
+                  break;
+              case 'error':
+                  icon = 'fas fa-exclamation-circle';
+                  bgClass = 'bg-danger';
+                  break;
+              case 'warning':
+                  icon = 'fas fa-exclamation-triangle';
+                  bgClass = 'bg-warning';
+                  break;
+              default:
+                  icon = 'fas fa-info-circle';
+                  bgClass = 'bg-primary';
+          }
+          
+          // Create toast element
+          const toastId = 'toast-' + Date.now();
+          const toastHtml = `
+              <div id="${toastId}" class="toast border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+                  <div class="toast-header ${bgClass} text-white">
+                      <i class="${icon} me-2"></i>
+                      <strong class="me-auto">Notification</strong>
+                      <small>Just now</small>
+                      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                  </div>
+                  <div class="toast-body">
+                      ${message}
+                  </div>
+              </div>
+          `;
+          
+          toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+          
+          // Initialize and show toast
+          const toastElement = document.getElementById(toastId);
+          const toast = new bootstrap.Toast(toastElement, {
+              autohide: true,
+              delay: 3000
+          });
+          
+          toast.show();
+          
+          // Remove toast after it's hidden
+          toastElement.addEventListener('hidden.bs.toast', function() {
+              toastElement.remove();
+          });
+      }
+  });
 </script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  /* Status Badges */
+  .badge {
+      padding: 0.5rem 0.75rem;
+      border-radius: 50rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+  }
+  
+  .badge-pending {
+      background-color: #ffc107;
+      color: #212529;
+  }
+  
+  .badge-processing {
+      background-color: #0dcaf0;
+      color: #212529;
+  }
+  
+  .badge-done {
+      background-color: #198754;
+      color: white;
+  }
+  
+  .badge-receive {
+      background-color: #0d6efd;
+      color: white;
+  }
+  
+  .badge-secondary {
+      background-color: #6c757d;
+      color: white;
+  }
+  
+  /* Empty State */
+  .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+  }
+  
+  .empty-state i {
+      font-size: 3rem;
+      color: #dee2e6;
+      margin-bottom: 1rem;
+  }
+  
+  .empty-state h5 {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+  }
+  
+  /* Toast Container */
+  .toast-container {
+      z-index: 1060;
+  }
+  
+  /* Modern Table */
+  .modern-table {
+      border-collapse: separate;
+      border-spacing: 0;
+  }
+  
+  .modern-table thead th {
+      background-color: #212529;
+      color: white;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.8rem;
+      letter-spacing: 0.5px;
+      padding: 15px;
+  }
+  
+  .modern-table thead th:first-child {
+      border-top-left-radius: 8px;
+  }
+  
+  .modern-table thead th:last-child {
+      border-top-right-radius: 8px;
+  }
+  
+  .modern-table tbody tr {
+      transition: all 0.2s;
+  }
+  
+  .modern-table tbody tr:hover {
+      background-color: rgba(0, 0, 0, 0.03);
+      transform: scale(1.01);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Admin Badge */
+  .admin-badge {
+      background-color: #dc3545;
+      color: white;
+      font-size: 0.8rem;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-left: 10px;
+      font-weight: 500;
+      display: inline-block;
+      box-shadow: 0 2px 5px rgba(220, 53, 69, 0.3);
+  }
+  
+  /* Fade In Animation */
+  @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .fade-in {
+      animation: fadeIn 0.5s ease-out forwards;
+  }
+  
+  /* Image Preview */
+  .img-preview {
+      transition: transform 0.3s;
+  }
+  
+  .img-preview:hover {
+      transform: scale(1.05);
+  }
+</style>
 {% endblock %}
+

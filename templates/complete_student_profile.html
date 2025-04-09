@@ -3,88 +3,96 @@
 {% block title %}Complete Your Profile{% endblock %}
 
 {% block content %}
-<div class="container d-flex justify-content-center align-items-center min-vh-100">
-    <div class="col-lg-6 col-md-8 col-12">
-        <div class="card shadow-lg border-0 rounded-3 bg-dark text-white">
-            <div class="card-header bg-dark text-white text-center border-bottom border-secondary">
-                <h2 class="fw-bold">📋 Complete Your Student Profile</h2>
-                <p class="mb-0 text-muted">Fill out the necessary details to proceed.</p>
-            </div>
-            <div class="card-body p-4">
-                <form method="POST" action="{{ url_for('update_student_info') }}" enctype="multipart/form-data">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">👤 Full Name</label>
-                        <input type="text" name="name" class="form-control bg-dark text-white border-secondary" value="{{ student.name }}" required>
-                    </div>
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10 col-12">
+            <div class="card shadow-lg border-0 rounded-3 bg-dark text-white">
+                <div class="card-header bg-dark text-white text-center border-bottom border-secondary">
+                    <h2 class="fw-bold">📋 Complete Your Student Profile</h2>
+                    <p class="mb-0 text-muted">Fill out the necessary details to proceed.</p>
+                </div>
+                <div class="card-body p-3 p-md-4">
+                    <form method="POST" action="{{ url_for('update_student_info') }}" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">👤 Full Name</label>
+                                <input type="text" name="name" class="form-control bg-dark text-white border-secondary" value="{{ student.name }}" required>
+                            </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">📌 Student Number (USN)</label>
-                        <input type="text" name="student_id" class="form-control bg-dark text-white border-secondary" value="{{ session['student_id'] }}" disabled>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">📚 Course</label>
-                        <input type="text" name="course" class="form-control bg-dark text-white border-secondary" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">📞 Contact Number</label>
-                        <input type="text" name="contact" class="form-control bg-dark text-white border-secondary" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">👨‍👩‍👦 Guardian Name</label>
-                        <input type="text" name="guardian_name" class="form-control bg-dark text-white border-secondary" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">🏡 Address</label>
-                        <textarea name="address" class="form-control bg-dark text-white border-secondary" required></textarea>
-                    </div>
-
-                    <!-- Profile Picture Upload -->
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">📷 Upload Profile Picture</label>
-                        <input type="file" name="profile_picture" class="form-control bg-dark text-white border-secondary" id="profile_picture" required accept="image/*">
-                        <div id="profile_status">
-                            <small id="profile_loading" class="text-primary d-none">🔄 Checking...</small>
-                            <small id="profile_error" class="text-danger d-none"></small>
-                            <small id="profile_success" class="text-success d-none"></small>
-                        </div>
-                    </div>
-
-                    <!-- Signature Tool -->
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">✍️ Signature</label>
-                        <div class="card bg-dark text-white">
-                            <div class="card-body">
-                                <!-- Signature Canvas -->
-                                <canvas id="signatureCanvas" class="w-100" style="border: 1px solid #ddd; background-color: white; border-radius: 5px;"></canvas>
-
-                                <!-- Controls -->
-                                <div class="mt-3 text-center">
-                                    <button type="button" id="clearBtn" class="btn btn-danger">Clear</button>
-                                    <button type="button" id="saveSignatureBtn" class="btn btn-success">Save Signature</button>
-                                </div>
-
-                                <!-- Thickness Slider -->
-                                <div class="mt-3">
-                                    <label for="thicknessSlider" class="form-label">Thickness: <span id="thicknessValue">100%</span></label>
-                                    <input type="range" id="thicknessSlider" class="form-range" min="10" max="200" value="100">
-                                </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">📌 Student Number (USN)</label>
+                                <input type="text" name="student_id" class="form-control bg-dark text-white border-secondary" value="{{ session['student_id'] }}" disabled>
                             </div>
                         </div>
-                        <input type="hidden" name="signature" id="signatureInput">
-                        <div id="signature_status">
-                            <small id="signature_loading" class="text-primary d-none">🔄 Checking...</small>
-                            <small id="signature_error" class="text-danger d-none"></small>
-                            <small id="signature_success" class="text-success d-none"></small>
-                        </div>
-                    </div>
 
-                    <!-- Submit Button (Initially Disabled) -->
-                    <button type="submit" class="btn btn-success w-100 fw-bold mt-3" id="submit_button" disabled>✅ Submit Profile</button>
-                </form>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">📚 Course</label>
+                                <input type="text" name="course" class="form-control bg-dark text-white border-secondary" required>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">📞 Contact Number</label>
+                                <input type="text" name="contact" class="form-control bg-dark text-white border-secondary" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">👨‍👩‍👦 Guardian Name</label>
+                                <input type="text" name="guardian_name" class="form-control bg-dark text-white border-secondary" required>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">🏡 Address</label>
+                                <textarea name="address" class="form-control bg-dark text-white border-secondary" rows="2" required></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Profile Picture Upload -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">📷 Upload Profile Picture</label>
+                            <input type="file" name="profile_picture" class="form-control bg-dark text-white border-secondary" id="profile_picture" required accept="image/*">
+                            <div id="profile_status">
+                                <small id="profile_loading" class="text-primary d-none">🔄 Checking...</small>
+                                <small id="profile_error" class="text-danger d-none"></small>
+                                <small id="profile_success" class="text-success d-none"></small>
+                            </div>
+                        </div>
+
+                        <!-- Signature Tool -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">✍️ Signature</label>
+                            <div class="card bg-dark text-white">
+                                <div class="card-body">
+                                    <!-- Signature Canvas -->
+                                    <canvas id="signatureCanvas" class="w-100" style="border: 1px solid #ddd; background-color: white; border-radius: 5px;"></canvas>
+
+                                    <!-- Controls -->
+                                    <div class="mt-3 d-flex flex-wrap justify-content-center gap-2">
+                                        <button type="button" id="clearBtn" class="btn btn-danger">Clear</button>
+                                        <button type="button" id="saveSignatureBtn" class="btn btn-success">Save Signature</button>
+                                    </div>
+
+                                    <!-- Thickness Slider -->
+                                    <div class="mt-3">
+                                        <label for="thicknessSlider" class="form-label">Thickness: <span id="thicknessValue">100%</span></label>
+                                        <input type="range" id="thicknessSlider" class="form-range" min="10" max="200" value="100">
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="hidden" name="signature" id="signatureInput">
+                            <div id="signature_status">
+                                <small id="signature_loading" class="text-primary d-none">🔄 Checking...</small>
+                                <small id="signature_error" class="text-danger d-none"></small>
+                                <small id="signature_success" class="text-success d-none"></small>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button (Initially Disabled) -->
+                        <button type="submit" class="btn btn-success w-100 fw-bold mt-3" id="submit_button" disabled>✅ Submit Profile</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
@@ -107,14 +115,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Set initial canvas size
     function setCanvasSize() {
+        // Get the container width
+        const container = canvas.parentElement;
+        const containerWidth = container.clientWidth - 20; // Subtract padding
         const maxWidth = 400; // Maximum width for the canvas
-        const canvasWidth = Math.min(window.innerWidth * 0.9, maxWidth); // 90% of screen width or maxWidth
+        const canvasWidth = Math.min(containerWidth, maxWidth);
         canvas.width = canvasWidth;
         canvas.height = canvasWidth * 0.5; // Maintain aspect ratio
     }
 
     // Initialize canvas size
     setCanvasSize();
+    
+    // Resize canvas when window size changes
     window.addEventListener('resize', setCanvasSize);
 
     // Set initial thickness
@@ -125,17 +138,40 @@ document.addEventListener("DOMContentLoaded", function () {
         redrawSignature(); // Redraw the signature with the new thickness
     });
 
+    // Handle mouse events
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mouseup', stopDrawing);
     canvas.addEventListener('mouseout', stopDrawing);
 
-    canvas.addEventListener('touchstart', startDrawing);
-    canvas.addEventListener('touchmove', draw);
+    // Handle touch events
+    canvas.addEventListener('touchstart', handleTouchStart);
+    canvas.addEventListener('touchmove', handleTouchMove);
     canvas.addEventListener('touchend', stopDrawing);
 
     clearBtn.addEventListener('click', clearCanvas);
     saveSignatureBtn.addEventListener('click', saveSignature);
+
+    // Touch event handlers with passive: false to prevent scrolling
+    function handleTouchStart(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent('mousedown', {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
+        canvas.dispatchEvent(mouseEvent);
+    }
+
+    function handleTouchMove(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent('mousemove', {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
+        canvas.dispatchEvent(mouseEvent);
+    }
 
     function startDrawing(e) {
         e.preventDefault(); // Prevent scrolling on touch devices
@@ -151,8 +187,16 @@ document.addEventListener("DOMContentLoaded", function () {
         const rect = canvas.getBoundingClientRect();
         const scaleX = canvas.width / rect.width; // Scale for canvas width
         const scaleY = canvas.height / rect.height; // Scale for canvas height
-        const x = (e.clientX || e.touches[0].clientX) - rect.left;
-        const y = (e.clientY || e.touches[0].clientY) - rect.top;
+        
+        // Get coordinates based on event type
+        let x, y;
+        if (e.type === 'mousemove' || e.type === 'mousedown') {
+            x = e.clientX - rect.left;
+            y = e.clientY - rect.top;
+        } else if (e.type === 'touchmove' || e.type === 'touchstart') {
+            x = e.touches[0].clientX - rect.left;
+            y = e.touches[0].clientY - rect.top;
+        }
 
         // Map the coordinates to the canvas
         const canvasX = x * scaleX;
@@ -329,4 +373,3 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 
 {% endblock %}
-

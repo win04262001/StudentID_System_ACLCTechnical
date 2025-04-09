@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trainable ID Photo Validator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1, h2 {
+            color: #333;
+            text-align: center;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .upload-section {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px;
+        }
+        .upload-section.dragover {
+            border-color: #007bff;
+            background-color: rgba(0, 123, 255, 0.1);
+        }
+        .preview-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        #imagePreview {
+            max-width: 100%;
+            max-height: 300px;
+            display: none;
+            border: 1px solid #ddd;
+        }
+        #resultVisualization {
+            max-width: 100%;
+            display: none;
+            border: 1px solid #ddd;
+        }
+        .result-section {
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .valid {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .invalid {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0069d9;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .requirements {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .requirements h3 {
+            margin-top: 0;
+        }
+        .requirements ul {
+            padding-left: 20px;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #007bff;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: 1px solid #ddd;
+            background-color: #f8f9fa;
+            flex: 1;
+            text-align: center;
+        }
+        .tab.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>Trainable Student ID Photo Validator</h1>
+    
+    <div class="tabs">
+        <div class="tab active" data-tab="validate">Validate Photo</div>
+        <div class="tab" data-tab="train">Train Model</div>
+    </div>
+    
+    <div class="container">
+        <!-- Validation Tab -->
+        <div class="tab-content active" id="validate-tab">
+            <div class="upload-section" id="dropArea">
+                <p>Drag and drop your photo here or click to browse</p>
+                <input type="file" id="photoInput" accept="image/*" style="display: none;">
+                <button id="browseButton">Browse Files</button>
+            </div>
+            
+            <div class="preview-section">
+                <img id="imagePreview" alt="Preview">
+                <button id="validateButton" disabled>Validate Photo</button>
+            </div>
+            
+            <div class="loading" id="loadingIndicator">
+                <div class="spinner"></div>
+                <p>Validating your photo...</p>
+            </div>
+            
+            <div class="result-section" id="resultSection">
+                <h3 id="resultTitle"></h3>
+                <p id="resultMessage"></p>
+                <img id="resultVisualization" alt="Validation Result">
+            </div>
+            
+            <div class="requirements">
+                <h3>Photo Requirements</h3>
+                <p>This validator uses machine learning to determine if a photo is suitable for a student ID. The model has been trained on examples of acceptable and unacceptable photos.</p>
+                <p>General guidelines:</p>
+                <ul>
+                    <li>Clear, focused image (not extremely blurry)</li>
+                    <li>Plain white or light-colored background</li>
+                    <li>Face should be clearly visible</li>
+                    <li>Only one person in the photo</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Training Tab -->
+        <div class="tab-content" id="train-tab">
+            <h2>Train the Validator</h2>
+            <p>Upload examples of valid and invalid ID photos to train the model. The more examples you provide, the better the model will perform.</p>
+            
+            <div class="upload-section">
+                <h3>Valid Photos</h3>
+                <p>Upload photos that should be accepted as valid ID photos</p>
+                <input type="file" id="validPhotosInput" accept="image/*" multiple style="display: none;">
+                <button id="browseValidButton">Browse Valid Photos</button>
+                <div id="validPhotosCount" style="margin-top: 10px;"></div>
+            </div>
+            
+            <div class="upload-section">
+                <h3>Invalid Photos</h3>
+                <p>Upload photos that should be rejected as invalid ID photos</p>
+                <input type="file" id="invalidPhotosInput" accept="image/*" multiple style="display: none;">
+                <button id="browseInvalidButton">Browse Invalid Photos</button>
+                <div id="invalidPhotosCount" style="margin-top: 10px;"></div>
+            </div>
+            
+            <div class="preview-section">
+                <button id="trainButton" disabled>Train Model</button>
+            </div>
+            
+            <div class="loading" id="trainingIndicator">
+                <div class="spinner"></div>
+                <p>Training the model... This may take a few minutes.</p>
+            </div>
+            
+            <div class="result-section valid" id="trainingResultSection">
+                <h3>Training Complete</h3>
+                <p>The model has been trained successfully. You can now use it to validate photos.</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab switching
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    // Update active tab
+                    tabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show active content
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                        if (content.id === tabId + '-tab') {
+                            content.classList.add('active');
+                        }
+                    });
+                });
+            });
+            
+            // Validation tab functionality
+            const photoInput = document.getElementById('photoInput');
+            const browseButton = document.getElementById('browseButton');
+            const imagePreview = document.getElementById('imagePreview');
+            const validateButton = document.getElementById('validateButton');
+            const resultSection = document.getElementById('resultSection');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultMessage = document.getElementById('resultMessage');
+            const resultVisualization = document.getElementById('resultVisualization');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const dropArea = document.getElementById('dropArea');
+            
+            // Handle browse button click
+            browseButton.addEventListener('click', function() {
+                photoInput.click();
+            });
+            
+            // Handle file selection
+            photoInput.addEventListener('change', function() {
+                handleFileSelection(this.files[0]);
+            });
+            
+            // Handle drag and drop
+            dropArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                dropArea.classList.add('dragover');
+            });
+            
+            dropArea.addEventListener('dragleave', function() {
+                dropArea.classList.remove('dragover');
+            });
+            
+            dropArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                dropArea.classList.remove('dragover');
+                
+                if (e.dataTransfer.files.length) {
+                    handleFileSelection(e.dataTransfer.files[0]);
+                }
+            });
+            
+            // Handle file selection
+            function handleFileSelection(file) {
+                if (file) {
+                    // Check if file is an image
+                    if (!file.type.match('image.*')) {
+                        alert('Please select an image file');
+                        return;
+                    }
+                    
+                    // Display preview
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        imagePreview.src = e.target.result;
+                        imagePreview.style.display = 'block';
+                        validateButton.disabled = false;
+                        
+                        // Hide previous results
+                        resultSection.style.display = 'none';
+                        resultVisualization.style.display = 'none';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+            
+            // Handle validate button click
+            validateButton.addEventListener('click', function() {
+                const file = photoInput.files[0];
+                if (!file) return;
+                
+                // Show loading indicator
+                loadingIndicator.style.display = 'block';
+                validateButton.disabled = true;
+                
+                // Create form data
+                const formData = new FormData();
+                formData.append('photo', file);
+                
+                // Send to server for validation
+                fetch('/validate', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Hide loading indicator
+                    loadingIndicator.style.display = 'none';
+                    validateButton.disabled = false;
+                    
+                    // Display result
+                    resultSection.style.display = 'block';
+                    resultSection.className = 'result-section ' + (data.valid ? 'valid' : 'invalid');
+                    
+                    const confidenceText = data.confidence ? ` (Confidence: ${(data.confidence * 100).toFixed(1)}%)` : '';
+                    resultTitle.textContent = data.valid ? `✓ Photo Accepted${confidenceText}` : `✗ Photo Rejected${confidenceText}`;
+                    resultMessage.textContent = data.valid ? 'Your photo meets the learned criteria for a valid ID photo.' : data.error;
+                    
+                    // Display visualization
+                    if (data.visualization_url) {
+                        resultVisualization.src = data.visualization_url + '?t=' + new Date().getTime(); // Add timestamp to prevent caching
+                        resultVisualization.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    // Hide loading indicator
+                    loadingIndicator.style.display = 'none';
+                    validateButton.disabled = false;
+                    
+                    // Display error
+                    resultSection.style.display = 'block';
+                    resultSection.className = 'result-section invalid';
+                    resultTitle.textContent = '✗ Error';
+                    resultMessage.textContent = 'An error occurred during validation. Please try again.';
+                });
+            });
+            
+            // Training tab functionality
+            const validPhotosInput = document.getElementById('validPhotosInput');
+            const invalidPhotosInput = document.getElementById('invalidPhotosInput');
+            const browseValidButton = document.getElementById('browseValidButton');
+            const browseInvalidButton = document.getElementById('browseInvalidButton');
+            const validPhotosCount = document.getElementById('validPhotosCount');
+            const invalidPhotosCount = document.getElementById('invalidPhotosCount');
+            const trainButton = document.getElementById('trainButton');
+            const trainingIndicator = document.getElementById('trainingIndicator');
+            const trainingResultSection = document.getElementById('trainingResultSection');
+            
+            // Handle browse buttons click
+            browseValidButton.addEventListener('click', function() {
+                validPhotosInput.click();
+            });
+            
+            browseInvalidButton.addEventListener('click', function() {
+                invalidPhotosInput.click();
+            });
+            
+            // Handle file selection
+            validPhotosInput.addEventListener('change', function() {
+                validPhotosCount.textContent = `Selected ${this.files.length} valid photos`;
+                updateTrainButtonState();
+            });
+            
+            invalidPhotosInput.addEventListener('change', function() {
+                invalidPhotosCount.textContent = `Selected ${this.files.length} invalid photos`;
+                updateTrainButtonState();
+            });
+            
+            function updateTrainButtonState() {
+                trainButton.disabled = !(validPhotosInput.files.length > 0 && invalidPhotosInput.files.length > 0);
+            }
+            
+            // Handle train button click
+            trainButton.addEventListener('click', function() {
+                if (validPhotosInput.files.length === 0 || invalidPhotosInput.files.length === 0) {
+                    alert('Please select both valid and invalid photos');
+                    return;
+                }
+                
+                // Show loading indicator
+                trainingIndicator.style.display = 'block';
+                trainButton.disabled = true;
+                
+                // Create form data
+                const formData = new FormData();
+                
+                // Add valid photos
+                for (let i = 0; i < validPhotosInput.files.length; i++) {
+                    formData.append('valid_photos', validPhotosInput.files[i]);
+                }
+                
+                // Add invalid photos
+                for (let i = 0; i < invalidPhotosInput.files.length; i++) {
+                    formData.append('invalid_photos', invalidPhotosInput.files[i]);
+                }
+                
+                // Send to server for training
+                fetch('/train', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Hide loading indicator
+                    trainingIndicator.style.display = 'none';
+                    
+                    if (data.success) {
+                        // Show success message
+                        trainingResultSection.style.display = 'block';
+                        
+                        // Reset form
+                        validPhotosInput.value = '';
+                        invalidPhotosInput.value = '';
+                        validPhotosCount.textContent = '';
+                        invalidPhotosCount.textContent = '';
+                        trainButton.disabled = true;
+                        
+                        // Reload page after 3 seconds to use the new model
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 3000);
+                    } else {
+                        // Show error message
+                        alert('Training failed: ' + data.error);
+                        trainButton.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    // Hide loading indicator
+                    trainingIndicator.style.display = 'none';
+                    trainButton.disabled = false;
+                    
+                    // Show error message
+                    alert('An error occurred during training. Please try again.');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+

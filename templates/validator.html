@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ID Photo Validator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .upload-section {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px;
+        }
+        .upload-section.dragover {
+            border-color: #007bff;
+            background-color: rgba(0, 123, 255, 0.1);
+        }
+        .preview-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        #imagePreview {
+            max-width: 100%;
+            max-height: 300px;
+            display: none;
+            border: 1px solid #ddd;
+        }
+        #resultVisualization {
+            max-width: 100%;
+            display: none;
+            border: 1px solid #ddd;
+        }
+        .result-section {
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .valid {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .invalid {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0069d9;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .requirements {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .requirements h3 {
+            margin-top: 0;
+        }
+        .requirements ul {
+            padding-left: 20px;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #007bff;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <h1>Student ID Photo Validator</h1>
+    
+    <div class="container">
+        <div class="upload-section" id="dropArea">
+            <p>Drag and drop your photo here or click to browse</p>
+            <input type="file" id="photoInput" accept="image/*" style="display: none;">
+            <button id="browseButton">Browse Files</button>
+        </div>
+        
+        <div class="preview-section">
+            <img id="imagePreview" alt="Preview">
+            <button id="validateButton" disabled>Validate Photo</button>
+        </div>
+        
+        <div class="loading" id="loadingIndicator">
+            <div class="spinner"></div>
+            <p>Validating your photo...</p>
+        </div>
+        
+        <div class="result-section" id="resultSection">
+            <h3 id="resultTitle"></h3>
+            <p id="resultMessage"></p>
+            <img id="resultVisualization" alt="Validation Result">
+        </div>
+        
+        <div class="requirements">
+            <h3>Photo Requirements</h3>
+            <ul>
+                <li>High resolution (minimum 300x300 pixels)</li>
+                <li>Clear, focused image (not blurry)</li>
+                <li>Plain white or light-colored background</li>
+                <li>Neutral facial expression</li>
+                <li>Face centered and not tilted</li>
+                <li>No hats, sunglasses, or accessories</li>
+                <li>Face should take up 10-70% of the image</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const photoInput = document.getElementById('photoInput');
+            const browseButton = document.getElementById('browseButton');
+            const imagePreview = document.getElementById('imagePreview');
+            const validateButton = document.getElementById('validateButton');
+            const resultSection = document.getElementById('resultSection');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultMessage = document.getElementById('resultMessage');
+            const resultVisualization = document.getElementById('resultVisualization');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const dropArea = document.getElementById('dropArea');
+            
+            // Handle browse button click
+            browseButton.addEventListener('click', function() {
+                photoInput.click();
+            });
+            
+            // Handle file selection
+            photoInput.addEventListener('change', function() {
+                handleFileSelection(this.files[0]);
+            });
+            
+            // Handle drag and drop
+            dropArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                dropArea.classList.add('dragover');
+            });
+            
+            dropArea.addEventListener('dragleave', function() {
+                dropArea.classList.remove('dragover');
+            });
+            
+            dropArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                dropArea.classList.remove('dragover');
+                
+                if (e.dataTransfer.files.length) {
+                    handleFileSelection(e.dataTransfer.files[0]);
+                }
+            });
+            
+            // Handle file selection
+            function handleFileSelection(file) {
+                if (file) {
+                    // Check if file is an image
+                    if (!file.type.match('image.*')) {
+                        alert('Please select an image file');
+                        return;
+                    }
+                    
+                    // Display preview
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        imagePreview.src = e.target.result;
+                        imagePreview.style.display = 'block';
+                        validateButton.disabled = false;
+                        
+                        // Hide previous results
+                        resultSection.style.display = 'none';
+                        resultVisualization.style.display = 'none';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+            
+            // Handle validate button click
+            validateButton.addEventListener('click', function() {
+                const file = photoInput.files[0];
+                if (!file) return;
+                
+                // Show loading indicator
+                loadingIndicator.style.display = 'block';
+                validateButton.disabled = true;
+                
+                // Create form data
+                const formData = new FormData();
+                formData.append('photo', file);
+                
+                // Send to server for validation
+                fetch('/validate', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Hide loading indicator
+                    loadingIndicator.style.display = 'none';
+                    validateButton.disabled = false;
+                    
+                    // Display result
+                    resultSection.style.display = 'block';
+                    resultSection.className = 'result-section ' + (data.valid ? 'valid' : 'invalid');
+                    
+                    resultTitle.textContent = data.valid ? '✓ Photo Accepted' : '✗ Photo Rejected';
+                    resultMessage.textContent = data.valid ? 'Your photo meets all requirements.' : data.error;
+                    
+                    // Display visualization
+                    if (data.visualization_url) {
+                        resultVisualization.src = data.visualization_url + '?t=' + new Date().getTime(); // Add timestamp to prevent caching
+                        resultVisualization.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    // Hide loading indicator
+                    loadingIndicator.style.display = 'none';
+                    validateButton.disabled = false;
+                    
+                    // Display error
+                    resultSection.style.display = 'block';
+                    resultSection.className = 'result-section invalid';
+                    resultTitle.textContent = '✗ Error';
+                    resultMessage.textContent = 'An error occurred during validation. Please try again.';
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+
