@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student ID Card</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .id-card {
+            width: 350px;
+            border: 2px solid #000;
+            padding: 10px;
+            box-sizing: border-box;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            display: flex;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        
+        .logo-holder {
+            width: 120px;
+            height: 80px;
+            border: 1px solid #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 10px;
+        }
+        
+        .title-section {
+            flex: 1;
+        }
+        
+        .title, .subtitle, .member-of {
+            border: 1px solid #000;
+            padding: 5px;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        
+        .world-class {
+            border: 1px solid #000;
+            padding: 5px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .main-content {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        
+        .photo-holder {
+            width: 150px;
+            height: 150px;
+            border: 1px solid #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 10px;
+        }
+        
+        .info-section {
+            flex: 1;
+        }
+        
+        .student-no, .valid-until {
+            border: 1px solid #000;
+            padding: 5px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .name-holder, .course-holder, .signature-holder, .barcode-holder {
+            border: 1px solid #000;
+            padding: 5px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .signature-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .signature-line {
+            width: 100px;
+            border: 1px solid #000;
+            padding: 5px;
+            margin: 0 auto;
+            text-align: center;
+            font-size: 0.8em;
+        }
+    </style>
+</head>
+<body>
+    <div class="id-card">
+        <!-- Header Section -->
+        <div class="header">
+            <div class="logo-holder">Logo Holder</div>
+            <div class="title-section">
+                <div class="title">ACLC title</div>
+                <div class="subtitle">COLLEGE sub title</div>
+                <div class="member-of">A member of...</div>
+            </div>
+        </div>
+        
+        <!-- World Class Section -->
+        <div class="world-class">World-Class...</div>
+        
+        <!-- Main Content Section -->
+        <div class="main-content">
+            <div class="photo-holder">Photo holder</div>
+            <div class="info-section">
+                <div class="student-no">Student No.<br>21000...Holder</div>
+                <div class="valid-until">Valid until<br>August 2025<br>S.Y. 2024-2025</div>
+            </div>
+        </div>
+        
+        <!-- Name and Course Section -->
+        <div class="name-holder">Name holder</div>
+        <div class="course-holder">Course holder</div>
+        
+        <!-- Signature Section -->
+        <div class="signature-holder">
+            Signature Holder
+            <div class="signature-section">
+                <div class="signature-line">signature</div>
+            </div>
+        </div>
+        
+        <!-- Barcode Section -->
+        <div class="barcode-holder">Barcode Holder</div>
+    </div>
+</body>
+</html>

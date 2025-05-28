@@ -63,7 +63,7 @@
               <i class="fas fa-headset"></i>
             </div>
             <div>
-              <h5 class="card-title mb-0">Support Chat</h5>
+              <h5 class="card-title mb-0">IT Support</h5>
               <small class="text-white-50">{{ message.subject }}</small>
             </div>
           </div>
@@ -78,47 +78,79 @@
             </div>
             
             <!-- Outgoing message (student) -->
-<div class="message-container outgoing">
-  <div class="message-avatar">
-    <div class="avatar-circle bg-primary text-white">
-      <i class="fas fa-user"></i>
-    </div>
-  </div>
-  <div class="message-content-wrapper">
-    <div class="message-bubble">
-      <div class="message-header">
-        <span class="message-sender">You</span>
-        <span class="message-time">{{ message.created_at.strftime('%H:%M') }}</span>
-      </div>
-      <div class="message-content">
-        {{ message.message }}
-      </div>
-    </div>
-    <div class="message-status">
-      <i class="fas fa-check-double"></i>
-    </div>
-  </div>
-</div>
+            <div class="message-container outgoing">
+              <div class="message-avatar">
+                <div class="avatar-circle bg-primary text-white">
+                  <i class="fas fa-user"></i>
+                </div>
+              </div>
+              <div class="message-content-wrapper">
+                <div class="message-bubble">
+                  <div class="message-header">
+                    <span class="message-sender">You</span>
+                    <span class="message-time">{{ message.created_at.strftime('%H:%M') }}</span>
+                  </div>
+                  <div class="message-content">
+                    {{ message.message }}
+                  </div>
+                </div>
+                <div class="message-status">
+                  {% if message.is_seen %}
+                    <i class="fas fa-check-double text-primary"></i>
+                  {% else %}
+                    <i class="fas fa-check"></i>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
 
-<!-- Incoming message (admin) -->
-<div class="message-container incoming">
-  <div class="message-avatar">
-    <div class="avatar-circle bg-light text-primary">
-      <i class="fas fa-headset"></i>
-    </div>
-  </div>
-  <div class="message-content-wrapper">
-    <div class="message-bubble">
-      <div class="message-header">
-        <span class="message-sender">Support</span>
-        <span class="message-time">{{ message.created_at.strftime('%H:%M') }}</span>
-      </div>
-      <div class="message-content">
-        {{ message.admin_response }}
-      </div>
-    </div>
-  </div>
-</div>
+            <!-- Auto-reply message (if exists) -->
+            {% if message.auto_reply %}
+            <div class="message-container incoming">
+              <div class="message-avatar">
+                <div class="avatar-circle bg-light text-primary">
+                  <i class="fas fa-robot"></i>
+                </div>
+              </div>
+              <div class="message-content-wrapper">
+                <div class="message-bubble">
+                  <div class="message-header">
+                    <span class="message-sender">Auto-Support</span>
+                    <span class="message-time">{{ message.created_at.strftime('%H:%M') }}</span>
+                  </div>
+                  <div class="message-content">
+                    {{ message.auto_reply }}
+                    <div class="mt-2 text-muted fst-italic small">
+                      <i class="fas fa-info-circle me-1"></i> This is an automated response. An admin will respond to your query soon.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+
+            <!-- Incoming message (admin) -->
+            {% if message.admin_response %}
+            <div class="message-container incoming">
+              <div class="message-avatar">
+                <div class="avatar-circle bg-light text-primary">
+                  <i class="fas fa-headset"></i>
+                </div>
+              </div>
+              <div class="message-content-wrapper">
+                <div class="message-bubble">
+                  <div class="message-header">
+                    <span class="message-sender">Support</span>
+                    <span class="message-time">{{ message.updated_at.strftime('%H:%M') if message.updated_at else message.created_at.strftime('%H:%M') }}</span>
+                  </div>
+                  <div class="message-content">
+                    {{ message.admin_response }}
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+            
             <!-- Message history -->
             {% if history %}
               {% set current_date = message.created_at.strftime('%Y-%m-%d') %}
@@ -148,7 +180,11 @@
                     </div>
                     {% if item.responder_role == 'student' %}
                       <div class="message-status">
-                        <i class="fas fa-check-double"></i>
+                        {% if item.is_seen %}
+                          <i class="fas fa-check-double text-primary"></i>
+                        {% else %}
+                          <i class="fas fa-check"></i>
+                        {% endif %}
                       </div>
                     {% endif %}
                   </div>
@@ -389,30 +425,9 @@
     // Check for new messages every 10 seconds
     const messageCheckInterval = setInterval(checkForNewMessages, 10000);
     
-    // Simulate typing indicator
-    const typingIndicator = document.getElementById('typingIndicator');
-    
-    // Show typing indicator randomly (for demo purposes)
-    function simulateTyping() {
-      // Only show typing indicator if conversation is not resolved
-      if ('{{ message.status }}' !== 'resolved' && Math.random() > 0.7) {
-        typingIndicator.style.display = 'flex';
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-        
-        // Hide typing indicator after 2-5 seconds
-        setTimeout(() => {
-          typingIndicator.style.display = 'none';
-        }, 2000 + Math.random() * 3000);
-      }
-    }
-    
-    // Simulate typing every 15-30 seconds
-    const typingInterval = setInterval(simulateTyping, 15000 + Math.random() * 15000);
-    
     // Clean up intervals when leaving the page
     window.addEventListener('beforeunload', function() {
       clearInterval(messageCheckInterval);
-      clearInterval(typingInterval);
     });
   });
 </script>

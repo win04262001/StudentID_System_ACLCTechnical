@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USN Finder - ACLC Student ID System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.jpg') }}">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-dark: #2563eb;
+            --accent-color: #f59e0b;
+        }
+        body {
+            background: linear-gradient(135deg, #e0f2fe 0%, #bfdbfe 100%);
+            min-height: 100vh;
+        }
+        .card {
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .btn-primary {
+            background-color: var(--primary-color);
+            transition: all 0.3s;
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4">
+    <div class="max-w-md w-full">
+
+
+        <!-- Main Card -->
+        <div class="bg-white card overflow-hidden">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-blue-400 to-blue-600 py-6 px-8 text-center text-white">
+                <img src="/static/logo.png" alt="ACLC Logo" class="mx-auto h-16 mb-2">
+                <h1 class="text-2xl font-bold">USN</h1>
+                <p class="text-blue-100">Enter your USN to continue your ID application</p>
+            </div>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=True) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="mx-6 mt-4 p-3 rounded-lg text-center 
+                            {% if category == 'success' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                            {% if category == 'success' %}
+                                <i class="fas fa-check-circle mr-2"></i>
+                            {% else %}
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                            {% endif %}
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- USN Finder Form -->
+            <form method="POST" action="{{ url_for('usn_finder') }}" class="p-8">
+                <div class="mb-6">
+                    <label for="usn" class="block text-gray-700 font-medium mb-2">
+                        <i class="fas fa-id-card text-blue-500 mr-2"></i>Enter Your USN
+                    </label>
+                    <input type="text" name="usn" id="usn" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="e.g. 21000602400" required
+                           pattern="\d{11}" title="USN must be 11 digits">
+                    <small class="text-gray-500 text-xs mt-1">Your 11-digit Unique Student Number</small>
+                </div>
+
+                <button type="submit" class="w-full btn-primary text-white py-3 rounded-lg font-medium">
+                    Find <i class="fas fa-search ml-2"></i>
+                </button>
+            </form>
+
+            <div class="text-center pb-6 px-8 border-t border-gray-200">
+                <p class="text-sm text-gray-600">
+                    Need help? Contact the TSD office
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple validation to ensure USN is 11 digits
+        document.getElementById('usn').addEventListener('input', function() {
+            this.value = this.value.replace(/\D/g, '').slice(0, 11);
+        });
+    </script>
+</body>
+</html>

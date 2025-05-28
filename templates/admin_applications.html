@@ -7,10 +7,7 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="mb-0">📋 Manage Student Applications</h1>
             <div class="d-flex gap-2">
-                <button id="themeToggle" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-sun-fill"></i>
-                    <span class="visually-hidden">Toggle theme</span>
-                </button>
+
                 <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-house-fill me-1"></i> Back to Dashboard
                 </a>
@@ -834,14 +831,7 @@
             updateStats();
             updateSortIndicators();
             
-            // Theme toggle
-            themeToggleBtn.addEventListener('click', function() {
-                document.body.classList.toggle('dark-mode');
-                const isDarkMode = document.body.classList.contains('dark-mode');
-                themeToggleBtn.innerHTML = isDarkMode ? 
-                    '<i class="bi bi-moon-fill"></i>' : 
-                    '<i class="bi bi-sun-fill"></i>';
-            });
+
             
             // Search input
             searchInput.addEventListener('input', function() {
@@ -1073,77 +1063,6 @@
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
-        }
-        
-        /* Dark mode */
-        body.dark-mode {
-            background-color: #212529;
-            color: #f8f9fa;
-        }
-        
-        body.dark-mode .card {
-            background-color: #343a40;
-            border-color: #495057;
-        }
-        
-        body.dark-mode .card-header {
-            background-color: #343a40;
-            border-color: #495057;
-        }
-        
-        body.dark-mode .table {
-            color: #f8f9fa;
-        }
-        
-        body.dark-mode .table-hover tbody tr:hover {
-            background-color: rgba(255, 255, 255, 0.075);
-        }
-        
-        body.dark-mode .modal-content {
-            background-color: #343a40;
-            border-color: #495057;
-        }
-        
-        body.dark-mode .form-control,
-        body.dark-mode .form-select {
-            background-color: #495057;
-            border-color: #6c757d;
-            color: #f8f9fa;
-        }
-        
-        body.dark-mode .nav-tabs .nav-link.active {
-            background-color: #343a40;
-            color: #f8f9fa;
-            border-color: #495057 #495057 #343a40;
-        }
-        
-        body.dark-mode .nav-tabs {
-            border-color: #495057;
-        }
-        
-        body.dark-mode .nav-tabs .nav-link:hover {
-            border-color: #495057 #495057 #343a40;
-        }
-        
-        body.dark-mode .dropdown-menu {
-            background-color: #343a40;
-            border-color: #495057;
-        }
-        
-        body.dark-mode .dropdown-item {
-            color: #f8f9fa;
-        }
-        
-        body.dark-mode .dropdown-item:hover {
-            background-color: #495057;
-        }
-        
-        body.dark-mode .dropdown-divider {
-            border-color: #495057;
-        }
-        
-        body.dark-mode .text-muted {
-            color: #adb5bd !important;
         }
     </style>
 {% endblock %}

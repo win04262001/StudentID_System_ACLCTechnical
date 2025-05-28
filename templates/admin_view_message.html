@@ -85,51 +85,26 @@
               <span>{{ message.created_at.strftime('%B %d, %Y') }}</span>
             </div>
             
-                        <!-- Incoming message (student) -->
-                        <div class="message-container incoming">
-                          <div class="message-avatar">
-                            <div class="avatar-circle bg-light text-primary">
-                              <i class="fas fa-user"></i>
-                            </div>
-                          </div>
-                          <div class="message-content-wrapper">
-                            <div class="message-bubble">
-                              <div class="message-header">
-                                <span class="message-sender">{{ message.student_name }}</span>
-                                <span class="message-time">{{ message.created_at.strftime('%H:%M') }}</span>
-                              </div>
-                              <div class="message-content">
-                                {{ message.message }}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-            <!-- Outgoing message (admin) -->
-            <div class="message-container outgoing">
+            <!-- Student's original message -->
+            <div class="message-container incoming">
               <div class="message-avatar">
-                <div class="avatar-circle bg-primary text-white">
-                  <i class="fas fa-headset"></i>
+                <div class="avatar-circle bg-light text-primary">
+                  <i class="fas fa-user"></i>
                 </div>
               </div>
               <div class="message-content-wrapper">
                 <div class="message-bubble">
                   <div class="message-header">
-                    <span class="message-sender">Support</span>
+                    <span class="message-sender">{{ message.student_name }}</span>
                     <span class="message-time">{{ message.created_at.strftime('%H:%M') }}</span>
                   </div>
                   <div class="message-content">
-                    {{ message.admin_response }}
+                    {{ message.message }}
                   </div>
-                </div>
-                <div class="message-status">
-                  <i class="fas fa-check-double"></i>
                 </div>
               </div>
             </div>
-            
 
-            
             <!-- Message history -->
             {% if history %}
               {% set current_date = message.created_at.strftime('%Y-%m-%d') %}
@@ -188,7 +163,7 @@
               <div class="input-group">
                 <select class="form-select flex-grow-0 w-auto" id="statusSelect" name="status">
                   <option value="in_progress" {% if message.status == 'in_progress' %}selected{% endif %}>In Progress</option>
-                  <option value="resolved">Resolved</option>
+                  <option value="resolved" {% if message.status == 'resolved' %}selected{% endif %}>Resolved</option>
                 </select>
                 <textarea class="form-control" id="responseMessage" name="response" placeholder="Type your message..." rows="1" required></textarea>
                 <button type="submit" class="btn btn-primary">
@@ -213,6 +188,33 @@
     gap: 10px;
   }
   
+  .message-date-divider {
+    text-align: center;
+    margin: 15px 0;
+    position: relative;
+  }
+  
+  .message-date-divider span {
+    background-color: #f8f9fa;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    color: #6c757d;
+    position: relative;
+    z-index: 1;
+  }
+  
+  .message-date-divider:before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: #dee2e6;
+    z-index: 0;
+  }
+  
   .message-container {
     display: flex;
     width: 100%;
@@ -228,7 +230,7 @@
   }
   
   .message-avatar {
-    margin-right: 8px; /* Space between avatar and message */
+    margin-right: 8px;
     flex-shrink: 0;
   }
   
@@ -282,6 +284,11 @@
   .message-time {
     font-size: 0.7rem;
     margin-left: 8px;
+  }
+  
+  .message-content {
+    word-wrap: break-word;
+    white-space: pre-wrap;
   }
   
   .message-status {
@@ -347,6 +354,17 @@
       opacity: 1;
     }
   }
+  
+  /* Chat input */
+  .chat-input-container {
+    background-color: #f8f9fa;
+  }
+  
+  #responseMessage {
+    resize: none;
+    min-height: 38px;
+    max-height: 120px;
+  }
 </style>
 
 <script>
@@ -365,18 +383,58 @@
     
     textarea.addEventListener('input', resizeTextarea);
     
-    // Form submission with loading state
+    // Form submission with AJAX
     const messageForm = document.getElementById('messageForm');
     const submitButton = messageForm.querySelector('button[type="submit"]');
     
     messageForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
       if (!textarea.value.trim()) {
-        e.preventDefault();
         return;
       }
       
+      const formData = new FormData(messageForm);
+      const submitBtnOriginal = submitButton.innerHTML;
+      
       submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
       submitButton.disabled = true;
+      
+      fetch(messageForm.action, {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Clear the textarea
+          textarea.value = '';
+          textarea.style.height = 'auto';
+          
+          // Update status badge if changed
+          const statusBadge = document.querySelector('.badge');
+          if (data.status === 'resolved') {
+            statusBadge.className = 'badge bg-success px-3 py-2';
+            statusBadge.textContent = 'Resolved';
+          } else if (data.status === 'in_progress') {
+            statusBadge.className = 'badge bg-info px-3 py-2';
+            statusBadge.textContent = 'In Progress';
+          }
+          
+          // Reload the page to show new messages
+          location.reload();
+        } else {
+          alert('Error: ' + data.error);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while sending the message');
+      })
+      .finally(() => {
+        submitButton.innerHTML = submitBtnOriginal;
+        submitButton.disabled = false;
+      });
     });
     
     // Check for new messages periodically
@@ -387,7 +445,6 @@
         .then(response => response.json())
         .then(data => {
           if (data.has_new) {
-            // Reload the page to show new messages
             location.reload();
           }
           lastCheckTimestamp = data.current_timestamp;
@@ -395,33 +452,11 @@
         .catch(error => console.error('Error checking for new messages:', error));
     }
     
-    // Check for new messages every 10 seconds
-    const messageCheckInterval = setInterval(checkForNewMessages, 10000);
+    // Check every 10 seconds
+    setInterval(checkForNewMessages, 10000);
     
-    // Show typing indicator when student is typing
-    const typingIndicator = document.getElementById('typingIndicator');
-    
-    // Simulate student typing (for demo purposes)
-    function simulateStudentTyping() {
-      if (Math.random() > 0.7) {
-        typingIndicator.style.display = 'flex';
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-        
-        // Hide typing indicator after 2-5 seconds
-        setTimeout(() => {
-          typingIndicator.style.display = 'none';
-        }, 2000 + Math.random() * 3000);
-      }
-    }
-    
-    // Simulate typing every 20-40 seconds
-    const typingInterval = setInterval(simulateStudentTyping, 20000 + Math.random() * 20000);
-    
-    // Clean up intervals when leaving the page
-    window.addEventListener('beforeunload', function() {
-      clearInterval(messageCheckInterval);
-      clearInterval(typingInterval);
-    });
+    // Focus the textarea when page loads
+    textarea.focus();
   });
 </script>
 {% endblock %}

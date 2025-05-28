@@ -1,131 +1,139 @@
-{% extends "base.html" %}
-{% block title %}Register - School System{% endblock %}
-
-{% block content %}
-<div class="container d-flex justify-content-center align-items-center min-vh-100">
-    <div class="col-lg-4 col-md-6 col-12">
-        <div class="card shadow-lg border-0 rounded-3 bg-dark text-white">
-            <div class="card-body p-4">
-                <h4 class="text-center fw-bold mb-4">Create an Account</h4>
-                <p class="text-center text-muted mb-4">Fill in the details below to register</p>
-
-                <!-- Flash Messages -->
-                {% with messages = get_flashed_messages(with_categories=True) %}
-                    {% if messages %}
-                        <div class="alert alert-danger alert-dismissible fade show text-center" role="alert">
-                            <i class="fas fa-exclamation-circle"></i> {{ messages[0][1] }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    {% endif %}
-                {% endwith %}
-
-                <form id="registerForm" method="POST">
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Full Name</label>
-                        <input type="text" name="name" class="form-control bg-dark text-white border-secondary" required placeholder="Enter your full name">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Unique Student Number (USN)</label>
-                        <input type="text" name="usn" id="usn" class="form-control bg-dark text-white border-secondary" pattern="\d{11}" required placeholder="Enter your USN">
-                        <div class="invalid-feedback">USN must be exactly 11 digits.</div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Password</label>
-                        <div class="input-group">
-                            <input type="password" name="password" id="password" class="form-control bg-dark text-white border-secondary" required placeholder="Enter your password">
-                            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('password')">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                        <div class="invalid-feedback">Password must be at least 8 characters.</div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Confirm Password</label>
-                        <div class="input-group">
-                            <input type="password" name="confirm_password" id="confirm_password" class="form-control bg-dark text-white border-secondary" required placeholder="Confirm your password">
-                            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('confirm_password')">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                        <div class="invalid-feedback">Passwords do not match.</div>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary w-100 fw-bold mt-3">Register</button>
-                </form>
-
-                <div class="text-center mt-3">
-                    <a href="{{ url_for('login') }}" class="text-decoration-none text-muted">Already have an account? Login</a>
-                </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - ACLC Student ID System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.jpg') }}">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'aclc-blue': '#87CEEB',
+                        'aclc-darkblue': '#4682B4',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gradient-to-b from-aclc-blue to-aclc-darkblue min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+        <!-- Main Register Card -->
+        <div class="bg-white rounded-xl shadow-xl overflow-hidden">
+            <!-- Header with gradient -->
+            <div class="bg-gradient-to-r from-aclc-blue to-aclc-darkblue py-6 px-8 text-center">
+                <img src="/static/logo.png" alt="ACLC Logo" class="mx-auto h-16 mb-2">
+                <h1 class="text-2xl font-bold text-white">Create Your Account</h1>
+                <p class="text-white text-opacity-80 text-sm mt-1">Join our school system</p>
             </div>
+            
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=True) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="mx-8 mt-4 p-3 rounded-lg text-center 
+                            {% if category == 'success' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                            {% if category == 'success' %}
+                                <i class="fas fa-check-circle mr-2"></i>
+                            {% else %}
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                            {% endif %}
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <!-- Registration Form -->
+            <form method="POST" class="p-6">
+                <!-- Step 1: Enter Email -->
+                {% if not email_sent and not otp_verified %}
+                    <input type="hidden" name="form_stage" value="email_stage">
+                    <label class="block mb-2 font-medium text-gray-700">ACLC School Email</label>
+                    <input type="email" name="email" value="{{ email or '' }}"
+                           class="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="e.g. student@aclcbutuan.edu.ph" required>
+                    <button type="submit"
+                            class="w-full mt-4 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
+                        Send OTP to Email
+                    </button>
+            
+                <!-- Step 2: Enter OTP -->
+                {% elif email_sent and not otp_verified %}
+                    <input type="hidden" name="form_stage" value="otp_stage">
+                    <p class="text-sm text-gray-600 mb-3">
+                        We've sent a 6-digit OTP to <strong>{{ email }}</strong>. Please enter it below to verify.
+                    </p>
+                    <p id="timer" class="text-sm text-gray-600 mt-2 text-center">
+                        OTP expires in <span id="countdown">05:00</span>
+                    </p>                    
+                    <label class="block mb-2 font-medium text-gray-700">Enter OTP</label>
+                    <input type="text" name="otp" maxlength="6"
+                           class="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Enter the 6-digit code" required>
+                           <div class="flex gap-2 mt-4">
+                            <button type="submit"
+                                class="flex-1 bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">
+                                Verify OTP
+                            </button>
+                            <button type="submit" name="resend_otp" value="1"
+                                class="flex-1 bg-gray-300 text-gray-800 py-2 rounded hover:bg-gray-400 transition">
+                                Resend OTP
+                            </button>
+                        </div>
+                        
+            
+                <!-- Step 3: Set Password -->
+                {% elif otp_verified %}
+                    <input type="hidden" name="form_stage" value="password_stage">
+                    <label class="block mb-2 font-medium text-gray-700">Create Password</label>
+                    <input type="password" name="password"
+                           class="w-full px-4 py-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Password" required>
+                    <label class="block mb-2 font-medium text-gray-700">Confirm Password</label>
+                    <input type="password" name="confirm_password"
+                           class="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Confirm Password" required>
+                    <button type="submit"
+                            class="w-full mt-4 bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 transition">
+                        Create Account
+                    </button>
+                {% endif %}
+                
+                <!-- Already have account -->
+                <div class="mt-6 text-center text-sm text-gray-600">
+                    Already registered? <a href="{{ url_for('login') }}" class="text-blue-600 hover:underline">Login here</a>
+                </div>
+            </form>
         </div>
     </div>
-</div>
-
-<style>
-body {
-    background-color: #0d1117; /* GitHub's dark background color */
-    color: #c9d1d9; /* GitHub's light text color */
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
-}
-
-.card {
-    background-color: #161b22; /* GitHub's card background color */
-    border: 1px solid #30363d; /* GitHub's border color */
-    border-radius: 6px; /* GitHub's border radius */
-}
-
-.form-control {
-    background-color: #0d1117; /* GitHub's input background color */
-    border: 1px solid #30363d; /* GitHub's input border color */
-    color: #c9d1d9; /* GitHub's input text color */
-    border-radius: 6px; /* GitHub's input border radius */
-}
-
-.form-control:focus {
-    border-color: #58a6ff; /* GitHub's focus border color */
-    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.3); /* GitHub's focus shadow */
-}
-
-.btn-primary {
-    background-color: #238636; /* GitHub's primary button color */
-    border: none;
-    border-radius: 6px; /* GitHub's button border radius */
-}
-
-.btn-primary:hover {
-    background-color: #2ea043; /* GitHub's primary button hover color */
-}
-
-.text-muted {
-    color: #8b949e !important; /* GitHub's muted text color */
-}
-
-.alert-danger {
-    background-color: #f85149; /* GitHub's danger alert background color */
-    border-color: #f85149; /* GitHub's danger alert border color */
-    color: #fff; /* GitHub's danger alert text color */
-}
-
-.alert-danger .btn-close {
-    filter: invert(1); /* Invert close button color for better visibility */
-}
-</style>
-
-<script>
-function togglePassword(fieldId) {
-    let field = document.getElementById(fieldId);
-    let icon = field.nextElementSibling.firstElementChild;
-
-    if (field.type === "password") {
-        field.type = "text";
-        icon.classList.replace("fa-eye", "fa-eye-slash");
-    } else {
-        field.type = "password";
-        icon.classList.replace("fa-eye-slash", "fa-eye");
-    }
-}
-</script>
-{% endblock %}
+    <script>
+        const countdownElement = document.getElementById('countdown');
+        if (countdownElement) {
+            let timeLeft = 300; // 5 minutes
+    
+            const countdown = setInterval(() => {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+    
+                countdownElement.textContent =
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+                timeLeft--;
+    
+                if (timeLeft < 0) {
+                    clearInterval(countdown);
+                    countdownElement.textContent = "EXPIRED";
+                    document.querySelector('input[name="otp"]').disabled = true;
+                    alert("⚠️ OTP has expired. Please click 'Resend OTP'.");
+                }
+            }, 1000);
+        }
+    </script>
+    
+</body>
+</html>

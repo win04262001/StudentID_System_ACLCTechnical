@@ -1,56 +1,239 @@
-<!doctype html>
-<html>
-  <head>
-    <title>Your site's title should be here</title>
+<!DOCTYPE html>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
-    <meta name="description" content="Your site's description should be here">
-    <meta name="keywords" content="Your site's keywords should be here">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge">
-    <link rel="stylesheet" href="style.css"> 
-    <!--[if IE 6]>
-	<style type="text/css">
-		* html .group {
-			height: 1%;
-		}
-	</style>
-  <![endif]--> 
-    <!--[if IE 7]>
-	<style type="text/css">
-		*:first-child+html .group {
-			min-height: 1px;
-		}
-	</style>
-  <![endif]--> 
-    <!--[if lt IE 9]> 
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js"></script> 
-  <![endif]--> 
-  </head>
-  <body>
-    <div class="do-not-edit">
-      <div class="do-not-edit-holder">
-        <img class="text" src="images/a_member_of_ama_education.png" alt="A member of AMA Education System" width="976" height="42" title="A member of AMA Education System">
-        <img class="vector-smart-object-copy-4" src="images/vector_smart_object_copy_.png" alt="" width="563" height="181">
-        <img class="layer-3" src="images/layer_3.png" alt="" width="650" height="166">
-        <img class="vector-smart-object-copy-4-2" src="images/vector_smart_object_copy__2.png" alt="" width="416" height="416">
-      </div>
-      <div class="do-not-edit-holder-2">
-        <img class="text-2" src="images/world-class_it_education.png" alt="World-Class IT Education" width="1268" height="63" title="World-Class IT Education">
-      </div>
-      <div class="row group">
-        <img class="picture-border" src="images/picture_border.png" alt="" width="664" height="645">
-        <div class="col-4">
-          <div class="do-not-edit-holder-3">
-            <img class="do-not-edit-2" src="images/do_not_edit_6.png" alt="STUDENT NO:" width="479" height="47" title="STUDENT NO:">
-          </div>
-          <div class="do-not-edit-holder-4">
-            <img class="text-3" src="images/valid_until_august_2025_s.png" alt="Valid until August 2025 S.Y. 2024-2025" width="402" height="158" title="Valid until August 2025 S.Y. 2024-2025">
-          </div>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style,.css">
+    <title>ACLC Student ID Card</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .id-card {
+            width: 350px;
+            height: 79%;
+            border: 2px solid #000;
+            border-radius: 10px;
+            padding: 10px;
+            box-sizing: border-box;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            position: relative;
+            height: 120px;
+            margin-bottom: 10px;
+            overflow: hidden;
+            background: url(images/do_not_edit.png) no-repeat;
+        }
+        
+        .logo {
+          position: absolute;
+          top: 5px;
+          left: 9px;
+          width: 98px;
+          height: 100px;
+        }
+        .aclc {
+          position: absolute;
+          top: 13px;
+          left: 132px;
+          width: 163px;
+          height: auto;
+        }
+        .college-title {
+          position: absolute;
+          top: 33px;
+          left: 148px;
+          width: 142px;
+          height: auto;
+      }
+        
+        .member-text {
+          position: absolute;
+          bottom: 17px;
+          left: 61%;
+          transform: translateX(-50%);
+          width: 68%;
+          height: 11px;
+      }
+        
+        .banner {
+            width: 100%;
+            margin-bottom: 10px;
+            margin-top: -10px;
+            text-align: center;
+            background: url(images/do_not_edit_2.png) no-repeat;
+        }
+        
+        .banner img {
+            width: 90%;
+            margin-top: 6px;
+            margin-bottom: 5px;
+            height: auto;
+        }
+        
+        .main-content {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        
+        .photo-container {
+            width: 150px;
+            height: 150px;
+            margin-right: 10px;
+            position: relative;
+        }
+        
+        .photo-border {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .info-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            
+        }
+        
+        .student-no {
+          margin-bottom: 10px;
+          margin-left: 4px;
+          width: 159px;
+          background: url(images/do_not_edit_3.png) no-repeat;
+          height: 61px;
+
+        }
+        
+        .student-no img {
+          width: 78%;
+          height: auto;
+          margin-left: 20px;
+          margin-top: 9px;
+      
+        }
+        
+        .valid-until {
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: center;
+            
+        }
+        
+        .valid-until img {
+          width: 70%;
+          height: auto;
+          border: 2px solid black;
+          padding: 20px;
+          display: block;
+          margin-top: -10px;
+        }
+        
+        .course-section {
+            margin: -25px 0;
+            display: flex;
+            justify-content: center;
+
+
+        }
+        
+        .course-section img {
+            width: 19%;
+            height: auto;
+            margin-top: 24%;
+
+
+        }
+        
+        .signature-section {
+            margin: 20px 0;
+            text-align: center;
+            margin-bottom: -19px;
+            margin-top: 68px;
+        }
+        
+        .signature-section img {
+            width: 50%;
+            height: auto;
+        }
+        
+        .signature-line {
+            width: 80%;
+            margin: 10px auto;
+            border-bottom: 2px solid #000;
+        }
+        
+        .barcode-section {
+            border: 1px solid #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 71px;
+            margin-top: 26px;
+        }
+    </style>
+</head>
+<body>
+    <div class="id-card">
+        <!-- Header Section -->
+        <div class="header">
+            <img class="logo" src="images/logo.png" alt="ACLC Logo">
+            <img class="aclc" src="images/layer_3.png" alt="ACLC">
+            <img class="college-title" src="images/vector_smart_object_copy_.png" alt="ACLC COLLEGE">
+            <img class="member-text" src="images/a_member_of_ama_education.png" alt="A member of AMA Education System">
         </div>
-      </div>
-      <img class="do-not-edit-3" src="images/do_not_edit_7.png" alt="Course" width="208" height="39" title="Course">
-      <div class="do-not-edit-4"></div>
-      <img class="do-not-edit-5" src="images/do_not_edit_8.png" alt="Student’s Signature" width="491" height="43" title="Student’s Signature">
+        
+        <!-- Banner Section -->
+        <div class="banner">
+            <img src="images/world-class_it_education.png" alt="World-Class IT Education">
+        </div>
+        
+        <!-- Main Content Section -->
+        <div class="main-content">
+            <div class="photo-container">
+              <!-- 1. lets make it image receiver or holder inside the box-->
+                <img class="photo-border" src="images/picture_border.png" alt="Photo Border">
+            </div>
+            <div class="info-section">
+                <div class="student-no">
+                    <img src="images/do_not_edit_6.png" alt="STUDENT NO:"> <!-- 2. Next at the bottom here is the receiver or holder of the student number -->
+                </div>
+                <div class="valid-until">
+                    <img src="images/valid_until_august_2025_s.png" alt="Valid until August 2025 S.Y. 2024-2025">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Course Section -->
+        <div class="course-section">
+          <!-- 3.Here we add here student name receiver or holder -->
+           <!-- 4. at the bottom of name can we put here the student course receiver or holder -->
+            <img src="images/do_not_edit_7.png" alt="Course">
+        </div>
+        <!-- 5. Here at the bottom of the course image can we put here the student signature receiveror holder -->
+        <!-- Signature Section -->
+        <div class="signature-section">
+          <div class="signature-line"></div>
+            <img src="images/do_not_edit_8.png" alt="Student's Signature">
+            
+        </div>
+        
+        <!-- Barcode Section -->
+         <!-- 6. And last here we can add a box here to put here the student barcode but fit into the border  -->
+        <div class="barcode-section">
+        </div>
     </div>
-  </body>
+    <!-- And then at the bottom of this card we can add here button of download and print just like to the first files i shared -->
+</body>
 </html>

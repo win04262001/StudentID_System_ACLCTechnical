@@ -6,77 +6,116 @@
 <div class="container py-4">
     <div class="row justify-content-center">
         <div class="col-lg-8 col-md-10 col-12">
-            <div class="card shadow-lg border-0 rounded-3 bg-dark text-white">
-                <div class="card-header bg-dark text-white text-center border-bottom border-secondary">
-                    <h2 class="fw-bold">📋 Complete Your Student Profile</h2>
-                    <p class="mb-0 text-muted">Fill out the necessary details to proceed.</p>
+            <div class="card shadow-lg border-0 rounded-3" style="background-color: #e6f2ff;">
+                <div class="card-header text-center border-bottom" style="background-color: #b3d9ff;">
+                    <h2 class="fw-bold" style="color: #003366;">📋 ACLC Student ID Registration</h2>
+                    <p class="mb-0" style="color: #0066cc;">Complete your profile to generate your official student ID</p>
                 </div>
                 <div class="card-body p-3 p-md-4">
                     <form method="POST" action="{{ url_for('update_student_info') }}" enctype="multipart/form-data">
                         <div class="row">
+                            <!-- Full Name -->
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">👤 Full Name</label>
-                                <input type="text" name="name" class="form-control bg-dark text-white border-secondary" value="{{ student.name }}" required>
+                                <label class="block text-sm font-medium text-gray-500">Full Name</label>
+                                <div class="input-group">
+                                    <span class="input-group-text" style="background-color: #cce6ff;">👤</span>
+                                    <input type="text" name="name" class="form-control border-primary" value="{{ student.name }}" readonly>
+                                    <input type="hidden" name="name" value="{{ student.name }}">
+                                </div>
                             </div>
-
+                    
+                            <!-- Student ID (USN) -->
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">📌 Student Number (USN)</label>
-                                <input type="text" name="student_id" class="form-control bg-dark text-white border-secondary" value="{{ session['student_id'] }}" disabled>
+                                <label class="block text-sm font-medium text-gray-500">Student Number (USN)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text" style="background-color: #cce6ff;">📌</span>
+                                    <input type="text" class="form-control border-primary" value="{{ student.student_id }}" readonly>
+                                </div>
                             </div>
                         </div>
-
+                    
                         <div class="row">
+                            <!-- Course -->
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">📚 Course</label>
-                                <input type="text" name="course" class="form-control bg-dark text-white border-secondary" required>
+                                <label class="block text-sm font-medium text-gray-500">Course</label>
+                                <div class="input-group">
+                                    <span class="input-group-text" style="background-color: #cce6ff;">🎓</span>
+                                    <input type="text" name="course" class="form-control border-primary" value="{{ student.course }}" readonly>
+                                    <input type="hidden" name="course" value="{{ student.course }}">
+                                </div>
                             </div>
-
+                    
+                            <!-- Contact Number -->
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">📞 Contact Number</label>
-                                <input type="text" name="contact" class="form-control bg-dark text-white border-secondary" required>
+                                <label class="form-label fw-bold" style="color: #004080;">Contact Number</label>
+                                <div class="input-group">
+                                    <span class="input-group-text" style="background-color: #cce6ff;">📞</span>
+                                    <input type="text" name="contact" class="form-control border-primary" value="{{ student.contact }}" readonly>
+                                    <input type="hidden" name="contact" value="{{ student.contact }}">
+                                </div>
                             </div>
                         </div>
-
+                    
                         <div class="row">
+                            <!-- Guardian Name -->
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">👨‍👩‍👦 Guardian Name</label>
-                                <input type="text" name="guardian_name" class="form-control bg-dark text-white border-secondary" required>
+                                <label class="form-label fw-bold" style="color: #004080;">Guardian Name</label>
+                                <div class="input-group">
+                                    <span class="input-group-text" style="background-color: #cce6ff;">👨‍👩‍👦</span>
+                                    <input type="text" name="guardian_name" class="form-control border-primary" value="{{ student.guardian_name }}" readonly>
+                                    <input type="hidden" name="guardian_name" value="{{ student.guardian_name }}">
+                                </div>
                             </div>
-
+                    
+                            <!-- Address -->
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">🏡 Address</label>
-                                <textarea name="address" class="form-control bg-dark text-white border-secondary" rows="2" required></textarea>
+                                <label class="form-label fw-bold" style="color: #004080;">Address</label>
+                                <div class="input-group">
+                                    <span class="input-group-text" style="background-color: #cce6ff;">🏡</span>
+                                    <input type="text" name="address" class="form-control border-primary" value="{{ student.address }}" readonly>
+                                    <input type="hidden" name="address" value="{{ student.address }}">
+                                </div>
                             </div>
                         </div>
-
+                    
                         <!-- Profile Picture Upload -->
                         <div class="mb-3">
-                            <label class="form-label fw-bold">📷 Upload Profile Picture</label>
-                            <input type="file" name="profile_picture" class="form-control bg-dark text-white border-secondary" id="profile_picture" required accept="image/*">
+                            <label class="form-label fw-bold" style="color: #004080;">📷 Upload Profile Picture</label>
+                            <div class="input-group">
+                                <span class="input-group-text" style="background-color: #cce6ff;">🖼️</span>
+                                <input type="file" name="profile_picture" class="form-control border-primary" id="profile_picture" required accept="image/*">
+                            </div>
                             <div id="profile_status">
                                 <small id="profile_loading" class="text-primary d-none">🔄 Checking...</small>
                                 <small id="profile_error" class="text-danger d-none"></small>
                                 <small id="profile_success" class="text-success d-none"></small>
                             </div>
+                            <small class="text-muted">Please upload a clear headshot (max 2MB)</small>
                         </div>
-
+                    
                         <!-- Signature Tool -->
                         <div class="mb-3">
-                            <label class="form-label fw-bold">✍️ Signature</label>
-                            <div class="card bg-dark text-white">
+                            <label class="form-label fw-bold" style="color: #004080;">✍️ Digital Signature</label>
+                            <div class="card" style="background-color: #f0f8ff;">
                                 <div class="card-body">
                                     <!-- Signature Canvas -->
-                                    <canvas id="signatureCanvas" class="w-100" style="border: 1px solid #ddd; background-color: white; border-radius: 5px;"></canvas>
-
+                                    <canvas id="signatureCanvas" class="w-100" style="border: 1px solid #66b3ff; background-color: white; border-radius: 5px;"></canvas>
+                    
                                     <!-- Controls -->
                                     <div class="mt-3 d-flex flex-wrap justify-content-center gap-2">
-                                        <button type="button" id="clearBtn" class="btn btn-danger">Clear</button>
-                                        <button type="button" id="saveSignatureBtn" class="btn btn-success">Save Signature</button>
+                                        <button type="button" id="clearBtn" class="btn btn-danger">
+                                            <i class="bi bi-eraser-fill"></i> Clear
+                                        </button>
+                                        <button type="button" id="saveSignatureBtn" class="btn btn-success">
+                                            <i class="bi bi-save-fill"></i> Save Signature
+                                        </button>
                                     </div>
-
+                    
                                     <!-- Thickness Slider -->
                                     <div class="mt-3">
-                                        <label for="thicknessSlider" class="form-label">Thickness: <span id="thicknessValue">100%</span></label>
+                                        <label for="thicknessSlider" class="form-label" style="color: #004080;">
+                                            <i class="bi bi-pencil"></i> Thickness: <span id="thicknessValue">100%</span>
+                                        </label>
                                         <input type="range" id="thicknessSlider" class="form-range" min="10" max="200" value="100">
                                     </div>
                                 </div>
@@ -87,11 +126,18 @@
                                 <small id="signature_error" class="text-danger d-none"></small>
                                 <small id="signature_success" class="text-success d-none"></small>
                             </div>
+                            <small class="text-muted">Sign in the white box above</small>
                         </div>
-
-                        <!-- Submit Button (Initially Disabled) -->
-                        <button type="submit" class="btn btn-success w-100 fw-bold mt-3" id="submit_button" disabled>✅ Submit Profile</button>
+                    
+                        <!-- Submit Button -->
+                        <button type="submit" class="btn btn-primary w-100 fw-bold mt-3 py-2" id="submit_button" disabled style="background-color: #0066cc;">
+                            <i class="bi bi-check-circle-fill"></i> Submit Profile
+                        </button>
                     </form>
+                    
+                </div>
+                <div class="card-footer text-center" style="background-color: #b3d9ff;">
+                    <small class="text-muted" style="color: #003366;">ACLC Student ID System • Secure Form</small>
                 </div>
             </div>
         </div>
@@ -108,6 +154,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const thicknessValue = document.getElementById('thicknessValue');
     const signatureInput = document.getElementById('signatureInput');
     const submitButton = document.getElementById('submit_button');
+    const courseSelect = document.getElementById('course');
+    const contactInput = document.getElementById('contact');
+    const guardianInput = document.getElementById('guardian_name');
+    const addressInput = document.getElementById('address');
+    
     let isDrawing = false;
     let strokes = []; // Store all strokes (each stroke is an array of points)
     let currentStroke = []; // Store points for the current stroke
@@ -118,7 +169,7 @@ document.addEventListener("DOMContentLoaded", function () {
         // Get the container width
         const container = canvas.parentElement;
         const containerWidth = container.clientWidth - 20; // Subtract padding
-        const maxWidth = 400; // Maximum width for the canvas
+        const maxWidth = 500; // Maximum width for the canvas
         const canvasWidth = Math.min(containerWidth, maxWidth);
         canvas.width = canvasWidth;
         canvas.height = canvasWidth * 0.5; // Maintain aspect ratio
@@ -136,6 +187,9 @@ document.addEventListener("DOMContentLoaded", function () {
         thicknessValue.textContent = `${thicknessPercent}%`;
         currentThickness = (thicknessPercent / 100) * 2; // Adjust base thickness (2px)
         redrawSignature(); // Redraw the signature with the new thickness
+        
+        // Save thickness to localStorage
+        localStorage.setItem('thicknessValue', thicknessPercent);
     });
 
     // Handle mouse events
@@ -151,6 +205,84 @@ document.addEventListener("DOMContentLoaded", function () {
 
     clearBtn.addEventListener('click', clearCanvas);
     saveSignatureBtn.addEventListener('click', saveSignature);
+
+    // Save form data to localStorage when inputs change
+    courseSelect.addEventListener('change', saveFormData);
+    contactInput.addEventListener('input', saveFormData);
+    guardianInput.addEventListener('input', saveFormData);
+    addressInput.addEventListener('input', saveFormData);
+
+    // Function to save form data to localStorage
+    function saveFormData() {
+        localStorage.setItem('course', courseSelect.value);
+        localStorage.setItem('contact', contactInput.value);
+        localStorage.setItem('guardian', guardianInput.value);
+        localStorage.setItem('address', addressInput.value);
+    }
+
+    // Load saved form data from localStorage
+    function loadFormData() {
+        // Load form fields
+        if (localStorage.getItem('course')) {
+            courseSelect.value = localStorage.getItem('course');
+        }
+        
+        if (localStorage.getItem('contact')) {
+            contactInput.value = localStorage.getItem('contact');
+        }
+        
+        if (localStorage.getItem('guardian')) {
+            guardianInput.value = localStorage.getItem('guardian');
+        }
+        
+        if (localStorage.getItem('address')) {
+            addressInput.value = localStorage.getItem('address');
+        }
+        
+        // Load signature if available
+        if (localStorage.getItem('signatureData')) {
+            signatureInput.value = localStorage.getItem('signatureData');
+            loadSignatureFromData(localStorage.getItem('signatureData'));
+        }
+        
+        // Load thickness value if available
+        if (localStorage.getItem('thicknessValue')) {
+            const savedThickness = localStorage.getItem('thicknessValue');
+            thicknessSlider.value = savedThickness;
+            thicknessValue.textContent = `${savedThickness}%`;
+            currentThickness = (parseInt(savedThickness) / 100) * 2;
+        }
+        
+        // Load strokes if available
+        if (localStorage.getItem('signatureStrokes')) {
+            try {
+                strokes = JSON.parse(localStorage.getItem('signatureStrokes'));
+                redrawSignature();
+            } catch (e) {
+                console.error("Error loading signature strokes:", e);
+            }
+        }
+        
+        // Check if signature was previously validated
+        if (localStorage.getItem('signatureValidated') === 'true') {
+            const successMsg = document.getElementById('signature_success');
+            successMsg.textContent = '✅ Signature processed successfully!';
+            successMsg.classList.remove('d-none');
+            submitButton.disabled = false;
+        }
+    }
+
+    // Load signature from data URL
+    function loadSignatureFromData(dataUrl) {
+        if (!dataUrl) return;
+        
+        const img = new Image();
+        img.onload = function() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        };
+        img.src = dataUrl;
+    }
 
     // Touch event handlers with passive: false to prevent scrolling
     function handleTouchStart(e) {
@@ -214,6 +346,9 @@ document.addEventListener("DOMContentLoaded", function () {
             // Add the current stroke to the strokes array
             if (currentStroke.length > 0) {
                 strokes.push(currentStroke);
+                
+                // Save strokes to localStorage
+                localStorage.setItem('signatureStrokes', JSON.stringify(strokes));
             }
         }
         isDrawing = false;
@@ -226,6 +361,15 @@ document.addEventListener("DOMContentLoaded", function () {
         currentStroke = []; // Clear the current stroke
         signatureInput.value = ''; // Clear the hidden input
         submitButton.disabled = true; // Disable submit button
+        
+        // Clear signature data from localStorage
+        localStorage.removeItem('signatureData');
+        localStorage.removeItem('signatureStrokes');
+        localStorage.removeItem('signatureValidated');
+        
+        // Clear success message
+        document.getElementById('signature_success').classList.add('d-none');
+        document.getElementById('signature_error').classList.add('d-none');
     }
 
     function saveSignature() {
@@ -254,10 +398,14 @@ document.addEventListener("DOMContentLoaded", function () {
         tempCtx.putImageData(imageData, 0, 0);
 
         // Update the hidden input with the signature data
-        signatureInput.value = tempCanvas.toDataURL('image/png');
+        const signatureData = tempCanvas.toDataURL('image/png');
+        signatureInput.value = signatureData;
+        
+        // Save signature data to localStorage
+        localStorage.setItem('signatureData', signatureData);
         
         // Process the signature on the server
-        processSignature(signatureInput.value);
+        processSignature(signatureData);
     }
 
     function processSignature(signatureData) {
@@ -287,6 +435,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 
                 // Enable submit button
                 submitButton.disabled = false;
+                
+                // Save validation status to localStorage
+                localStorage.setItem('signatureValidated', 'true');
             } else {
                 // Show error message
                 const errorMsg = document.getElementById('signature_error');
@@ -295,6 +446,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 
                 // Keep submit button disabled
                 submitButton.disabled = true;
+                
+                // Remove validation status from localStorage
+                localStorage.removeItem('signatureValidated');
             }
         })
         .catch(error => {
@@ -306,6 +460,9 @@ document.addEventListener("DOMContentLoaded", function () {
             
             // Keep submit button disabled
             submitButton.disabled = true;
+            
+            // Remove validation status from localStorage
+            localStorage.removeItem('signatureValidated');
         });
     }
 
@@ -369,6 +526,9 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         return smoothed;
     }
+    
+    // Load saved form data when the page loads
+    loadFormData();
 });
 </script>
 

@@ -3,214 +3,251 @@
 {% block title %}Student Dashboard{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-3 py-md-4">
-    <!-- Application Status Cards -->
-    <div class="mb-4">
-        <h2 class="fw-bold mb-2 fs-3">Student ID Application Status</h2>
-        <p class="text-muted mb-3">Track the progress of your student ID application.</p>
-        
-        <div class="row g-3">
-            <!-- Pending Card -->
-            <div class="col-6 col-md-6 col-lg-3">
-                <div class="card h-100 {% if session.application_status == 'pending' %}bg-warning text-dark{% endif %}">
-                    <div class="card-body p-3 text-center">
-                        <h4 class="card-title d-flex justify-content-center align-items-center gap-2 fs-5">
-                            <i class="fas fa-clock"></i> Pending
-                        </h4>
-                        <p class="card-text small">Your application is awaiting review.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Processing Card -->
-            <div class="col-6 col-md-6 col-lg-3">
-                <div class="card h-100 {% if session.application_status == 'processing' %}bg-info text-white{% endif %}">
-                    <div class="card-body p-3 text-center">
-                        <h4 class="card-title d-flex justify-content-center align-items-center gap-2 fs-5">
-                            <i class="fas fa-sync-alt"></i> Processing
-                        </h4>
-                        <p class="card-text small">Your application is being processed.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Done Card -->
-            <div class="col-6 col-md-6 col-lg-3">
-                <div class="card h-100 {% if session.application_status == 'done' %}bg-success text-white{% endif %}">
-                    <div class="card-body p-3 text-center">
-                        <h4 class="card-title d-flex justify-content-center align-items-center gap-2 fs-5">
-                            <i class="fas fa-check-circle"></i> Done
-                        </h4>
-                        <p class="card-text small">Your student ID is ready for pickup.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Received Card -->
-            <div class="col-6 col-md-6 col-lg-3">
-                <div class="card h-100 {% if session.application_status == 'receive' %}bg-primary text-white{% endif %}">
-                    <div class="card-body p-3 text-center">
-                        <h4 class="card-title d-flex justify-content-center align-items-center gap-2 fs-5">
-                            <i class="fas fa-award"></i> Received
-                        </h4>
-                        {% if session.application_status == 'receive' %}
-                            <p class="card-text small">You have received your student ID.</p>
+<div class="container-fluid py-4">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card welcome-card">
+                <div class="card-body d-flex align-items-center">
+                    <div class="welcome-avatar me-4">
+                        {% if session.profile_picture %}
+                            <img src="{{ url_for('static', filename='uploads/' + session.profile_picture) }}" 
+                                class="rounded-circle" alt="Profile Picture">
                         {% else %}
-                            <p class="card-text small">Pick up your ID to update status.</p>
+                            <div class="avatar-placeholder">
+                                <i class="fas fa-user"></i>
+                            </div>
                         {% endif %}
                     </div>
+                    <div>
+                        <h1 class="welcome-title">Welcome, <span class="student-name">{{ session.name }}</span></h1>
+                        <p class="welcome-subtitle mb-0">Student ID: {{ session.student_id }}</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- Welcome Section -->
-    <div class="card mb-4">
-        <div class="card-body p-3">
-            <h1 class="fw-bold mb-1 fs-4">Welcome, {{ session.user_name }}</h1>
-        </div>
-    </div>
-    
-    <!-- Profile and Application Details -->
-    <div class="row g-3 mb-4">
-        <!-- Student Profile Card -->
-        <div class="col-12 col-md-6">
-            <div class="card h-100">
-                <div class="card-header py-2">
-                    <h5 class="card-title mb-0 fs-5">Your Profile</h5>
+    <!-- Main Content Row -->
+    <div class="row">
+        <!-- Left Column -->
+        <div class="col-lg-8">
+            <!-- Application Status Card -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Application Status</h5>
+                    <span class="badge 
+                        {% if session.application_status == 'pending' %}
+                            bg-warning
+                        {% elif session.application_status == 'processing' %}
+                            bg-info
+                        {% elif session.application_status == 'done' %}
+                            bg-success
+                        {% elif session.application_status == 'receive' %}
+                            bg-primary
+                        {% endif %}">
+                        {{ session.application_status|capitalize }}
+                    </span>
                 </div>
-                <div class="card-body p-3">
-                    <div class="d-flex flex-column flex-sm-row">
-                        <div class="text-center mb-3 mb-sm-0 me-sm-4">
-                            {% if session.profile_picture %}
-                                <img src="{{ url_for('static', filename='uploads/' + session.profile_picture) }}" 
-                                    class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover;">
-                            {% else %}
-                                <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" 
-                                    style="width: 100px; height: 100px; margin: 0 auto;">
-                                    <i class="fas fa-user fa-3x text-dark"></i>
+                <div class="card-body">
+                    <div class="progress-container">
+                        <div class="progress-steps">
+                            <div class="progress-step {% if session.application_status in ['pending', 'processing', 'done', 'receive'] %}active{% endif %}">
+                                <div class="step-icon">
+                                    <i class="fas fa-file-alt"></i>
                                 </div>
+                                <div class="step-label">Submitted</div>
+                            </div>
+                            <div class="progress-step {% if session.application_status in ['processing', 'done', 'receive'] %}active{% endif %}">
+                                <div class="step-icon">
+                                    <i class="fas fa-cogs"></i>
+                                </div>
+                                <div class="step-label">Processing</div>
+                            </div>
+                            <div class="progress-step {% if session.application_status in ['done', 'receive'] %}active{% endif %}">
+                                <div class="step-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="step-label">Ready</div>
+                            </div>
+                            <div class="progress-step {% if session.application_status == 'receive' %}active{% endif %}">
+                                <div class="step-icon">
+                                    <i class="fas fa-id-card"></i>
+                                </div>
+                                <div class="step-label">Received</div>
+                            </div>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress">
+                                {% set progress = 25 %}
+                                {% if session.application_status == 'pending' %}
+                                    {% set progress = 25 %}
+                                {% elif session.application_status == 'processing' %}
+                                    {% set progress = 50 %}
+                                {% elif session.application_status == 'done' %}
+                                    {% set progress = 75 %}
+                                {% elif session.application_status == 'receive' %}
+                                    {% set progress = 100 %}
+                                {% endif %}
+                                <div class="progress-bar" role="progressbar" style="width: {{ progress }}%;" 
+                                    aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Status Details -->
+                    <div class="mt-4">
+                        <div class="alert 
+                            {% if session.application_status == 'pending' %}alert-warning
+                            {% elif session.application_status == 'processing' %}alert-info
+                            {% elif session.application_status == 'done' %}alert-success
+                            {% elif session.application_status == 'receive' %}alert-primary
+                            {% endif %}">
+                            <i class="fas fa-info-circle me-2"></i>
+                            {% if session.application_status == 'pending' %}
+                                Your application has been submitted and is awaiting review.
+                            {% elif session.application_status == 'processing' %}
+                                Your application is currently being processed by our team.
+                            {% elif session.application_status == 'done' %}
+                                Your ID card is ready for collection.
+                            {% elif session.application_status == 'receive' %}
+                                You have received your ID card.
                             {% endif %}
                         </div>
-                        <div class="flex-grow-1">
-                            <div class="info-row mb-2">
-                                <span class="info-label fw-bold me-2">Name:</span>
-                                <span>{{ session.user_name }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Profile Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Your Profile</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="profile-item mb-3">
+                                <label class="profile-label">
+                                    <i class="fas fa-user me-2"></i> Full Name
+                                </label>
+                                <div class="profile-value">{{ session.name }}</div>
                             </div>
-                            <div class="info-row mb-2">
-                                <span class="info-label fw-bold me-2">Student ID:</span>
-                                <span>{{ session.student_id }}</span>
+                            <div class="profile-item mb-3">
+                                <label class="profile-label">
+                                    <i class="fas fa-id-card me-2"></i> Student ID
+                                </label>
+                                <div class="profile-value">{{ session.student_id }}</div>
                             </div>
-                            <div class="info-row mb-2">
-                                <span class="info-label fw-bold me-2">Course:</span>
-                                <span>{{ session.course }}</span>
+                            <div class="profile-item mb-3">
+                                <label class="profile-label">
+                                    <i class="fas fa-graduation-cap me-2"></i> Course
+                                </label>
+                                <div class="profile-value">{{ session.course }}</div>
                             </div>
-                            <div class="info-row mb-2">
-                                <span class="info-label fw-bold me-2">Contact:</span>
-                                <span>{{ session.contact }}</span>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="profile-item mb-3">
+                                <label class="profile-label">
+                                    <i class="fas fa-phone me-2"></i> Contact
+                                </label>
+                                <div class="profile-value">{{ session.contact }}</div>
+                            </div>
+                            <div class="profile-item mb-3">
+                                <label class="profile-label">
+                                    <i class="fas fa-user-friends me-2"></i> Guardian
+                                </label>
+                                <div class="profile-value">{{ session.guardian_name }}</div>
+                            </div>
+                            <div class="profile-item mb-3">
+                                <label class="profile-label">
+                                    <i class="fas fa-map-marker-alt me-2"></i> Address
+                                </label>
+                                <div class="profile-value">{{ session.address }}</div>
                             </div>
                         </div>
                     </div>
                 </div>
+                <div class="card-footer">
+                    <a href="{{ url_for('complete_student_profile') }}" class="btn btn-primary">
+                        <i class="fas fa-edit me-2"></i> Update Profile
+                    </a>
+                </div>
             </div>
         </div>
         
-        <!-- Application Details Card -->
-        <div class="col-12 col-md-6">
-            <div class="card h-100">
-                <div class="card-header py-2">
-                    <h5 class="card-title mb-0 fs-5">Application Details</h5>
+        <!-- Right Column -->
+        <div class="col-lg-4">
+            <!-- Quick Actions Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
                 </div>
-                <div class="card-body p-3">
-                    <div class="info-row mb-2">
-                        <span class="info-label fw-bold me-2">Status:</span>
-                        <span class="fw-bold 
-                            {% if session.application_status == 'pending' %}
-                                text-warning
-                            {% elif session.application_status == 'processing' %}
-                                text-info
-                            {% elif session.application_status == 'done' %}
-                                text-success
-                            {% elif session.application_status == 'receive' %}
-                                text-primary
-                            {% endif %}">
-                            {{ session.application_status|capitalize }}
-                        </span>
-                    </div>
-                    <div class="info-row mb-2">
-                        <span class="info-label fw-bold me-2">Guardian:</span>
-                        <span>{{ session.guardian_name }}</span>
-                    </div>
-                    <div class="info-row mb-2">
-                        <span class="info-label fw-bold me-2">Address:</span>
-                        <span class="text-break">{{ session.address }}</span>
-                    </div>
-                    <div class="info-row mb-2">
-                        <span class="info-label fw-bold me-2">Signature:</span>
-                        {% if session.signature %}
-                            <span class="text-success fw-medium">✓ Uploaded</span>
-                        {% else %}
-                            <span class="text-danger fw-medium">✗ Missing</span>
-                        {% endif %}
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <a href="{{ url_for('my_application_status') }}" class="list-group-item list-group-item-action">
+                            <div class="d-flex align-items-center">
+                                <div class="action-icon me-3">
+                                    <i class="fas fa-info-circle"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Check Status</h6>
+                                    <p class="mb-0 text-muted small">View detailed application status</p>
+                                </div>
+                            </div>
+                        </a>
+                        
+                        <a href="{{ url_for('student_support_messages') }}" class="list-group-item list-group-item-action">
+                            <div class="d-flex align-items-center">
+                                <div class="action-icon me-3">
+                                    <i class="fas fa-headset"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Support</h6>
+                                    <p class="mb-0 text-muted small">Contact support for assistance</p>
+                                </div>
+                            </div>
+                        </a>
                     </div>
                 </div>
-                <div class="card-footer py-2">
-                    <small class="text-muted">Last updated: Today</small>
+            </div>
+            
+            <!-- Status Legend Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Status Legend</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled status-legend">
+                        <li class="mb-2">
+                            <span class="badge bg-warning me-2">Pending</span>
+                            <small>Application submitted and awaiting review</small>
+                        </li>
+                        <li class="mb-2">
+                            <span class="badge bg-info me-2">Processing</span>
+                            <small>Application is being processed</small>
+                        </li>
+                        <li class="mb-2">
+                            <span class="badge bg-success me-2">Ready</span>
+                            <small>ID card is ready for collection</small>
+                        </li>
+                        <li>
+                            <span class="badge bg-primary me-2">Received</span>
+                            <small>ID card has been collected</small>
+                        </li>
+                    </ul>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Quick Actions -->
-    <div class="card mb-4">
-        <div class="card-header py-2">
-            <h5 class="card-title mb-0 fs-5">Quick Actions</h5>
-        </div>
-        <div class="card-body p-3 d-flex flex-wrap gap-2">
-            <a href="{{ url_for('complete_student_profile') }}" class="btn btn-primary">
-                <i class="fas fa-edit me-2"></i> Update Information
-            </a>
-            <a href="{{ url_for('student_support_messages') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-headset me-2"></i> Contact Support
-            </a>
-        </div>
-    </div>
-
-    <!-- Application Progress -->
-    <div class="card mb-4">
-        <div class="card-header py-2">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <h5 class="card-title mb-0 fs-5">Application Progress</h5>
-                <span class="status-badge">
-                    {% set progress = 25 %}
-                    {% if session.application_status == 'pending' %}
-                        {% set progress = 25 %}
-                    {% elif session.application_status == 'processing' %}
-                        {% set progress = 50 %}
-                    {% elif session.application_status == 'done' %}
-                        {% set progress = 75 %}
-                    {% elif session.application_status == 'receive' %}
-                        {% set progress = 100 %}
-                    {% endif %}
-                    {{ progress }}% Complete
-                </span>
-            </div>
-        </div>
-        <div class="card-body p-3">
-            <div class="progress" style="height: 10px;">
-                <div class="progress-bar bg-primary" role="progressbar" style="width: {{ progress }}%;" 
-                    aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100"></div>
-            </div>
-        </div>
-    </div>
+</div>
 
 <!-- Support Modal -->
 <div class="modal fade" id="supportModal" tabindex="-1" aria-labelledby="supportModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
+            <div class="modal-header">
                 <h5 class="modal-title" id="supportModalLabel"><i class="fas fa-headset me-2"></i>Contact Support</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="supportForm">
@@ -245,6 +282,227 @@
         </div>
     </div>
 </div>
+
+<style>
+    :root {
+        --primary-color: #2563eb;
+        --primary-dark: #1d4ed8;
+    }
+    
+    /* Welcome Card */
+    .welcome-card {
+        background: linear-gradient(to right, var(--primary-color), var(--primary-dark));
+        color: white;
+        border: none;
+        border-radius: 12px;
+    }
+    
+    .welcome-avatar {
+        width: 80px;
+        height: 80px;
+        overflow: hidden;
+        border-radius: 50%;
+        border: 3px solid rgba(255, 255, 255, 0.5);
+    }
+    
+    .welcome-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .avatar-placeholder {
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: white;
+    }
+    
+    .welcome-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+    
+    .student-name {
+        display: inline !important;
+    }
+    
+    .welcome-subtitle {
+        opacity: 0.8;
+        font-size: 0.9rem;
+    }
+    
+    /* Progress Steps */
+    .progress-container {
+        margin: 20px 0;
+    }
+    
+    .progress-steps {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .progress-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        z-index: 2;
+        flex: 1;
+    }
+    
+    .step-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background-color: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 10px;
+        color: #64748b;
+        font-size: 1.25rem;
+        transition: all 0.3s;
+        border: 2px solid #e2e8f0;
+    }
+    
+    .progress-step.active .step-icon {
+        background-color: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 5px rgba(37, 99, 235, 0.2);
+    }
+    
+    .step-label {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #64748b;
+        text-align: center;
+        position: relative;
+        z-index: 2;
+        background-color: white;
+        padding: 0 5px;
+    }
+    
+    .progress-step.active .step-label {
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+    
+    .progress-track {
+        position: relative;
+        margin-top: -25px;
+        z-index: 1;
+    }
+    
+    .progress {
+        height: 8px;
+        border-radius: 4px;
+        background-color: #f1f5f9;
+        z-index: 1;
+        position: relative;
+    }
+    
+    .progress-bar {
+        background-color: var(--primary-color);
+        border-radius: 4px;
+        transition: width 0.5s ease;
+    }
+    
+    /* Profile Details */
+    .profile-item {
+        margin-bottom: 1rem;
+    }
+    
+    .profile-label {
+        font-weight: 600;
+        color: #64748b;
+        font-size: 0.9rem;
+    }
+    
+    .profile-value {
+        font-weight: 500;
+        color: #1e293b;
+    }
+    
+    /* Quick Actions */
+    .action-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background-color: rgba(37, 99, 235, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary-color);
+        font-size: 1rem;
+    }
+    
+    .list-group-item {
+        padding: 1rem 1.25rem;
+        border-left: 0;
+        border-right: 0;
+    }
+    
+    .list-group-item:first-child {
+        border-top: 0;
+    }
+    
+    .list-group-item:last-child {
+        border-bottom: 0;
+    }
+    
+    /* Status Legend */
+    .status-legend small {
+        color: #64748b;
+        font-size: 0.85rem;
+    }
+    
+    /* Responsive Adjustments */
+    @media (max-width: 991px) {
+        .welcome-avatar {
+            width: 70px;
+            height: 70px;
+        }
+        
+        .welcome-title {
+            font-size: 1.35rem;
+        }
+    }
+    
+    @media (max-width: 767px) {
+        .welcome-avatar {
+            width: 60px;
+            height: 60px;
+        }
+        
+        .welcome-title {
+            font-size: 1.25rem;
+        }
+        
+        .step-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 1rem;
+        }
+        
+        .step-label {
+            font-size: 0.75rem;
+        }
+        
+        .progress-track {
+            margin-top: -20px;
+        }
+    }
+</style>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -358,5 +616,33 @@
             sendButton.disabled = false;
         });
     });
+    
+    // Helper function for toast notifications
+    function showToast(message, type = 'info') {
+        const toastContainer = document.createElement('div');
+        toastContainer.className = `toast align-items-center text-white bg-${type} border-0 position-fixed bottom-0 end-0 m-3`;
+        toastContainer.setAttribute('role', 'alert');
+        toastContainer.setAttribute('aria-live', 'assertive');
+        toastContainer.setAttribute('aria-atomic', 'true');
+        
+        toastContainer.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        `;
+        
+        document.body.appendChild(toastContainer);
+        
+        const toast = new bootstrap.Toast(toastContainer);
+        toast.show();
+        
+        // Remove toast after it's hidden
+        toastContainer.addEventListener('hidden.bs.toast', function() {
+            document.body.removeChild(toastContainer);
+        });
+    }
 </script>
 {% endblock %}

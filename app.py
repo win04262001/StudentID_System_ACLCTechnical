@@ -1,3 +1,4 @@
+from binascii import Error
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import timedelta
@@ -5,48 +6,84 @@ import mysql.connector
 from functools import wraps
 from werkzeug.utils import secure_filename
 import os
-import barcode
+from barcode import Code39, get_barcode_class
 from barcode.writer import ImageWriter
 from flask import send_from_directory
 import cv2
 import numpy as np
 import easyocr
-from concurrent.futures import ThreadPoolExecutor
 import base64
 import re
 from PIL import Image
 import io
-import json
-# Add this import at the top of the file with your other imports
-import jinja2
 from markupsafe import Markup
+import random
+import time
 
 # Import the OpenCV-based face validation module
-from face_validation import FaceValidator, process_profile_picture
+from face_validation import FaceValidator
 
 # Import the trainable validator
 from trainable_validator import TrainablePhotoValidator
 from datetime import datetime
 
-# ✅ Define Flask App
-app = Flask(__name__, static_folder="static")
-app.secret_key = "123"
-app.permanent_session_lifetime = timedelta(hours=2)
+#for email sending
+from flask_mail import Mail, Message
+from itsdangerous import URLSafeTimedSerializer
+import os
 
-# Add this code after your app initialization (after app = Flask(...))
+#------------------------------------------------------------------------------------
+# Define Flask App
+# Purpose: Initialize the Flask application with configuration settings
+# This is the main entry point of the web application
+app = Flask(__name__, static_folder="static")
+app.secret_key = "123"  # Used for session encryption and security
+app.permanent_session_lifetime = timedelta(hours=2)  # Sets how long a user session lasts
+
+
+#-----------------------------------------------------------------------------------# Configure Flask-Mail for sending emails
+# Purpose: Set up email configuration for sending notifications
+
+# Config
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'aclc.id.system@gmail.com'  # your Gmail
+app.config['MAIL_PASSWORD'] = 'popw loyf hjjc etst'        # the app password
+app.config['MAIL_DEFAULT_SENDER'] = ('Technical Support Department', 'aclc.id.system@gmail.com')
+app.config['SECRET_KEY'] = '123'
+
+
+mail = Mail(app)
+
+# Token serializer
+serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+
+#-----------------------------------------------------------------------------------
+
+# Purpose: Create a custom template filter to convert newlines to HTML line breaks
+# This helps with displaying multi-line text properly in HTML templates
 @app.template_filter('nl2br')
 def nl2br_filter(s):
   if s is None:
       return ''
   return Markup(s.replace('\n', '<br>'))
 
-# ✅ Configure File Uploads
+#-----------------------------------------------------------------------------------
+
+# Configure File Uploads
+# Purpose: Set up file upload configuration for profile pictures and signatures
+# This defines where uploaded files will be stored and what file types are allowed
 UPLOAD_FOLDER = "static/uploads/"
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)  # Create upload directory if it doesn't exist
+
+#-----------------------------------------------------------------------------------
 
 # Create directories for training data
+# Purpose: Set up directories for storing training data for the photo validator model
+# These directories will store valid and invalid photos for machine learning training
 TRAINING_FOLDER = "training"
 VALID_PHOTOS_DIR = os.path.join(TRAINING_FOLDER, "valid")
 INVALID_PHOTOS_DIR = os.path.join(TRAINING_FOLDER, "invalid")
@@ -55,7 +92,11 @@ MODEL_PATH = os.path.join(TRAINING_FOLDER, "photo_validator_model.joblib")
 os.makedirs(VALID_PHOTOS_DIR, exist_ok=True)
 os.makedirs(INVALID_PHOTOS_DIR, exist_ok=True)
 
-# ✅ Initialize the trainable validator
+#-----------------------------------------------------------------------------------
+
+# Initialize the trainable validator
+# Purpose: Load or create the machine learning model for photo validation
+# This model will be used to automatically validate student profile pictures
 try:
     if os.path.exists(MODEL_PATH):
         photo_validator = TrainablePhotoValidator(model_path=MODEL_PATH)
@@ -67,7 +108,11 @@ except Exception as e:
     print(f"Error initializing photo validator: {str(e)}")
     photo_validator = None
 
-# ✅ Database Configuration
+#-----------------------------------------------------------------------------------
+
+# Database Configuration
+# Purpose: Define database connection parameters
+# This configuration is used to connect to the MySQL database
 DB_CONFIG = {
     "host": "localhost",
     "user": "root",
@@ -75,11 +120,17 @@ DB_CONFIG = {
     "database": "studentid"
 }
 
-# ✅ Database Connection
+# Database Connection
+# Purpose: Create a function to establish database connections
+# This function is used throughout the application whenever database access is needed
 def get_db_connection():
     return mysql.connector.connect(**DB_CONFIG)
 
-# ✅ Authentication Middleware
+#-----------------------------------------------------------------------------------
+
+# Authentication Middleware
+# Purpose: Create a decorator to protect routes that require authentication
+# This ensures only logged-in users with appropriate roles can access certain pages
 def login_required(role="student"):
     def wrapper(fn):
         @wraps(fn)
@@ -94,100 +145,154 @@ def login_required(role="student"):
         return decorated_view
     return wrapper
 
-# ✅ Load EasyOCR model once to avoid reloading every request
+# Load EasyOCR model once to avoid reloading every request
+# Purpose: Initialize the OCR engine for text recognition in images
+# Loading this once improves performance as it's a resource-intensive operation
 reader = easyocr.Reader(['en'], gpu=False)
 
-# ✅ Check if an image is blurry
-def is_blurry(image, threshold=80):
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
-    return laplacian_var < threshold
 
-# ✅ Check if a face is detected using OpenCV's Haar cascade
-def is_face_detected(image_path):
-    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
-    image = cv2.imread(image_path)
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-    return len(faces) > 0
 
-# ✅ Check if the background is plain using edge detection
-def is_plain_background(image_path, edge_threshold=5000):
-    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-    edges = cv2.Canny(image, 50, 150)
-    return np.count_nonzero(edges) < edge_threshold
 
-# ✅ Check if a signature is valid using OCR
-def is_signature_valid(image_path):
-    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-    _, binary = cv2.threshold(image, 128, 255, cv2.THRESH_BINARY_INV)
-    white_pixels = np.count_nonzero(binary)
-    return 1000 < white_pixels < 20000  # Adjust values if necessary
+#----------------------------------------------------------------VALIDATION PROCESS SIDE-----------------------------------------------------------------------------------------------
 
-# ✅ Process Electronic Signature
+# # Check if an image is blurry
+# # Purpose: Determine if an uploaded image is too blurry to be acceptable
+# # Used during profile picture validation to ensure image quality
+# def is_blurry(image, threshold=80):
+#     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+#     laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
+#     return laplacian_var < threshold
+
+# # Check if a face is detected using OpenCV's Haar cascade
+# # Purpose: Verify that a profile picture contains a face
+# # This ensures that profile pictures actually show the student's face
+# def is_face_detected(image_path):
+#     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+#     image = cv2.imread(image_path)
+#     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+#     faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+#     return len(faces) > 0
+
+# # Check if the background is plain using edge detection
+# # Purpose: Verify that a profile picture has a plain background
+# # This ensures professional-looking ID photos with minimal distractions
+# def is_plain_background(image_path, edge_threshold=5000):
+#     image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+#     edges = cv2.Canny(image, 50, 150)
+#     return np.count_nonzero(edges) < edge_threshold
+
+# # Check if a signature is valid using OCR
+# # Purpose: Validate that an uploaded signature meets quality requirements
+# # This ensures signatures are clear and properly formed
+# def is_signature_valid(image_path):
+#     image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+#     _, binary = cv2.threshold(image, 128, 255, cv2.THRESH_BINARY_INV)
+#     white_pixels = np.count_nonzero(binary)
+#     return 1000 < white_pixels < 20000  # Adjust values if necessary
+
+# Process Electronic Signature
+# Purpose: Process and enhance electronic signatures drawn on a canvas
+# This function converts base64 data to an image, removes background, enhances contrast, and saves the signature
 def process_esignature(base64_data, student_id):
     """
     Process electronic signature from canvas:
     1. Convert base64 to image
     2. Remove background
-    3. Auto-correct signature (enhance contrast, smooth edges)
-    4. Save processed signature
+    3. Enhance signature visibility
+    4. Save as transparent PNG
     """
     try:
-        # Extract the base64 data (remove the data:image/png;base64, prefix)
-        base64_data = re.sub('^data:image/.+;base64,', '', base64_data)
-        
-        # Convert base64 to image
+        import base64, re, io
+        from PIL import Image
+        import numpy as np
+        import cv2
+        import os
+
+        # Remove base64 prefix if present
+        base64_data = re.sub(r'^data:image/[^;]+;base64,', '', base64_data)
+
+        # Decode base64 → binary → PIL image
         img_data = base64.b64decode(base64_data)
-        img = Image.open(io.BytesIO(img_data))
-        
-        # Convert to numpy array for OpenCV processing
+        img = Image.open(io.BytesIO(img_data)).convert("RGBA")
+
+        # Convert to OpenCV format
         img_array = np.array(img)
-        
-        # If image has alpha channel, use it for transparency
-        if img_array.shape[2] == 4:
-            # Extract alpha channel
-            alpha = img_array[:, :, 3]
-            # Convert to RGB
-            img_array = cv2.cvtColor(img_array, cv2.COLOR_RGBA2RGB)
-        else:
-            # Create mask based on white background
-            gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
+        bgr = cv2.cvtColor(img_array[:, :, :3], cv2.COLOR_RGBA2RGB)
+        alpha = img_array[:, :, 3]
+
+        # If no alpha, generate it from brightness
+        if alpha is None or np.max(alpha) == 0:
+            gray = cv2.cvtColor(bgr, cv2.COLOR_RGB2GRAY)
             _, alpha = cv2.threshold(gray, 240, 255, cv2.THRESH_BINARY_INV)
-        
-        # Remove background (make white pixels transparent)
-        # Create a new RGBA image
-        height, width = img_array.shape[:2]
-        rgba = np.zeros((height, width, 4), dtype=np.uint8)
-        rgba[:, :, 0:3] = img_array
-        rgba[:, :, 3] = alpha
-        
-        # Enhance contrast to make signature more visible
-        alpha_enhanced = cv2.equalizeHist(alpha)
-        
-        # Apply slight Gaussian blur to smooth edges
-        alpha_enhanced = cv2.GaussianBlur(alpha_enhanced, (3, 3), 0)
-        
-        # Update alpha channel with enhanced version
-        rgba[:, :, 3] = alpha_enhanced
-        
-        # Convert back to PIL Image
-        processed_img = Image.fromarray(rgba)
-        
-        # Save the processed signature
+
+        # Enhance and smooth alpha mask
+        enhanced_alpha = cv2.equalizeHist(alpha)
+        enhanced_alpha = cv2.GaussianBlur(enhanced_alpha, (3, 3), 0)
+
+        # Merge BGR + updated alpha → RGBA
+        result_rgba = cv2.merge([bgr[:, :, 0], bgr[:, :, 1], bgr[:, :, 2], enhanced_alpha])
+
+        # Save image using PIL
+        result_img = Image.fromarray(result_rgba, 'RGBA')
         filename = f"{student_id}_signature.png"
         filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-        processed_img.save(filepath)
-        
+        result_img.save(filepath)
+
         return filename
+
     except Exception as e:
-        print(f"Error processing signature: {str(e)}")
+        print(f"❌ Error processing signature: {str(e)}")
         return None
 
+
 # Create a global instance of the validator
+# Purpose: Initialize the face validator for use throughout the application
 face_validator = FaceValidator()
 
+
+
+
+def generate_barcode(usn):
+    """Generate a Code39 barcode PNG from the student's USN"""
+    barcode_dir = os.path.join("static", "barcodes")
+    os.makedirs(barcode_dir, exist_ok=True)
+
+    barcode_filename = f"{usn}.png"
+    barcode_path = os.path.join(barcode_dir, barcode_filename)
+
+    # Generate the barcode
+    code39 = Code39(usn, writer=ImageWriter(), add_checksum=False)
+    code39.save(os.path.splitext(barcode_path)[0])  # remove .png from filename
+
+    return barcode_filename
+
+
+
+
+
+@app.route('/test-email')
+def test_email():
+    msg = Message("Baho kag tae zar",
+                  recipients=['zarwin.villaro@aclcbutuan.edu.ph'])
+    msg.body = "This is a test email sent from Flask using Brevo SMTP."
+    try:
+        mail.send(msg)
+        return "✅ Test email sent!"
+    except Exception as e:
+        return f"❌ Failed to send email: {str(e)}"
+
+
+
+
+
+
+
+
+#-----------------------------------------------------------------------------------
+
 # ✅ Validate Image (Profile & Signature) - UPDATED to use trainable validator
+# Purpose: API endpoint to validate uploaded images (profile pictures and signatures)
+# This route is called via AJAX when students upload images during application
 @app.route('/validate_image/<image_type>', methods=['POST'])
 def validate_image(image_type):
     if image_type not in ["profile", "signature"]:
@@ -197,50 +302,30 @@ def validate_image(image_type):
     if not file:
         return jsonify({"valid": False, "error": "No image uploaded"}), 400
 
-    # Save the file before processing
+    # Save the uploaded file
     filename = secure_filename(file.filename)
     image_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
     file.save(image_path)
 
-    # Use ThreadPoolExecutor to process the image in parallel
-    with ThreadPoolExecutor() as executor:
-        if image_type == "profile":
-            # Check if we have a trained model
-            if photo_validator and photo_validator.model:
-                # Use the trainable validator
-                file_content = file.read()
-                file.seek(0)  # Reset file pointer
-                
-                # Validate using the trained model
-                result = photo_validator.validate(image_path=image_path)
-                
-                # Make result JSON serializable
-                result = make_json_serializable(result)
-                
-                return jsonify(result)
-            else:
-                # Fall back to the original validation if no model is available
-                face_result = executor.submit(is_face_detected, image_path)
-                bg_result = executor.submit(is_plain_background, image_path)
-                blur_result = executor.submit(is_blurry, cv2.imread(image_path))
+    if image_type == "profile":
+        # Use ML validator if trained model exists
+        if photo_validator and photo_validator.model:
+            result = photo_validator.validate(image_path=image_path)
+        else:
+            result = face_validator.validate_from_file(image_path)
 
-                if not face_result.result():
-                    return jsonify({"valid": False, "error": "Profile picture must contain a visible face."})
+        return jsonify(make_json_serializable(result))
 
-                if not bg_result.result():
-                    return jsonify({"valid": False, "error": "Profile picture must have a plain background."})
+    elif image_type == "signature":
+        # Optional: add simple pixel-based validation if needed
+        return jsonify({"valid": True})
 
-                if blur_result.result():
-                    return jsonify({"valid": False, "error": "Profile picture is blurry."})
+    return jsonify({"valid": False, "error": "Unhandled image type"}), 400
 
-        elif image_type == "signature":
-            signature_result = executor.submit(is_signature_valid, image_path)
-            if not signature_result.result():
-                return jsonify({"valid": False, "error": "Signature is not clear or readable."})
-
-    return jsonify({"valid": True})
 
 # Helper function to make objects JSON serializable
+# Purpose: Convert complex Python objects to JSON-compatible format
+# This is needed when returning validation results that contain numpy arrays or other non-serializable objects
 def make_json_serializable(obj):
     """Convert a dictionary with potentially non-serializable values to a JSON-serializable dict"""
     if isinstance(obj, dict):
@@ -258,41 +343,333 @@ def make_json_serializable(obj):
     else:
         return str(obj)  # Convert any other types to strings
 
+#-----------------------------------------------------------------------------------
+
 # ✅ Process and Save Electronic Signature
+# Purpose: API endpoint to process and save signatures drawn on a canvas
+# This route is called when a student draws a signature using the electronic signature pad
 @app.route('/process_signature', methods=['POST'])
+@login_required("student")
 def process_signature():
     if 'student_id' not in session:
         return jsonify({"success": False, "error": "Not logged in"}), 401
-    
-    data = request.json
-    signature_data = data.get('signature')
-    student_id = session.get('student_id')
-    
-    if not signature_data:
-        return jsonify({"success": False, "error": "No signature data provided"}), 400
-    
-    # Process the signature
-    filename = process_esignature(signature_data, student_id)
-    
-    if not filename:
-        return jsonify({"success": False, "error": "Failed to process signature"}), 500
-    
-    # Update the database with the new signature
-    conn = get_db_connection()
-    cursor = conn.cursor()
+
     try:
+        data = request.get_json()
+        signature_data = data.get('signature')
+        student_id = session.get('student_id')
+
+        if not signature_data:
+            return jsonify({"success": False, "error": "No signature data provided"}), 400
+
+        # ✅ Process signature (base64 to PNG)
+        filename = process_esignature(signature_data, student_id)
+
+        if not filename:
+            return jsonify({"success": False, "error": "Failed to process signature"}), 500
+
+        # ✅ Update the database
+        conn = get_db_connection()
+        cursor = conn.cursor()
         cursor.execute("UPDATE students SET signature = %s WHERE student_id = %s", 
-                      (filename, student_id))
+                       (filename, student_id))
         conn.commit()
+
         return jsonify({"success": True, "filename": filename})
+
     except Exception as e:
-        conn.rollback()
+        print("❌ Signature Processing Error:", str(e))  # Debug log
         return jsonify({"success": False, "error": str(e)}), 500
+
     finally:
+        try:
+            cursor.close()
+            conn.close()
+        except:
+            pass
+
+        
+        
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+# ---------- User Authentication ----------
+# Purpose: Handle student registration
+# This route allows new students to create accounts in the system
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    email_sent = False
+    otp_verified = False
+    entered_email = session.get('otp_email')
+
+    if request.method == 'POST':
+        form_stage = request.form.get('form_stage')
+
+        # STEP 1: Email entered → Send OTP
+        if form_stage == 'email_stage':
+            email = request.form.get('email', '').strip().lower()
+            entered_email = email
+
+            if not email or not email.endswith('@aclcbutuan.edu.ph'):
+                flash("⚠️ Please use your institutional email.", "danger")
+            else:
+                conn = get_db_connection()
+                cursor = conn.cursor(dictionary=True)
+
+                # Check if email already registered in users table
+                cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+                if cursor.fetchone():
+                    flash("⚠️ Email is already registered. Please log in.", "warning")
+                    return redirect(url_for('login'))
+
+                # Check if email exists in the preloaded students table
+                cursor.execute("SELECT student_id FROM students WHERE email = %s", (email,))
+                student = cursor.fetchone()
+                if not student:
+                    flash("❌ Your email is not found in the official student records. Please contact the registrar.", "danger")
+                else:
+                    otp = str(random.randint(100000, 999999))
+                    session['otp'] = otp
+                    session['otp_email'] = email
+                    session['otp_time'] = int(time.time())
+
+                    msg = Message("Your ACLC OTP Code", recipients=[email])
+                    msg.body = f"Your ACLC ID registration code is: {otp}"
+                    mail.send(msg)
+
+                    flash("✅ OTP sent to your email.", "success")
+                    email_sent = True
+
+                cursor.close()
+                conn.close()
+
+        # STEP 2: OTP entered → Verify
+        elif form_stage == 'otp_stage':
+            entered_email = session.get('otp_email')
+            user_otp = request.form.get('otp')
+
+            if request.form.get('resend_otp') == '1':
+                otp = str(random.randint(100000, 999999))
+                session['otp'] = otp
+                session['otp_time'] = int(time.time())
+
+                msg = Message("Your ACLC OTP Code (Resent)", recipients=[entered_email])
+                msg.body = f"Your new ACLC ID registration code is: {otp}"
+                mail.send(msg)
+
+                flash("🔁 OTP resent to your email.", "info")
+                return render_template("register.html", email_sent=True, otp_verified=False, email=entered_email)
+
+            otp_valid = session.get('otp')
+            otp_time = session.get('otp_time')
+            current_time = int(time.time())
+
+            if not user_otp or otp_valid != user_otp:
+                flash("❌ Invalid OTP!", "danger")
+                email_sent = True
+            elif current_time - otp_time > 300:
+                flash("❌ OTP has expired. Please request a new one.", "danger")
+                session.pop('otp', None)
+                session.pop('otp_time', None)
+                email_sent = False
+            else:
+                otp_verified = True
+                email_sent = True
+                flash("✅ OTP verified. Set your password.", "success")
+
+        # STEP 3: Password set → Create account with linked student_id
+        elif form_stage == 'password_stage':
+            email = session.get('otp_email')
+            password = request.form.get('password')
+            confirm = request.form.get('confirm_password')
+
+            if password != confirm:
+                flash("❌ Passwords do not match!", "danger")
+                otp_verified = True
+                email_sent = True
+            else:
+                conn = get_db_connection()
+                cursor = conn.cursor(dictionary=True)
+
+                # Check again to be sure
+                cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+                if cursor.fetchone():
+                    flash("⚠️ Email is already registered. Please log in.", "warning")
+                    return redirect(url_for('login'))
+
+                # Get the student_id from the student record
+                cursor.execute("SELECT student_id FROM students WHERE email = %s", (email,))
+                student = cursor.fetchone()
+
+                if not student:
+                    flash("❌ Student record not found. Contact registrar.", "danger")
+                else:
+                    student_id = student['student_id']
+                    hashed_password = generate_password_hash(password)
+
+                    try:
+                        cursor.execute("""
+                            INSERT INTO users (email, password, is_verified, role, student_id)
+                            VALUES (%s, %s, TRUE, 'student', %s)
+                        """, (email, hashed_password, student_id))
+                        conn.commit()
+
+                        session.pop('otp', None)
+                        session.pop('otp_email', None)
+                        session.pop('otp_time', None)
+
+                        flash("✅ Account created! Please log in.", "success")
+                        return redirect(url_for('login'))
+
+                    except Error as e:
+                        conn.rollback()
+                        flash(f"❌ Database error: {str(e)}", "danger")
+                    finally:
+                        cursor.close()
+                        conn.close()
+
+    return render_template("register.html", email_sent=email_sent, otp_verified=otp_verified, email=entered_email)
+
+
+
+
+
+
+@app.route('/verify/<token>')
+def verify_email(token):
+    try:
+        email = serializer.loads(token, salt='email-verify', max_age=3600)
+    except:
+        flash("❌ Invalid or expired verification link.", "danger")
+        return redirect(url_for('register'))
+
+    return redirect(url_for('set_password', email=email))
+
+
+
+
+
+
+# Purpose: Handle user login (both students and admins)
+# This route authenticates users and redirects them to the appropriate dashboard
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form.get('email').strip().lower()
+        password = request.form.get('password')
+
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # Step 1: Check email in users table
+        cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+        user = cursor.fetchone()
+
+        if user and check_password_hash(user['password'], password):
+            if not user['is_verified']:
+                flash("⚠️ Please verify your email first.", "warning")
+                return redirect(url_for('login'))
+
+            session['user_id'] = user['id']
+            session['user_name'] = user.get('name', '')
+            session['user_role'] = user.get('role', 'student')
+            session['user_email'] = user['email']
+
+            # ✅ Step 2: Check if student record exists
+            cursor.execute("SELECT student_id, application_status FROM students WHERE email = %s", (email,))
+            student = cursor.fetchone()
+
+            if not student:
+                flash("❌ Your email is not found in the registrar's student list. Please contact TSD.", "danger")
+                return redirect(url_for('login'))
+
+            # ✅ Set student_id in session
+            session['student_id'] = student['student_id']
+
+            # ✅ Step 3: Check application_status
+            if student['application_status'] in ['pending', 'processing', 'done', 'receive']:
+                return redirect(url_for('student_dashboard'))
+            else:
+                return redirect(url_for('complete_student_profile'))
+
+        else:
+            flash("❌ Invalid email or password.", "danger")
+
         cursor.close()
         conn.close()
 
+    return render_template("login.html")
+
+
+
+    
+
+@app.route('/usn_finder', methods=['GET', 'POST'])
+@login_required("student")
+def usn_finder():
+    
+    print("🔍 SESSION =", dict(session))
+
+    user_id = session['user_id']
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # ✅ If already linked → skip to dashboard
+    cursor.execute("SELECT student_id FROM users WHERE id = %s", (user_id,))
+    user = cursor.fetchone()
+    if user and user['student_id']:
+        return redirect(url_for('student_dashboard'))
+
+    # ✅ USN Submission
+    if request.method == 'POST':
+        usn = request.form.get('usn', '').strip()
+
+        if not usn or len(usn) != 11 or not usn.isdigit():
+            flash("❌ USN must be 11 digits.", "danger")
+        else:
+            # (Optional) check if USN exists in `students` table
+            cursor.execute("SELECT * FROM students WHERE student_id = %s", (usn,))
+            if not cursor.fetchone():
+                flash("❌ USN not found. Please contact the registrar.", "danger")
+            else:
+                cursor.execute("UPDATE users SET student_id = %s WHERE id = %s", (usn, user_id))
+                conn.commit()
+                session['student_id'] = usn
+                flash("✅ USN linked successfully!", "success")
+                return redirect(url_for('student_dashboard'))
+
+    cursor.close()
+    conn.close()
+    return render_template("usn_finder.html")
+
+
+
+
+
+
+# ---------- Home Page ----------
+# Purpose: Display the main landing page of the application
+# This is the first page users see when visiting the site
+@app.route('/')
+def home():
+    return render_template("home.html")
+
+# Purpose: Display information about the ID section
+# This route provides general information about student IDs
+@app.route('/ID_section')
+def ID_section():
+    return render_template("ID_section.html")
+
+
+
+
+
+#----------------------------------------------------ADMIN SIDE---------------------------------------------------------------------------------------------------------
+
 # NEW: Admin route to train the photo validator model
+# Purpose: Allow admins to train the machine learning model for photo validation
+# This route handles both displaying the training interface and processing training requests
 @app.route('/admin/train_validator', methods=['GET', 'POST'])
 @login_required("admin")
 def train_validator():
@@ -331,7 +708,68 @@ def train_validator():
         model_exists=model_exists
     )
 
+
+
+# Add this new route for admin import page
+@app.route('/admin/import_students', methods=['GET', 'POST'])
+@login_required("admin")
+def admin_import_students():
+    if request.method == 'POST':
+        student_id = request.form.get("student_id", "").strip()
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        course = request.form.get("course", "").strip()
+        contact = request.form.get("contact", "").strip()
+        guardian_name = request.form.get("guardian_name", "").strip()
+        address = request.form.get("address", "").strip()
+
+        # Basic validation
+        if not student_id or len(student_id) != 11 or not student_id.isdigit():
+            flash("Invalid USN. Must be 11 digits.", "danger")
+            return redirect(url_for("admin_import_students"))
+
+        if not name or not email:
+            flash("Name and email are required.", "danger")
+            return redirect(url_for("admin_import_students"))
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        try:
+            # Check for duplicate USN or email
+            cursor.execute("SELECT 1 FROM students WHERE student_id = %s OR email = %s", (student_id, email))
+            if cursor.fetchone():
+                flash("Student with this USN or email already exists.", "danger")
+                return redirect(url_for("admin_import_students"))
+
+            # Insert into students
+            cursor.execute("""
+                INSERT INTO students (student_id, name, email, course, contact, guardian_name, address)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, (student_id, name, email, course, contact, guardian_name, address))
+
+            conn.commit()
+            flash("Student record added successfully!", "success")
+
+        except Exception as e:
+            conn.rollback()
+            flash(f"Database error: {str(e)}", "danger")
+
+        finally:
+            cursor.close()
+            conn.close()
+
+        return redirect(url_for("admin_import_students"))
+
+    return render_template("admin_import_students.html")
+
+
+
+    
+
 # NEW: Admin route to upload training data
+# Purpose: Allow admins to upload photos for training the validator model
+# This route handles file uploads for both valid and invalid photo categories
 @app.route('/admin/upload_training_data', methods=['POST'])
 @login_required("admin")
 def upload_training_data():
@@ -361,7 +799,11 @@ def upload_training_data():
     flash(f"✅ Uploaded {count} {data_type} photos for training", "success")
     return redirect(url_for('train_validator'))
 
+
+
 # NEW: Admin route to test the validator on a specific image
+# Purpose: Allow admins to test the trained model on individual photos
+# This helps verify that the model is working correctly before using it in production
 @app.route('/admin/test_validator', methods=['POST'])
 @login_required("admin")
 def test_validator():
@@ -396,114 +838,20 @@ def test_validator():
     
     return redirect(url_for('train_validator'))
 
-# ---------- Home Page ----------
-@app.route('/')
-def home():
-    return render_template("home.html")
 
-@app.route('/ID_section')
-def ID_section():
-    return render_template("ID_section.html")
-
+# Purpose: Display a sample ID card layout
+# This route shows administrators what the final ID cards will look like
 @app.route('/sample_layout')
 @login_required("admin")
 def sample_layout():
     return render_template("sample_layout.html")
-# ---------- User Authentication ----------
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        name = request.form.get('name').strip()
-        usn = request.form.get('usn').strip()  # USN must be unique
-        password = request.form.get('password').strip()
-        confirm_password = request.form.get('confirm_password').strip()
 
-        # ✅ Validate required fields
-        if not all([name, usn, password, confirm_password]):
-            flash("⚠️ All fields are required!", "danger")
-            return redirect(url_for('register'))
-
-        # ✅ Validate USN format (must be exactly 11 digits)
-        if len(usn) != 11 or not usn.isdigit():
-            flash("⚠️ USN must be exactly 11 digits!", "danger")
-            return redirect(url_for('register'))
-
-        # ✅ Validate password match
-        if password != confirm_password:
-            flash("⚠️ Passwords do not match!", "danger")
-            return redirect(url_for('register'))
-
-        hashed_password = generate_password_hash(password)
-
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        try:
-            # ✅ Check if the USN already exists in `users`
-            cursor.execute("SELECT id FROM users WHERE student_id = %s", (usn,))
-            if cursor.fetchone():
-                flash("⚠️ USN already exists! Try a different one.", "danger")
-                return redirect(url_for('register'))
-
-            # ✅ Insert student into `users` table (For login access)
-            cursor.execute("""
-                INSERT INTO users (student_id, name, password, role) 
-                VALUES (%s, %s, %s, 'student')
-            """, (usn, name, hashed_password))
-
-            # ✅ Insert student into `students` table (For profile completion)
-            cursor.execute("""
-                INSERT INTO students (student_id, name, application_status, barcode) 
-                VALUES (%s, %s, 'pending', %s)
-            """, (usn, name, f"{usn}.png")) 
-
-            conn.commit()
-            flash("✅ Account created successfully! Please log in.", "success")
-            return redirect(url_for('login'))
-
-        except mysql.connector.Error as e:
-            flash(f"⚠️ Database Error: {str(e)}", "danger")
-            conn.rollback()
-        finally:
-            cursor.close()
-            conn.close()
-
-    return render_template("register.html")
-
-
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        student_id = request.form.get('student_id')  # Ensure form sends student_id
-        password = request.form.get('password')
-
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM users WHERE student_id = %s", (student_id,))
-        user = cursor.fetchone()
-        cursor.close()
-        conn.close()
-
-        if user and check_password_hash(user['password'], password):
-            session['user_id'] = user['id']
-            session['user_name'] = user['name']
-            session['user_role'] = user['role']
-            session['student_id'] = user['student_id']  # ✅ Set student_id in session
-
-            # Redirect based on role
-            if user['role'] == 'admin':
-                return redirect(url_for('admin_dashboard'))
-            else:
-                return redirect(url_for('student_dashboard'))
-        else:
-            flash("❌ Invalid USN or password!", "danger")
-
-    return render_template("login.html")
 
 
 
 #---------- Admin Login ----------
+# Purpose: Handle admin-specific login
+# This route provides a separate login page for administrators
 @app.route('/admin_login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
@@ -535,7 +883,11 @@ def admin_login():
     return render_template("admin_login.html")
 
 
+
+
 # ---------- Admin Dashboard ----------
+# Purpose: Display the main admin dashboard with application statistics
+# This is the central hub for administrators to monitor the system
 @app.route('/admin_dashboard')
 @login_required("admin")
 def admin_dashboard():
@@ -576,7 +928,8 @@ def admin_dashboard():
         receive=receive
     )
 
-
+# Purpose: Display all student applications for admin review
+# This route lists all applications in the system for administrators to manage
 @app.route('/admin/applications')
 def admin_applications():
     conn = get_db_connection()
@@ -590,6 +943,10 @@ def admin_applications():
 
 
 
+#----------------------------------------------------------------------------------------------------------------------------------
+
+# Purpose: Display detailed information about a specific student application
+# This route allows administrators to view all details of a student's application
 @app.route('/view_application/<student_id>')
 @login_required("admin")  # Only admins can access
 def view_application(student_id):
@@ -609,15 +966,20 @@ def view_application(student_id):
 
     return render_template("view_application.html", student=student)
 
+#----------------------------------------------------------------------------------------------------------------------------------
 
 
+# Purpose: Allow downloading of uploaded files
+# This route enables administrators to download student-uploaded files like profile pictures and signatures
 @app.route('/download/<filename>')
 @login_required("admin")
 def download_file(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename, as_attachment=True)
 
+#----------------------------------------------------------------------------------------------------------------------------------
 
-
+# Purpose: API endpoint to get student details
+# This route returns student information in JSON format for AJAX requests
 @app.route('/get_student/<student_id>')
 @login_required("admin")
 def get_student(student_id):
@@ -642,9 +1004,10 @@ def get_student(student_id):
         os.makedirs("static/barcodes", exist_ok=True)  # Ensure directory exists
 
         # ✅ Generate barcode again
-        code128 = barcode.get_barcode_class('code128')
-        generated_barcode = code128(student_id, writer=ImageWriter())
-        generated_barcode.save(barcode_path.replace(".png", ""), {"format": "PNG"})  # ✅ Save PNG format
+        CODE39 = get_barcode_class('code39')
+        generated_barcode = Code39(student_id.strip(), writer=ImageWriter(), add_checksum=False)
+        generated_barcode.save(barcode_path.replace(".png", ""), {"format": "PNG"})
+
 
     # ✅ Set barcode path for frontend
     if barcode_filename:
@@ -659,20 +1022,10 @@ def get_student(student_id):
 
 
 
+#----------------------------------------------------------------------------------------------------------------------------------
 
-
-@app.route('/get_all_students', methods=['GET'])
-def get_all_students():
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-
-    cursor.execute("SELECT * FROM students")  # Make sure this returns ALL students
-    students = cursor.fetchall()
-
-    conn.close()
-    return jsonify(students)
-
-
+# Purpose: Update a student's application status
+# This route handles status changes and maintains a history of status updates
 @app.route('/update_application_status/<student_id>', methods=['POST'])
 @login_required("admin")
 def update_application_status(student_id):
@@ -751,9 +1104,11 @@ def update_application_status(student_id):
         if 'conn' in locals():
             conn.close()
 
+#----------------------------------------------------------------------------------------------------------------------------------
 
 
-
+# Purpose: Display history of student IDs that have been received
+# This route shows a list of all student IDs that have been marked as received
 @app.route('/student_id_history')
 @login_required("admin")
 def student_id_history():
@@ -766,9 +1121,11 @@ def student_id_history():
     conn.close()
     return render_template("student_id_history.html", student_history=received_students)
 
+#----------------------------------------------------------------------------------------------------------------------------------
 
 
-
+# Purpose: API endpoint to get a student's history
+# This route returns the history of a student's ID in JSON format
 @app.route('/get_student_history/<student_id>')
 @login_required("admin")
 def get_student_history(student_id):
@@ -785,7 +1142,12 @@ def get_student_history(student_id):
 
     return jsonify(student)
 
+#----------------------------------------------------------------------------------------------------------------------------------
+
+
 # ---------- Admin User Management ----------
+# Purpose: Display and manage all users in the system
+# This route provides an interface for administrators to manage user accounts
 @app.route('/admin/manage_users')
 @login_required("admin")
 def admin_manage_users():
@@ -813,6 +1175,10 @@ def admin_manage_users():
     
     return render_template("admin_manage_users.html", users=users, admin_profile=admin_profile)
 
+#----------------------------------------------------------------------------------------------------------------------------------
+
+# Purpose: Create a new user account
+# This route allows administrators to create new student or admin accounts
 @app.route('/admin/create_user', methods=['POST'])
 @login_required("admin")
 def admin_create_user():
@@ -871,6 +1237,11 @@ def admin_create_user():
             
         return redirect(url_for('admin_manage_users'))
 
+
+#----------------------------------------------------------------------------------------------------------------------------------
+
+# Purpose: Update an existing user's information
+# This route allows administrators to modify user details and passwords
 @app.route('/admin/update_user/<int:user_id>', methods=['POST'])
 @login_required("admin")
 def admin_update_user(user_id):
@@ -914,7 +1285,11 @@ def admin_update_user(user_id):
             conn.close()
             
         return redirect(url_for('admin_manage_users'))
+    
+#----------------------------------------------------------------------------------------------------------------------------------
 
+# Purpose: Delete a user account
+# This route allows administrators to remove users from the system
 @app.route('/admin/delete_user/<int:user_id>', methods=['POST'])
 @login_required("admin")
 def admin_delete_user(user_id):
@@ -951,7 +1326,12 @@ def admin_delete_user(user_id):
             conn.close()
             
         return redirect(url_for('admin_manage_users'))
+    
+    
+#----------------------------------------------------------------------------------------------------------------------------------
 
+# Purpose: Update admin profile information
+# This route allows administrators to update their own profile details
 @app.route('/admin/update_profile', methods=['POST'])
 @login_required("admin")
 def admin_update_profile():
@@ -1017,14 +1397,311 @@ def admin_update_profile():
             
         return redirect(url_for('admin_manage_users'))
 
-# ---------- Logout ----------
-@app.route('/logout')
-def logout():
-    session.clear()
-    flash("You have been logged out.", "info")
-    return redirect(url_for('login'))
+
+#----------------------------------------------------------------------------------------------------------------------------------
+
+# Purpose: API endpoint to get all students
+# This route returns a list of all students in JSON format for AJAX requests
+@app.route('/get_all_students', methods=['GET'])
+@login_required("admin")
+def get_all_students():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("SELECT * FROM students")  # Make sure this returns ALL students
+    students = cursor.fetchall()
+
+    conn.close()
+    return jsonify(students)
+
+
+#----------------------------------------------------------------------------------------------------------------------------------
+
+# ---------- Admin Support Messages ----------
+# Purpose: Display all support messages for admin review
+# This route provides an interface for administrators to manage support tickets
+@app.route('/admin/support_messages')
+@login_required("admin")
+def admin_support_messages():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    # Get all support messages with student information
+    cursor.execute("""
+        SELECT sm.*, u.name as student_name 
+        FROM support_messages sm
+        JOIN users u ON sm.student_id = u.student_id
+        ORDER BY 
+            CASE 
+                WHEN sm.status = 'pending' THEN 1
+                WHEN sm.status = 'in_progress' THEN 2
+                WHEN sm.status = 'resolved' THEN 3
+            END,
+            sm.created_at DESC
+    """)
+    messages = cursor.fetchall()
+    
+    # Get count of unread messages
+    cursor.execute("SELECT COUNT(*) as unread FROM support_messages WHERE status = 'pending'")
+    unread_count = cursor.fetchone()['unread']
+    
+    cursor.close()
+    conn.close()
+    
+    return render_template("admin_support_messages.html", messages=messages, unread_count=unread_count)
+
+#----------------------------------------------------------------------------------------------------------------------------------
+
+# Purpose: API endpoint to get count of unread support messages
+# This route returns the number of pending support messages for real-time notifications
+@app.route('/admin/get_unread_count')
+@login_required("admin")
+def get_unread_count():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    cursor.execute("SELECT COUNT(*) as unread FROM support_messages WHERE status = 'pending'")
+    unread_count = cursor.fetchone()['unread']
+    
+    cursor.close()
+    conn.close()
+    
+    return jsonify({"unread_count": unread_count})
+
+#----------------------------------------------------------------------------------------------------------------------------------
+
+# Purpose: Display a specific support message and its history
+# This route allows administrators to view and respond to support tickets
+@app.route('/admin/view_message/<int:message_id>')
+@login_required("admin")
+def admin_view_message(message_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    # Get message details
+    cursor.execute("""
+        SELECT sm.*, u.name as student_name 
+        FROM support_messages sm
+        JOIN users u ON sm.student_id = u.student_id
+        WHERE sm.id = %s
+    """, (message_id,))
+    message = cursor.fetchone()
+    
+    if not message:
+        cursor.close()
+        conn.close()
+        flash("Message not found", "danger")
+        return redirect(url_for('admin_support_messages'))
+    
+    # Get message history
+    cursor.execute("""
+               SELECT 
+                    h.*,
+                    CASE 
+                        WHEN h.response_by LIKE 'ADMIN_%%' THEN 'Admin'
+                        ELSE COALESCE(u.name, 'Unknown')
+                    END as responder_name,
+                    CASE 
+                        WHEN h.response_by LIKE 'ADMIN_%%' THEN 'admin'
+                        ELSE COALESCE(u.role, 'unknown')
+                    END as responder_role
+                FROM support_message_history h
+                LEFT JOIN users u ON 
+                    (h.response_by NOT LIKE 'ADMIN_%%' AND h.response_by = u.student_id)
+                WHERE h.message_id = %s
+                ORDER BY h.created_at ASC
+    """, (message_id,))
+    history = cursor.fetchall()
+    
+    # If message is pending, mark as in_progress
+    if message['status'] == 'pending':
+        cursor.execute("UPDATE support_messages SET status = 'in_progress' WHERE id = %s", (message_id,))
+        conn.commit()
+        message['status'] = 'in_progress'
+    
+    cursor.close()
+    conn.close()
+    
+    return render_template("admin_view_message.html", message=message, history=history)
+
+#----------------------------------------------------------------------------------------------------------------------------------
+
+# Purpose: Handle admin responses to support messages
+# This route processes admin replies and updates message status
+@app.route('/admin/respond_message/<int:message_id>', methods=['POST'])
+@login_required("admin")
+def admin_respond_message(message_id):
+    if request.method == 'POST':
+        try:
+            response = request.form.get('response')
+            status = request.form.get('status')
+            
+            if not response:
+                return jsonify({"success": False, "error": "Response cannot be empty"}), 400
+            
+            admin_id = session.get('student_id') or f"ADMIN_{session.get('user_id')}"
+            
+            conn = get_db_connection()
+            cursor = conn.cursor(dictionary=True)
+            
+            # Insert new response
+            cursor.execute("""
+                INSERT INTO support_message_history 
+                (message_id, response_by, response, responder_role, created_at)
+                VALUES (%s, %s, %s, 'admin', NOW())
+            """, (message_id, admin_id, response))
+            
+            # Update message status
+            cursor.execute("""
+                UPDATE support_messages 
+                SET status = %s, updated_at = NOW()
+                WHERE id = %s
+            """, (status, message_id))
+            
+            # Get updated message history
+            cursor.execute("""
+               SELECT 
+                    h.*,
+                    CASE 
+                        WHEN h.response_by LIKE 'ADMIN_%%' THEN 'Admin'
+                        ELSE COALESCE(u.name, 'Unknown')
+                    END as responder_name,
+                    CASE 
+                        WHEN h.response_by LIKE 'ADMIN_%%' THEN 'admin'
+                        ELSE COALESCE(u.role, 'unknown')
+                    END as responder_role
+                FROM support_message_history h
+                LEFT JOIN users u ON 
+                    (h.response_by NOT LIKE 'ADMIN_%%' AND h.response_by = u.student_id)
+                WHERE h.message_id = %s
+                ORDER BY h.created_at ASC
+            """, (message_id,))
+            history = cursor.fetchall()
+            
+            conn.commit()
+            
+            return jsonify({
+                'success': True,
+                'status': status,
+                'history': [{
+                    'id': item['id'],
+                    'response': item['response'],
+                    'responder_name': item['responder_name'],
+                    'responder_role': item['responder_role'],
+                    'created_at': item['created_at'].strftime('%Y-%m-%d %H:%M:%S')
+                } for item in history]
+            })
+            
+        except Exception as e:
+            conn.rollback()
+            return jsonify({
+                'success': False,
+                'error': str(e)
+            }), 500
+            
+        finally:
+            cursor.close()
+            conn.close()
+
+
+
+# ---------- Auto-reply and Seen Status ----------
+
+# Purpose: Mark a message as seen by admin
+# This route updates the seen status when an admin views a message
+@app.route('/admin/mark_message_seen/<int:message_id>', methods=['POST'])
+@login_required("admin")
+def mark_message_seen(message_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Update the main message
+        cursor.execute("""
+            UPDATE support_messages 
+            SET is_seen = TRUE 
+            WHERE id = %s
+        """, (message_id,))
+        
+        # Update all student responses in history
+        cursor.execute("""
+            UPDATE support_message_history 
+            SET is_seen = TRUE 
+            WHERE message_id = %s AND responder_role = 'student'
+        """, (message_id,))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({"success": True})
+    except Exception as e:
+        print(f"Error marking message as seen: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# Purpose: Generate auto-reply for new student messages
+# This function creates an AI-like response when a student submits a new message
+# Enhanced auto-reply function with more keywords and better detection
+def generate_auto_reply(subject, message):
+    """Generate an automated response based on the message content"""
+    # Convert to lowercase for case-insensitive matching
+    message_text = (subject + " " + message).lower()
+    
+    # Comprehensive keyword dictionary with targeted responses
+    keywords = {
+        # ID-related keywords
+        "id": "Thank you for your inquiry about student IDs. Your ID application status can be checked in your dashboard. If you're experiencing issues with your ID, please provide more details so we can assist you better.",
+        "card": "Thank you for your message about your student card. If you need a replacement card or have issues with your current one, please provide your student number and the specific problem you're experiencing.",
+        "identification": "Thank you for your inquiry about student identification. Our support team will assist you with your ID-related concerns shortly.",
+        
+        # Payment-related keywords
+        "payment": "Thank you for your message about payments. For payment-related inquiries. Our finance team will review your concern as soon as possible.",
+        "fee": "Thank you for your inquiry about fees. For fee-related questions, please specify which program or service you're asking about. We'll provide you with the most up-to-date information once an admin reviews your message.",
+        "tuition": "Thank you for your message regarding tuition. Our finance department will review your inquiry and respond shortly. If you have a specific payment question, please include any relevant reference numbers.",
+        "bill": "Thank you for your message about billing. Our finance team will review your inquiry and respond as soon as possible. For faster assistance, please include any relevant invoice numbers or payment details.",
+        
+
+        
+        # Course-related keywords
+        "course": "Thank you for your course-related inquiry. Please specify which course you're asking about and what information you need. An admin will provide you with detailed information soon.",
+        "subject": "Thank you for your inquiry about subjects. Our academic advisors will review your message and respond shortly. For specific subject questions, please include the subject code if available.",
+        "module": "Thank you for your message about modules. Our academic team will review your inquiry and respond as soon as possible. For faster assistance, please specify which module you're referring to.",
+        
+
+        # General help keywords
+        "help": "Thank you for reaching out for help. To assist you better, please provide more specific details about your concern. Our support team will review your message and respond as soon as possible.",
+        "support": "Thank you for contacting support. Our team will review your inquiry and respond shortly. For faster assistance, please provide specific details about your concern.",
+        "assist": "Thank you for your message. Our support team is here to assist you and will respond to your inquiry as soon as possible. For faster assistance, please provide specific details about your concern.",
+        
+        # Follow-up keywords
+        "follow up": "Thank you for your follow-up message. Our team will review your previous conversation and respond to your inquiry as soon as possible. For faster assistance, please provide your previous ticket number if available.",
+        "followup": "Thank you for your follow-up inquiry. Our support team will review your message and respond shortly. If you're following up on a specific issue, please include any reference numbers from previous communications.",
+        "status": "Thank you for your status inquiry. Our team will check on your request and provide you with an update as soon as possible. For faster assistance, please include any reference numbers from previous communications.",
+        
+        # Update keywords
+        "update": "Thank you for requesting an update. Our team will review your inquiry and provide you with the latest information as soon as possible. For faster assistance, please specify which matter you need an update on.",
+        "progress": "Thank you for your inquiry about progress. Our team will check on your request and provide you with an update as soon as possible. For faster assistance, please include any reference numbers from previous communications.",
+        "news": "Thank you for your inquiry about updates. Our team will provide you with the latest information as soon as possible. For faster assistance, please specify which matter you need information on."
+    }
+    
+    # Check for keywords in the message text
+    for keyword, response in keywords.items():
+        if keyword in message_text:
+            return response
+    
+    # Default response if no keywords match
+    return "Thank you for your message. Our support team will review your inquiry and respond as soon as possible. Please check back later for updates."
+
+
+
+
+#------------------------------------------------------STUDENT SIDE-------------------------------------------------------------------------------------------------------------
 
 # ---------- Student Dashboard ----------
+
+
+# Purpose: Display the main student dashboard
+# This is the central hub for students to access all system features
 @app.route('/student_dashboard')
 @login_required("student")
 def student_dashboard():
@@ -1054,6 +1731,7 @@ def student_dashboard():
     # Store student details in session for quick access
     session.update({
         "application_status": student["application_status"],
+        "name": student["name"],
         "course": student["course"],
         "contact": student["contact"],
         "guardian_name": student["guardian_name"],
@@ -1066,11 +1744,14 @@ def student_dashboard():
 
 
 
+#----------------------------------------------------------------------------------------------------------------------------------
 
 
 
 
 # ---------- Apply for Student ID ----------
+# Purpose: Handle student ID application process
+# This route collects all necessary information and files for ID creation
 @app.route('/apply_student_id', methods=['GET', 'POST'])
 @login_required("student")
 def apply_student_id():
@@ -1112,9 +1793,10 @@ def apply_student_id():
         os.makedirs("static/barcodes", exist_ok=True)
 
         # ✅ Generate barcode and save as image
-        code128 = barcode.get_barcode_class('code128')
-        generated_barcode = code128(student_id, writer=ImageWriter())
-        generated_barcode.save(barcode_path.replace(".png", ""), {"format": "PNG"})  # ✅ Save PNG format
+        CODE39 = get_barcode_class('code39')
+        generated_barcode = Code39(student_id.strip(), writer=ImageWriter(), add_checksum=False)
+        generated_barcode.save(barcode_path.replace(".png", ""), {"format": "PNG"})
+
 
         # ✅ Store barcode filename in the database
         conn = get_db_connection()
@@ -1136,12 +1818,29 @@ def apply_student_id():
     return render_template("apply_student_id.html", student=student)
 
 
+#----------------------------------------------------------------------------------------------------------------------------------
 
 
+# Purpose: Update student information
+# This route processes form submissions to update student details
+from barcode import Code39
+from barcode.writer import ImageWriter
+import os
+
+def generate_barcode(usn):
+    """Generate a Code39 barcode PNG from the student's USN"""
+    barcode_dir = os.path.join("static", "barcodes")
+    os.makedirs(barcode_dir, exist_ok=True)
+
+    barcode_filename = f"{usn}.png"
+    barcode_path = os.path.join(barcode_dir, barcode_filename)
+
+    code39 = Code39(usn, writer=ImageWriter(), add_checksum=False)
+    code39.save(os.path.splitext(barcode_path)[0])  # remove .png before saving
+
+    return barcode_filename
 
 
-
-# ---------- Update Student Info ----------
 @app.route('/update_student_info', methods=['POST'])
 def update_student_info():
     user_id = session.get('user_id')
@@ -1158,61 +1857,53 @@ def update_student_info():
     address = request.form.get("address")
 
     profile_picture = request.files.get("profile_picture")
-    signature_data = request.form.get("signature")  # This will be base64 data from canvas
+    signature_data = request.form.get("signature")
 
     if not profile_picture:
         flash("Profile picture is required.", "danger")
         return redirect(url_for("complete_student_profile"))
 
-    # Process profile picture
+    # Save profile picture
     profile_picture_filename = secure_filename(profile_picture.filename)
     profile_path = os.path.join(app.config["UPLOAD_FOLDER"], profile_picture_filename)
     profile_picture.save(profile_path)
 
-    # Process signature from canvas
+    # Process signature
     signature_filename = None
     if signature_data:
         signature_filename = process_esignature(signature_data, student_id)
-    
+
     if not signature_filename:
         flash("Signature is required. Please draw your signature.", "danger")
         return redirect(url_for("complete_student_profile"))
 
-    # Validate profile picture using trainable validator if available
+    # Validate profile picture (AI or fallback)
     if photo_validator and photo_validator.model:
         result = photo_validator.validate(image_path=profile_path)
-        if not result["valid"]:
-            flash(f"Profile picture validation failed: {result.get('error', 'Unknown error')}", "danger")
-            return redirect(url_for("complete_student_profile"))
     else:
-        # Fall back to original validation
-        with ThreadPoolExecutor() as executor:
-            blur_result = executor.submit(is_blurry, cv2.imread(profile_path))
-            face_result = executor.submit(is_face_detected, profile_path)
-            bg_result = executor.submit(is_plain_background, profile_path)
+        result = face_validator.validate_from_file(profile_path)
 
-            if blur_result.result():
-                flash("Profile picture is blurry. Please upload a clear image.", "danger")
-                return redirect(url_for("complete_student_profile"))
+    if not result.get("valid", False):
+        flash(f"Profile picture validation failed: {result.get('error', 'Unknown error')}", "danger")
+        return redirect(url_for("complete_student_profile"))
 
-            if not face_result.result():
-                flash("Profile picture must contain a visible face.", "danger")
-                return redirect(url_for("complete_student_profile"))
+    # ✅ Generate barcode from USN
+    barcode_filename = generate_barcode(student_id)
 
-            if not bg_result.result():
-                flash("Profile picture must have a plain background.", "danger")
-                return redirect(url_for("complete_student_profile"))
-
-    # Save to the database
+    # ✅ Save all to database
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
         UPDATE students 
         SET name=%s, course=%s, contact=%s, guardian_name=%s, address=%s, 
-            profile_picture=%s, signature=%s, application_status='pending'
+            profile_picture=%s, signature=%s, barcode=%s, application_status='pending'
         WHERE student_id=%s
-    """, (name, course, contact, guardian_name, address, profile_picture_filename, signature_filename, student_id))
-    
+    """, (
+        name, course, contact, guardian_name, address,
+        profile_picture_filename, signature_filename,
+        barcode_filename, student_id
+    ))
+
     conn.commit()
     cursor.close()
     conn.close()
@@ -1221,23 +1912,80 @@ def update_student_info():
     return redirect(url_for("student_dashboard"))
 
 
+#----------------------------------------------------------------------------------------------------------------------------------
+
+
 # ---------- Complete Info ----------
-@app.route('/complete_student_profile', methods=['GET'])
+# Purpose: Allow students to complete their profile information
+# This route handles both displaying and processing the profile completion form
+
+@app.route('/complete_student_profile', methods=['GET', 'POST'])
 @login_required("student")
 def complete_student_profile():
-    user_id = session.get('user_id')
-    name = session.get('name')
+    if 'student_id' not in session:
+        flash("Please log in again to continue your profile completion.", "danger")
+        return redirect(url_for('login'))
 
+    student_id = session['student_id']
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM students WHERE student_id = %s", (session['student_id'],))
+
+    cursor.execute("SELECT * FROM students WHERE student_id = %s", (student_id,))
     student = cursor.fetchone()
+
+    if request.method == 'POST':
+        profile_picture = request.files.get("profile_picture")
+        signature = request.files.get("signature")
+
+        if not all([profile_picture, signature]):
+            flash("Profile picture and signature are required", "danger")
+            return redirect(url_for('complete_student_profile'))
+
+        # Save profile picture
+        profile_picture_filename = secure_filename(f"{student_id}_profile.png")
+        profile_path = os.path.join(app.config["UPLOAD_FOLDER"], profile_picture_filename)
+        profile_picture.save(profile_path)
+
+        # Save signature
+        signature_filename = secure_filename(f"{student_id}_signature.png")
+        signature_path = os.path.join(app.config["UPLOAD_FOLDER"], signature_filename)
+        signature.save(signature_path)
+
+        # Validate profile picture
+        if photo_validator and photo_validator.model:
+            result = photo_validator.validate(image_path=profile_path)
+        else:
+            result = face_validator.validate_from_file(profile_path)
+
+        if not result.get("valid", False):
+            flash(f"Profile picture validation failed: {result.get('error', 'Unknown error')}", "danger")
+            return redirect(url_for('complete_student_profile'))
+
+        # ✅ Update student record
+        cursor.execute("""
+            UPDATE students 
+            SET profile_picture = %s, 
+                signature = %s,
+                application_status = 'pending'
+            WHERE student_id = %s
+        """, (profile_picture_filename, signature_filename, student_id))
+        conn.commit()
+
+        flash("✅ Profile submitted successfully! Your application is now being processed.", "success")
+        return redirect(url_for('student_dashboard'))
+
     cursor.close()
     conn.close()
+    return render_template("complete_student_profile.html", student=student)
 
-    return render_template("complete_student_profile.html", student=student, name=student['name'])
+    
+
+#----------------------------------------------------------------------------------------------------------------------------------
+
 
 # ---------- Student Application Status ----------
+# Purpose: Display the current status of a student's ID application
+# This route shows students where their application is in the process
 @app.route('/my_application_status')
 @login_required("student")
 def my_application_status():
@@ -1255,8 +2003,13 @@ def my_application_status():
     else:
         flash("❌ No application found.", "danger")
         return redirect(url_for("student_dashboard"))
+    
+#----------------------------------------------------------------------------------------------------------------------------------
+
 
 # ---------- Contact Support ----------
+# Purpose: API endpoint to submit support messages
+# This route handles AJAX requests to create new support tickets
 @app.route('/submit_support_message', methods=['POST'])
 @login_required("student")
 def submit_support_message():
@@ -1292,141 +2045,17 @@ def submit_support_message():
     
     return jsonify({"success": False, "error": "Invalid request method"}), 405
 
-# ---------- Admin Support Messages ----------
-@app.route('/admin/support_messages')
-@login_required("admin")
-def admin_support_messages():
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    
-    # Get all support messages with student information
-    cursor.execute("""
-        SELECT sm.*, u.name as student_name 
-        FROM support_messages sm
-        JOIN users u ON sm.student_id = u.student_id
-        ORDER BY 
-            CASE 
-                WHEN sm.status = 'pending' THEN 1
-                WHEN sm.status = 'in_progress' THEN 2
-                WHEN sm.status = 'resolved' THEN 3
-            END,
-            sm.created_at DESC
-    """)
-    messages = cursor.fetchall()
-    
-    # Get count of unread messages
-    cursor.execute("SELECT COUNT(*) as unread FROM support_messages WHERE status = 'pending'")
-    unread_count = cursor.fetchone()['unread']
-    
-    cursor.close()
-    conn.close()
-    
-    return render_template("admin_support_messages.html", messages=messages, unread_count=unread_count)
 
-@app.route('/admin/get_unread_count')
-@login_required("admin")
-def get_unread_count():
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    
-    cursor.execute("SELECT COUNT(*) as unread FROM support_messages WHERE status = 'pending'")
-    unread_count = cursor.fetchone()['unread']
-    
-    cursor.close()
-    conn.close()
-    
-    return jsonify({"unread_count": unread_count})
+#----------------------------------------------------------------------------------------------------------------------------------
 
-@app.route('/admin/view_message/<int:message_id>')
-@login_required("admin")
-def admin_view_message(message_id):
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    
-    # Get message details
-    cursor.execute("""
-        SELECT sm.*, u.name as student_name 
-        FROM support_messages sm
-        JOIN users u ON sm.student_id = u.student_id
-        WHERE sm.id = %s
-    """, (message_id,))
-    message = cursor.fetchone()
-    
-    if not message:
-        cursor.close()
-        conn.close()
-        flash("Message not found", "danger")
-        return redirect(url_for('admin_support_messages'))
-    
-    # Get message history
-    cursor.execute("""
-        SELECT h.*, u.name as responder_name, u.role as responder_role
-        FROM support_message_history h
-        JOIN users u ON h.response_by = u.student_id
-        WHERE h.message_id = %s
-        ORDER BY h.created_at ASC
-    """, (message_id,))
-    history = cursor.fetchall()
-    
-    # If message is pending, mark as in_progress
-    if message['status'] == 'pending':
-        cursor.execute("UPDATE support_messages SET status = 'in_progress' WHERE id = %s", (message_id,))
-        conn.commit()
-        message['status'] = 'in_progress'
-    
-    cursor.close()
-    conn.close()
-    
-    return render_template("admin_view_message.html", message=message, history=history)
 
-@app.route('/admin/respond_message/<int:message_id>', methods=['POST'])
-@login_required("admin")
-def admin_respond_message(message_id):
-    if request.method == 'POST':
-        response = request.form.get('response')
-        status = request.form.get('status')
-        
-        if not response:
-            flash("Response cannot be empty", "danger")
-            return redirect(url_for('admin_view_message', message_id=message_id))
-        
-        # Get admin ID - use student_id if available, otherwise use a default format
-        admin_id = session.get('student_id')
-        if not admin_id:
-            # Fallback to user_id if student_id is not available
-            admin_id = f"ADMIN_{session.get('user_id')}"
-        
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        try:
-            # Add response to history
-            cursor.execute("""
-                INSERT INTO support_message_history (message_id, response_by, response, created_at)
-                VALUES (%s, %s, %s, NOW())
-            """, (message_id, admin_id, response))
-            
-            # Update message status and admin response
-            cursor.execute("""
-                UPDATE support_messages 
-                SET status = %s, admin_response = %s, updated_at = NOW()
-                WHERE id = %s
-            """, (status, response, message_id))
-            
-            conn.commit()
-            flash("Response sent successfully", "success")
-            
-        except Exception as e:
-            conn.rollback()
-            flash(f"Error sending response: {str(e)}", "danger")
-            
-        finally:
-            cursor.close()
-            conn.close()
-            
-        return redirect(url_for('admin_view_message', message_id=message_id))
+
+
+
 
 # ---------- Student Support Messages ----------
+# Purpose: Display all support messages for a student
+# This route shows students their support ticket history
 @app.route('/student/my_support_messages')
 @login_required("student")
 def student_support_messages():
@@ -1448,6 +2077,10 @@ def student_support_messages():
     
     return render_template("student_support_messages.html", messages=messages)
 
+#---------------------------------------------------------------------------------------------------------------------------------
+
+# Purpose: Display a specific support message and its history
+# This route allows students to view details of their support tickets
 @app.route('/student/view_message/<int:message_id>')
 @login_required("student")
 def student_view_message(message_id):
@@ -1471,11 +2104,21 @@ def student_view_message(message_id):
     
     # Get message history
     cursor.execute("""
-        SELECT h.*, u.name as responder_name, u.role as responder_role
-        FROM support_message_history h
-        JOIN users u ON h.response_by = u.student_id
-        WHERE h.message_id = %s
-        ORDER BY h.created_at ASC
+               SELECT 
+                    h.*,
+                    CASE 
+                        WHEN h.response_by LIKE 'ADMIN_%%' THEN 'Admin'
+                        ELSE COALESCE(u.name, 'Unknown')
+                    END as responder_name,
+                    CASE 
+                        WHEN h.response_by LIKE 'ADMIN_%%' THEN 'admin'
+                        ELSE COALESCE(u.role, 'unknown')
+                    END as responder_role
+                FROM support_message_history h
+                LEFT JOIN users u ON 
+                    (h.response_by NOT LIKE 'ADMIN_%%' AND h.response_by = u.student_id)
+                WHERE h.message_id = %s
+                ORDER BY h.created_at ASC
     """, (message_id,))
     history = cursor.fetchall()
     
@@ -1484,6 +2127,11 @@ def student_view_message(message_id):
     
     return render_template("student_view_message.html", message=message, history=history)
 
+#----------------------------------------------------------------------------------------------------------------------------------
+
+
+# Purpose: Modified student_reply_message to add auto-reply
+# This route handles student message submissions and generates auto-replies
 @app.route('/student/reply_message/<int:message_id>', methods=['POST'])
 @login_required("student")
 def student_reply_message(message_id):
@@ -1496,29 +2144,42 @@ def student_reply_message(message_id):
             return redirect(url_for('student_view_message', message_id=message_id))
         
         conn = get_db_connection()
-        cursor = conn.cursor()
+        cursor = conn.cursor(dictionary=True)
         
         try:
             # Verify message belongs to student
-            cursor.execute("SELECT id FROM support_messages WHERE id = %s AND student_id = %s", 
+            cursor.execute("SELECT id, subject FROM support_messages WHERE id = %s AND student_id = %s", 
                           (message_id, student_id))
-            if not cursor.fetchone():
+            message = cursor.fetchone()
+            
+            if not message:
                 flash("Message not found", "danger")
                 return redirect(url_for('student_support_messages'))
             
             # Add response to history
             cursor.execute("""
-                INSERT INTO support_message_history (message_id, response_by, response, created_at)
-                VALUES (%s, %s, %s, NOW())
+                INSERT INTO support_message_history (message_id, response_by, response, created_at, is_seen)
+                VALUES (%s, %s, %s, NOW(), FALSE)
             """, (message_id, student_id, response))
             
             # Update message status to pending if it was resolved
             cursor.execute("""
                 UPDATE support_messages 
                 SET status = CASE WHEN status = 'resolved' THEN 'pending' ELSE status END,
-                    updated_at = NOW()
+                    updated_at = NOW(),
+                    is_seen = FALSE
                 WHERE id = %s
             """, (message_id,))
+            
+            # Generate auto-reply if needed
+            auto_reply = generate_auto_reply(message['subject'], response)
+            
+            # Add auto-reply to the database
+            cursor.execute("""
+                UPDATE support_messages
+                SET auto_reply = %s
+                WHERE id = %s
+            """, (auto_reply, message_id))
             
             conn.commit()
             flash("Reply sent successfully", "success")
@@ -1532,8 +2193,11 @@ def student_reply_message(message_id):
             conn.close()
             
         return redirect(url_for('student_view_message', message_id=message_id))
+    
+#----------------------------------------------------------------------------------------------------------------------------------
 
-# Add a route to check for new messages (for real-time updates)
+# Purpose: Check for new messages in real-time
+# This route enables real-time updates of support conversations
 @app.route('/check_new_messages/<int:message_id>/<timestamp>')
 @login_required()
 def check_new_messages(message_id, timestamp):
@@ -1571,9 +2235,24 @@ def check_new_messages(message_id, timestamp):
             "error": str(e),
             "current_timestamp": int(datetime.now().timestamp())
         })
-        
+    
 
 
+
+
+#----------------------------------------------------------------------------------------------------------------------------------
+
+# ---------- Logout ----------
+# Purpose: Handle user logout
+# This route clears the session and redirects to the login page
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash("You have been logged out.", "info")
+    return redirect(url_for('login'))
+
+
+# Purpose: Main entry point for the application
+# This code runs the Flask application when the script is executed directly
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
-

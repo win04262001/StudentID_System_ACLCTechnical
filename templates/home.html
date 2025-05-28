@@ -3,461 +3,474 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student ID Application | ACLC College</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome for icons -->
+    <title>Student ID System | ACLC College</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Custom CSS */
         :root {
-            --primary-color: #10b981;
-            --primary-dark: #059669;
-            --primary-light: #34d399;
-            --dark-bg: #0f172a;
-            --darker-bg: #020617;
-            --card-bg: #1e293b;
-            --text-light: #f1f5f9;
-            --text-muted: #94a3b8;
-            --border-color: #334155;
-        }
-
-        html {
-            scroll-behavior: smooth;
+            --primary-color: #3b82f6;
+            --primary-dark: #2563eb;
+            --primary-light: #93c5fd;
+            --accent-color: #f59e0b;
+            --light-bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
         }
 
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: var(--darker-bg);
-            color: var(--text-light);
+            background-color: var(--light-bg);
+            color: var(--text-dark);
             line-height: 1.6;
         }
 
-        /* Animations */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes bounce {
-            0%, 100% {
-                transform: translateY(0);
-            }
-            50% {
-                transform: translateY(-10px);
-            }
-        }
-
-        .animate-fadeIn {
-            animation: fadeIn 1.5s ease-out;
-        }
-
-        .animate-bounce {
-            animation: bounce 2s infinite;
-        }
-
-        /* Hero Section */
-        .hero {
-            position: relative;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            overflow: hidden;
-        }
-
         .hero-bg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url('/static/default_background.png');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            filter: brightness(0.3);
-            z-index: 0;
+            background: linear-gradient(135deg, #e0f2fe 0%, #bfdbfe 100%);
         }
 
-        .hero-content {
-            position: relative;
-            z-index: 1;
-            max-width: 800px;
-            padding: 0 20px;
-        }
-
-        .hero h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            line-height: 1.2;
-        }
-
-        .hero p {
-            font-size: 1.25rem;
-            margin-bottom: 2rem;
-            color: var(--text-muted);
-        }
-
-        .btn-custom {
+        .btn-primary {
             background-color: var(--primary-color);
             color: white;
-            border: none;
-            padding: 12px 30px;
-            font-size: 1rem;
-            font-weight: 500;
-            border-radius: 6px;
             transition: all 0.3s ease;
         }
 
-        .btn-custom:hover {
+        .btn-primary:hover {
             background-color: var(--primary-dark);
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-        .scroll-indicator {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
+        .btn-accent {
+            background-color: var(--accent-color);
             color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        /* Services Section */
-        .services-section {
-            background-color: var(--dark-bg);
-            padding: 5rem 0;
-        }
-
-        .section-title {
-            text-align: center;
-            margin-bottom: 4rem;
-        }
-
-        .section-title h2 {
-            font-size: 2.25rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-        }
-
-        .title-underline {
-            width: 80px;
-            height: 4px;
-            background-color: var(--primary-color);
-            margin: 0 auto;
+        .btn-accent:hover {
+            background-color: #e67e22;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         .service-card {
-            background-color: var(--card-bg);
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
-            padding: 2rem;
-            text-align: center;
             transition: all 0.3s ease;
-            height: 100%;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
         }
 
         .service-card:hover {
-            transform: translateY(-10px);
-            border-color: var(--primary-color);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transform: translateY(-8px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+            border-color: var(--primary-light);
         }
 
-        .icon-container {
+        .icon-circle {
             width: 70px;
             height: 70px;
-            background-color: rgba(16, 185, 129, 0.1);
+            background-color: rgba(59, 130, 246, 0.1);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 1.5rem;
-        }
-
-        .icon-container i {
-            font-size: 1.75rem;
-            color: var(--primary-color);
-        }
-
-        .service-card h3 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: var(--primary-light);
-        }
-
-        /* Testimonials Section */
-        .testimonials-section {
-            background-color: var(--darker-bg);
-            padding: 5rem 0;
         }
 
         .testimonial-card {
-            background-color: var(--card-bg);
             border-radius: 12px;
             border: 1px solid var(--border-color);
-            padding: 2.5rem;
-            position: relative;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        }
-
-        .quote-mark {
-            position: absolute;
-            font-size: 4rem;
-            color: var(--primary-color);
-            opacity: 0.3;
-            font-family: Georgia, serif;
-            line-height: 1;
-        }
-
-        .quote-mark.left {
-            top: 20px;
-            left: 20px;
-        }
-
-        .quote-mark.right {
-            bottom: 20px;
-            right: 20px;
-        }
-
-        .testimonial-text {
-            font-size: 1.25rem;
-            font-style: italic;
-            margin-bottom: 1.5rem;
-            position: relative;
-            z-index: 1;
-        }
-
-        .testimonial-author {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .author-avatar {
-            width: 50px;
-            height: 50px;
-            background-color: rgba(16, 185, 129, 0.2);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 1rem;
-        }
-
-        .author-avatar span {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--primary-color);
-        }
-
-        .author-info h4 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-        }
-
-        .author-info p {
-            color: var(--text-muted);
-            margin: 0;
-        }
-
-        .testimonial-controls {
-            display: flex;
-            justify-content: center;
-            margin-top: 2rem;
-        }
-
-        .control-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            color: var(--text-light);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
             transition: all 0.3s ease;
-            margin: 0 5px;
         }
 
-        .control-btn:hover {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
+        .testimonial-card:hover {
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
         }
 
-        .indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background-color: var(--border-color);
-            margin: 0 5px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
+        .sticker {
+            position: absolute;
+            z-index: 10;
+            opacity: 0.8;
+            transition: all 0.5s ease;
         }
 
-        .indicator.active {
-            background-color: var(--primary-color);
+        .sticker:hover {
+            opacity: 1;
+            transform: scale(1.05) rotate(5deg);
         }
 
-        /* Footer */
-        .footer {
-            background-color: var(--dark-bg);
-            padding: 2rem 0;
-            border-top: 1px solid var(--border-color);
-            text-align: center;
+        .bounce {
+            animation: bounce 2s infinite;
         }
 
-        .footer p {
-            color: var(--text-muted);
-            margin: 0;
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
 
-        /* Media Queries */
-        @media (max-width: 991px) {
-            .hero h1 {
-                font-size: 2.25rem;
-            }
-            .hero p {
-                font-size: 1.1rem;
-            }
-            .section-title h2 {
-                font-size: 2rem;
-            }
+        .floating {
+            animation: floating 6s ease-in-out infinite;
         }
 
-        @media (max-width: 767px) {
-            .hero h1 {
-                font-size: 1.75rem;
-            }
-            .service-card {
-                margin-bottom: 1.5rem;
-            }
-            .testimonial-card {
-                padding: 2rem;
-            }
-            .testimonial-text {
-                font-size: 1.1rem;
-            }
+        @keyframes floating {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
     </style>
 </head>
-<body>
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="hero-bg"></div>
-        <div class="hero-content animate-fadeIn">
-            <h1 class="text-white">Welcome to ACLC College Student ID System</h1>
-            <p>Register online and get your official student ID hassle-free.</p>
-            <a href="/register" class="btn btn-custom">Register Now</a>
+<body class="relative overflow-x-hidden">
+    <!-- Sticker Elements -->
+    <div class="sticker hidden md:block top-20 left-10 floating">
+        <div class="bg-white p-3 rounded-full shadow-lg">
+            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                <i class="fas fa-id-card text-blue-500 text-2xl"></i>
+            </div>
         </div>
-        <a href="#services" class="scroll-indicator animate-bounce">
-            <i class="fas fa-chevron-down"></i>
-        </a>
+    </div>
+
+    <div class="sticker hidden md:block top-1/3 right-10 bounce">
+        <div class="bg-white p-3 rounded-full shadow-lg">
+            <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center">
+                <i class="fas fa-star text-yellow-500 text-2xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="sticker hidden md:block bottom-1/4 left-20 pulse">
+        <div class="bg-white p-3 rounded-full shadow-lg">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                <i class="fas fa-check-circle text-green-500 text-2xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm py-4 sticky top-0 z-50">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                    <i class="fas fa-id-card text-white"></i>
+                </div>
+                <span class="font-bold text-xl text-blue-600">ACLC ID System</span>
+            </div>
+            <div class="hidden md:flex space-x-6">
+                <a href="#" class="text-blue-600 font-medium">Home</a>
+                <a href="#features" class="text-gray-600 hover:text-blue-600 transition">Features</a>
+                <a href="#testimonials" class="text-gray-600 hover:text-blue-600 transition">Testimonials</a>
+                <a href="#faq" class="text-gray-600 hover:text-blue-600 transition">FAQ</a>
+            </div>
+
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-bg py-20 relative overflow-hidden">
+        <div class="container mx-auto px-4 flex flex-col md:flex-row items-center">
+            <div class="md:w-1/2 mb-10 md:mb-0 relative z-10">
+                <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-6 leading-tight">
+                    Your Digital Student ID <br>
+                    <span class="text-blue-600">Made Simple</span>
+                </h1>
+                <p class="text-lg text-gray-600 mb-8 max-w-lg">
+                    Apply for your official ACLC College student identification card online. 
+                    Fast, secure, and convenient - get your ID without the hassle.
+                </p>
+                <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                    <a href="/register" class="px-6 py-3 btn-primary rounded-lg font-medium text-center">
+                        Apply Now <i class="fas fa-arrow-right ml-2"></i>
+                    </a>
+                    <a href="#features" class="px-6 py-3 bg-white text-blue-600 border border-blue-200 rounded-lg font-medium hover:bg-blue-50 transition text-center">
+                        Learn More <i class="fas fa-chevron-down ml-2"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="md:w-1/2 relative">
+                <div class="relative max-w-md mx-auto">
+                    <div class="absolute -top-10 -left-10 w-32 h-32 bg-blue-100 rounded-full opacity-50"></div>
+                    <div class="absolute -bottom-10 -right-10 w-32 h-32 bg-yellow-100 rounded-full opacity-50"></div>
+                    <div class="relative bg-white p-6 rounded-2xl shadow-xl border border-gray-100">
+                        <div class="flex justify-between items-center mb-6">
+                            <div class="text-blue-600 font-bold text-xl">ACLC ID</div>
+                            <div class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">STUDENT</div>
+                        </div>
+                        <div class="flex items-center space-x-4 mb-6">
+                            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user-graduate text-blue-500 text-2xl"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium text-gray-700">Student Name</div>
+                                <div class="text-sm text-gray-500">BSIT 3rd Year</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <div class="text-xs text-gray-500">Student ID</div>
+                                <div class="font-mono">ACLC-2023-00123</div>
+                            </div>
+                            <div class="w-20 h-8 bg-gray-100 rounded flex items-center justify-center">
+                                <div class="w-16 h-6 bg-black"></div>
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-500 text-center mt-6">
+                            Valid until: June 2024
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </section>
 
-    <!-- Services Section -->
-    <section id="services" class="services-section">
-        <div class="container">
-            <div class="section-title">
-                <h2>Why Register Your Student ID?</h2>
-                <div class="title-underline"></div>
+    <!-- Features Section -->
+    <section id="features" class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">Why Choose Our ID System</h2>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                    A seamless experience designed specifically for ACLC College students
+                </p>
             </div>
-            <div class="row">
-                <div class="col-md-4 mb-4 mb-md-0">
-                    <div class="service-card">
-                        <div class="icon-container">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <h3>Quick Application</h3>
-                        <p>Fill out your details online in just a few minutes.</p>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="service-card bg-white p-8">
+                    <div class="icon-circle mb-6 mx-auto">
+                        <i class="fas fa-mobile-alt text-blue-500 text-2xl"></i>
                     </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-3 text-center">Online Application</h3>
+                    <p class="text-gray-600 text-center">
+                        Complete your ID application from anywhere using our simple online form.
+                    </p>
                 </div>
-                <div class="col-md-4 mb-4 mb-md-0">
-                    <div class="service-card">
-                        <div class="icon-container">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                        <h3>Easy Approval</h3>
-                        <p>Track your application progress through our system.</p>
+                <div class="service-card bg-white p-8">
+                    <div class="icon-circle mb-6 mx-auto">
+                        <i class="fas fa-bolt text-blue-500 text-2xl"></i>
                     </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-3 text-center">Fast Processing</h3>
+                    <p class="text-gray-600 text-center">
+                        Get your ID processed within 3-5 working days after application.
+                    </p>
                 </div>
-                <div class="col-md-4">
-                    <div class="service-card">
-                        <div class="icon-container">
-                            <i class="fas fa-id-card"></i>
-                        </div>
-                        <h3>Get Your ID Fast</h3>
-                        <p>Receive your Student ID with a barcode for identification.</p>
+                <div class="service-card bg-white p-8">
+                    <div class="icon-circle mb-6 mx-auto">
+                        <i class="fas fa-shield-alt text-blue-500 text-2xl"></i>
                     </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-3 text-center">Secure & Verified</h3>
+                    <p class="text-gray-600 text-center">
+                        Advanced security features to protect your student identity.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="py-16 bg-gray-50">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">How It Works</h2>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                    Get your student ID in just a few simple steps
+                </p>
+            </div>
+            <div class="grid md:grid-cols-4 gap-8">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-blue-600 font-bold text-xl">1</span>
+                    </div>
+                    <h3 class="font-bold text-gray-800 mb-2">Find USN</h3>
+                    <p class="text-gray-600 text-sm">
+                        Find your USN and fill out the application form
+                    </p>
+                </div>
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-blue-600 font-bold text-xl">2</span>
+                    </div>
+                    <h3 class="font-bold text-gray-800 mb-2">Upload</h3>
+                    <p class="text-gray-600 text-sm">
+                        Submit your photo and required documents
+                    </p>
+                </div>
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-blue-600 font-bold text-xl">3</span>
+                    </div>
+                    <h3 class="font-bold text-gray-800 mb-2">Monitor</h3>
+                    <p class="text-gray-600 text-sm">
+                        Monitor your application status on your dashboard
+                    </p>
+                </div>
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-blue-600 font-bold text-xl">4</span>
+                    </div>
+                    <h3 class="font-bold text-gray-800 mb-2">Receive</h3>
+                    <p class="text-gray-600 text-sm">
+                        Git your ID on TSD office
+                    </p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Testimonials Section -->
-    <section class="testimonials-section">
-        <div class="container">
-            <div class="section-title">
-                <h2>What Students Say</h2>
-                <div class="title-underline"></div>
+    <section id="testimonials" class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">What Students Say</h2>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                    Hear from our satisfied students about their experience
+                </p>
             </div>
-            <div class="row justify-content-center">
-                <div class="col-lg-8">
-                    <div class="testimonial-card">
-                        <div class="quote-mark left">"</div>
-                        <p id="testimonial-text" class="testimonial-text"></p>
-                        <div class="testimonial-author">
-                            <div class="author-avatar">
-                                <span id="author-initial"></span>
-                            </div>
-                            <div class="author-info">
-                                <h4 id="testimonial-author"></h4>
-                                <p>Student</p>
+            <div class="max-w-4xl mx-auto">
+                <div class="testimonial-card bg-white p-8 mb-8">
+                    <div class="flex flex-col md:flex-row items-center">
+                        <div class="md:w-1/4 mb-6 md:mb-0 flex justify-center">
+                            <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-blue-500 text-3xl"></i>
                             </div>
                         </div>
-                        <div class="quote-mark right">"</div>
+                        <div class="md:w-3/4">
+                            <div class="text-gray-600 italic mb-4 text-lg">
+                                "The online application was so easy to complete. I got my ID within 3 days and didn't have to wait in any lines!"
+                            </div>
+                            <div class="font-bold text-gray-800">Maria Santos</div>
+                            <div class="text-blue-600 text-sm">BS Computer Science</div>
+                        </div>
                     </div>
-                    <div class="testimonial-controls">
-                        <button class="control-btn" id="prev-testimonial">
-                            <i class="fas fa-chevron-left"></i>
-                        </button>
-                        <div id="indicators" class="d-flex align-items-center"></div>
-                        <button class="control-btn" id="next-testimonial">
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-                    </div>
+                </div>
+                <div class="flex justify-center space-x-2">
+                    <button class="w-3 h-3 rounded-full bg-blue-200"></button>
+                    <button class="w-3 h-3 rounded-full bg-blue-500"></button>
+                    <button class="w-3 h-3 rounded-full bg-blue-200"></button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-16 bg-blue-600 text-white">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-3xl font-bold mb-6">Ready to Get Your Student ID?</h2>
+            <p class="text-xl mb-8 max-w-2xl mx-auto">
+                Join thousands of ACLC students who have already simplified their ID process
+            </p>
+            <a href="/register" class="inline-block px-8 py-3 btn-accent rounded-lg font-medium">
+                Apply Now <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section id="faq" class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">Frequently Asked Questions</h2>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                    Find answers to common questions about the ID system
+                </p>
+            </div>
+            <div class="max-w-3xl mx-auto">
+                <div class="mb-6 border-b border-gray-200 pb-6">
+                    <h3 class="font-bold text-gray-800 mb-2">How long does it take to get my ID?</h3>
+                    <p class="text-gray-600">
+                        Processing typically after you submit your application we process it and monitor your status on your dashboard.
+                    </p>
+                </div>
+                <div class="mb-6 border-b border-gray-200 pb-6">
+                    <h3 class="font-bold text-gray-800 mb-2">What documents do I need to submit?</h3>
+                    <p class="text-gray-600">
+                        You'll just need submit your application we can process on time.
+                    </p>
+                </div>
+                <div class="mb-6 border-b border-gray-200 pb-6">
+                    <h3 class="font-bold text-gray-800 mb-2">Can I apply if I'm a new student?</h3>
+                    <p class="text-gray-600">
+                        Yes, new students can apply once they have completed their enrollment process.
+                    </p>
+                </div>
+                <div class="mb-6">
+                    <h3 class="font-bold text-gray-800 mb-2">What if I lose my ID?</h3>
+                    <p class="text-gray-600">
+                        You can request a replacement ID through the same system for a small fee.
+                    </p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; <span id="current-year"></span> ACLC College Student ID System. All rights reserved.</p>
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="grid md:grid-cols-4 gap-8 mb-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                            <i class="fas fa-id-card text-white"></i>
+                        </div>
+                        <span class="font-bold text-lg">ACLC ID System</span>
+                    </div>
+                    <p class="text-gray-400">
+                        The official student identification system of ACLC College.
+                    </p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg mb-4">Quick Links</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Home</a></li>
+                        <li><a href="#features" class="text-gray-400 hover:text-white transition">Features</a></li>
+                        <li><a href="#faq" class="text-gray-400 hover:text-white transition">FAQ</a></li>
+                        <li><a href="/login" class="text-gray-400 hover:text-white transition">Login</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg mb-4">Contact</h3>
+                    <ul class="space-y-2 text-gray-400">
+                        <li class="flex items-center space-x-2">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>ACLC College Main Campus</span>
+                        </li>
+                        <li class="flex items-center space-x-2">
+                            <i class="fas fa-phone"></i>
+                            <span>(02) 1234-5678</span>
+                        </li>
+                        <li class="flex items-center space-x-2">
+                            <i class="fas fa-envelope"></i>
+                            <span>id-system@aclc.edu.ph</span>
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg mb-4">Connect With Us</h3>
+                    <div class="flex space-x-4">
+                        <a href="#" class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-blue-600 transition">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-blue-400 transition">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-red-600 transition">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-pink-600 transition">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 pt-8 text-center text-gray-400">
+                <p>&copy; <span id="current-year"></span> ACLC College Student ID System. All rights reserved.</p>
+            </div>
         </div>
     </footer>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Custom JavaScript -->
     <script>
         // Set current year in footer
         document.getElementById('current-year').textContent = new Date().getFullYear();
@@ -471,98 +484,62 @@
                 
                 if (targetElement) {
                     window.scrollTo({
-                        top: targetElement.offsetTop,
+                        top: targetElement.offsetTop - 80,
                         behavior: 'smooth'
                     });
                 }
             });
         });
 
-        // Testimonials carousel
+        // Simple testimonial carousel
         const testimonials = [
             {
-                quote: "The application process was so smooth and quick! Highly recommended.",
-                author: "Zarwin"
+                quote: "The online application was so easy to complete. I got my ID within 3 days and didn't have to wait in any lines!",
+                name: "Maria Santos",
+                program: "BS Computer Science"
             },
             {
-                quote: "I loved how I could track my application status. The barcode system is great!",
-                author: "Harvey"
+                quote: "I was impressed with how secure the system is. My personal information feels protected throughout the process.",
+                name: "John Dela Cruz",
+                program: "BS Information Technology"
             },
             {
-                quote: "No more long lines! I applied online and got my student ID in no time.",
-                author: "Mark"
+                quote: "As a working student, the convenience of applying online saved me so much time. Highly recommended!",
+                name: "Andrea Reyes",
+                program: "BS Business Administration"
             }
         ];
 
         let currentTestimonial = 0;
-        const testimonialText = document.getElementById('testimonial-text');
-        const testimonialAuthor = document.getElementById('testimonial-author');
-        const authorInitial = document.getElementById('author-initial');
-        const indicatorsContainer = document.getElementById('indicators');
-        const prevButton = document.getElementById('prev-testimonial');
-        const nextButton = document.getElementById('next-testimonial');
+        const testimonialElements = document.querySelectorAll('.testimonial-card');
+        const dots = document.querySelectorAll('.w-3.h-3.rounded-full');
 
-        // Create indicator dots
-        testimonials.forEach((_, index) => {
-            const indicator = document.createElement('div');
-            indicator.classList.add('indicator');
-            if (index === 0) {
-                indicator.classList.add('active');
-            }
-            indicator.addEventListener('click', () => {
-                showTestimonial(index);
-            });
-            indicatorsContainer.appendChild(indicator);
-        });
-
-        // Show testimonial function
         function showTestimonial(index) {
-            currentTestimonial = index;
-            testimonialText.textContent = testimonials[index].quote;
-            testimonialAuthor.textContent = `- ${testimonials[index].author}`;
-            authorInitial.textContent = testimonials[index].author.charAt(0);
+            testimonialElements.forEach(el => el.style.display = 'none');
+            dots.forEach(dot => dot.classList.remove('bg-blue-500'));
+            dots.forEach(dot => dot.classList.add('bg-blue-200'));
             
-            // Update indicators
-            document.querySelectorAll('.indicator').forEach((indicator, i) => {
-                if (i === index) {
-                    indicator.classList.add('active');
-                } else {
-                    indicator.classList.remove('active');
-                }
-            });
+            testimonialElements[index].style.display = 'block';
+            dots[index].classList.remove('bg-blue-200');
+            dots[index].classList.add('bg-blue-500');
         }
 
         // Initialize first testimonial
         showTestimonial(0);
 
-        // Previous and next buttons
-        prevButton.addEventListener('click', () => {
-            currentTestimonial = (currentTestimonial - 1 + testimonials.length) % testimonials.length;
-            showTestimonial(currentTestimonial);
-        });
-
-        nextButton.addEventListener('click', () => {
-            currentTestimonial = (currentTestimonial + 1) % testimonials.length;
-            showTestimonial(currentTestimonial);
+        // Add click events to dots
+        dots.forEach((dot, index) => {
+            dot.addEventListener('click', () => {
+                currentTestimonial = index;
+                showTestimonial(currentTestimonial);
+            });
         });
 
         // Auto-rotate testimonials
-        let testimonialInterval = setInterval(() => {
+        setInterval(() => {
             currentTestimonial = (currentTestimonial + 1) % testimonials.length;
             showTestimonial(currentTestimonial);
         }, 5000);
-
-        // Pause auto-rotation when user interacts with testimonials
-        document.querySelector('.testimonial-card').addEventListener('mouseenter', () => {
-            clearInterval(testimonialInterval);
-        });
-
-        document.querySelector('.testimonial-card').addEventListener('mouseleave', () => {
-            testimonialInterval = setInterval(() => {
-                currentTestimonial = (currentTestimonial + 1) % testimonials.length;
-                showTestimonial(currentTestimonial);
-            }, 5000);
-        });
     </script>
 </body>
 </html>

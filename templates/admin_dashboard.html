@@ -12,18 +12,13 @@
         </h2>
         <p class="text-muted">Manage and monitor student ID applications</p>
     </div>
-    <div>
-        <button class="btn btn-primary shadow-sm" id="refresh-data">
-            <i class="fas fa-sync-alt me-2"></i> Refresh
-        </button>
-    </div>
 </div>
 
 <!-- Status Cards Row -->
 <div class="row g-4 mb-4">
     <!-- Total Applications -->
-    <div class="col-md-3">
-        <div class="card status-card h-100 border-0 shadow-sm">
+    <div class="col-md-3 col-sm-6">
+        <div class="card status-card h-100">
             <div class="card-body text-center p-4">
                 <div class="status-icon text-primary mb-3">
                     <i class="fas fa-users fa-3x"></i>
@@ -35,8 +30,8 @@
     </div>
 
     <!-- Pending Applications -->
-    <div class="col-md-3">
-        <div class="card status-card pending h-100 border-0 shadow-sm">
+    <div class="col-md-3 col-sm-6">
+        <div class="card status-card pending h-100">
             <div class="card-body text-center p-4">
                 <div class="status-icon text-warning mb-3">
                     <i class="fas fa-hourglass-half fa-3x"></i>
@@ -48,8 +43,8 @@
     </div>
 
     <!-- Processing Applications -->
-    <div class="col-md-3">
-        <div class="card status-card processing h-100 border-0 shadow-sm">
+    <div class="col-md-3 col-sm-6">
+        <div class="card status-card processing h-100">
             <div class="card-body text-center p-4">
                 <div class="status-icon text-info mb-3">
                     <i class="fas fa-cogs fa-3x"></i>
@@ -61,8 +56,8 @@
     </div>
 
     <!-- Completed Applications -->
-    <div class="col-md-3">
-        <div class="card status-card done h-100 border-0 shadow-sm">
+    <div class="col-md-3 col-sm-6">
+        <div class="card status-card done h-100">
             <div class="card-body text-center p-4">
                 <div class="status-icon text-success mb-3">
                     <i class="fas fa-check-circle fa-3x"></i>
@@ -78,10 +73,10 @@
 <div class="row">
     <!-- Application Status Chart -->
     <div class="col-lg-6 mb-4">
-        <div class="card h-100 border-0 shadow-sm">
-            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center py-3">
-                <h5 class="mb-0 fw-bold text-primary">
-                    <i class="fas fa-chart-pie me-2"></i> Application Status
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold">
+                    <i class="fas fa-chart-pie me-2 text-primary"></i> Application Status
                 </h5>
             </div>
             <div class="card-body d-flex align-items-center justify-content-center p-4">
@@ -94,17 +89,17 @@
     
     <!-- Recent Applications -->
     <div class="col-lg-6 mb-4">
-        <div class="card h-100 border-0 shadow-sm">
-            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center py-3">
-                <h5 class="mb-0 fw-bold text-primary">
-                    <i class="fas fa-clipboard-list me-2"></i> Recent Applications
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold">
+                    <i class="fas fa-clipboard-list me-2 text-primary"></i> Recent Applications
                 </h5>
-                <a href="{{ url_for('admin_applications') }}" class="btn btn-sm btn-primary rounded-pill px-3">View All</a>
+                <a href="{{ url_for('admin_applications') }}" class="btn btn-sm btn-primary">View All</a>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover mb-0 modern-table">
-                        <thead class="table-dark">
+                        <thead>
                             <tr>
                                 <th class="ps-4">Student ID</th>
                                 <th>Name</th>
@@ -125,8 +120,8 @@
 <!-- Student Details Modal -->
 <div class="modal fade" id="studentDetailsModal" tabindex="-1" aria-labelledby="studentDetailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header border-0 bg-primary text-white">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="studentDetailsModalLabel">
                     <i class="fas fa-user me-2"></i> Student Details
                 </h5>
@@ -224,13 +219,13 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer border-0">
-                <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
                 <div class="dropdown">
-                    <button class="btn btn-primary rounded-pill px-4 dropdown-toggle" type="button" id="updateStatusDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <button class="btn btn-primary dropdown-toggle" type="button" id="updateStatusDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                         Update Status
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="updateStatusDropdown">
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="updateStatusDropdown">
                         <li><a class="dropdown-item status-update" href="#" data-status="pending">Pending</a></li>
                         <li><a class="dropdown-item status-update" href="#" data-status="processing">Processing</a></li>
                         <li><a class="dropdown-item status-update" href="#" data-status="done">Ready for Pickup</a></li>
@@ -242,32 +237,10 @@
     </div>
 </div>
 
-<!-- DataTables CSS & JS -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
-<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
-
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-    /* Modern Dashboard Styling */
-    .card {
-        border-radius: 12px;
-        overflow: hidden;
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-    
-    .card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
-    }
-    
-    .card-header {
-        font-weight: 600;
-        border-radius: 12px 12px 0 0 !important;
-    }
-    
     /* Status Cards */
     .status-card {
         transition: all 0.3s ease;
@@ -278,19 +251,19 @@
     }
 
     .status-card.pending {
-        border-left-color: #ffc107;
+        border-left-color: var(--warning-color);
     }
 
     .status-card.processing {
-        border-left-color: #0dcaf0;
+        border-left-color: var(--info-color);
     }
 
     .status-card.done {
-        border-left-color: #198754;
+        border-left-color: var(--success-color);
     }
 
     .status-card.receive {
-        border-left-color: #0d6efd;
+        border-left-color: var(--primary-color);
     }
 
     .status-card .status-icon {
@@ -307,64 +280,30 @@
 
     .status-card .status-label {
         font-size: 0.9rem;
-        color: #adb5bd;
+        color: var(--secondary-color);
         text-transform: uppercase;
         letter-spacing: 1px;
         font-weight: 600;
     }
 
-    /* Admin Badge */
-    .admin-badge {
-        background-color: #dc3545;
-        color: white;
-        font-size: 0.8rem;
-        padding: 4px 12px;
-        border-radius: 20px;
-        margin-left: 10px;
-        font-weight: 500;
-        display: inline-block;
-        box-shadow: 0 2px 5px rgba(220, 53, 69, 0.3);
-    }
-
-    /* Page Header */
-    .page-header {
-        margin-bottom: 25px;
-        border-bottom: 1px solid rgba(52, 58, 64, 0.2);
-        padding-bottom: 15px;
-    }
-
-    .page-header h2 {
-        font-weight: 700;
-        color: #212529;
-        margin-bottom: 5px;
-    }
-
     /* Status Badges */
-    .badge {
-        padding: 6px 12px;
-        font-weight: 500;
-        border-radius: 30px;
-        font-size: 0.8rem;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    
     .badge-pending {
-        background-color: #ffc107;
-        color: #212529;
+        background-color: var(--warning-color);
+        color: #fff;
     }
 
     .badge-processing {
-        background-color: #0dcaf0;
-        color: #212529;
+        background-color: var(--info-color);
+        color: #fff;
     }
 
     .badge-done {
-        background-color: #198754;
+        background-color: var(--success-color);
         color: white;
     }
 
     .badge-receive {
-        background-color: #0d6efd;
+        background-color: var(--primary-color);
         color: white;
     }
 
@@ -387,12 +326,12 @@
     }
 
     .action-btn-view {
-        background-color: rgba(13, 110, 253, 0.1);
-        color: #0d6efd;
+        background-color: rgba(37, 99, 235, 0.1);
+        color: var(--primary-color);
     }
 
     .action-btn-view:hover {
-        background-color: #0d6efd;
+        background-color: var(--primary-color);
         color: white;
     }
 
@@ -400,7 +339,7 @@
     .student-detail-row {
         margin-bottom: 15px;
         padding-bottom: 15px;
-        border-bottom: 1px solid rgba(52, 58, 64, 0.1);
+        border-bottom: 1px solid var(--border-color);
     }
 
     .student-detail-row:last-child {
@@ -409,7 +348,7 @@
 
     .detail-label {
         font-weight: 600;
-        color: #6c757d;
+        color: var(--secondary-color);
     }
 
     /* Image Preview */
@@ -419,149 +358,6 @@
     
     .img-preview:hover {
         transform: scale(1.05);
-    }
-
-    /* Status Timeline */
-    .status-timeline {
-        position: relative;
-        padding-left: 30px;
-        margin-top: 20px;
-    }
-
-    .status-timeline::before {
-        content: '';
-        position: absolute;
-        left: 10px;
-        top: 0;
-        bottom: 0;
-        width: 2px;
-        background-color: rgba(52, 58, 64, 0.2);
-    }
-
-    .timeline-item {
-        position: relative;
-        padding-bottom: 25px;
-    }
-
-    .timeline-item:last-child {
-        padding-bottom: 0;
-    }
-
-    .timeline-item::before {
-        content: '';
-        position: absolute;
-        left: -30px;
-        top: 0;
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        background-color: #f8f9fa;
-        border: 2px solid #dee2e6;
-        z-index: 1;
-        transition: all 0.3s;
-    }
-
-    .timeline-item.active::before {
-        background-color: #0d6efd;
-        border-color: #0d6efd;
-        box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.2);
-    }
-
-    .timeline-item.completed::before {
-        background-color: #198754;
-        border-color: #198754;
-        box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.2);
-    }
-
-    .timeline-content {
-        padding: 15px;
-        background-color: #f8f9fa;
-        border-radius: 8px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-        transition: all 0.3s;
-    }
-    
-    .timeline-item.active .timeline-content,
-    .timeline-item.completed .timeline-content {
-        background-color: #fff;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    }
-
-    .timeline-title {
-        font-weight: 600;
-        margin-bottom: 5px;
-        color: #212529;
-    }
-
-    .timeline-date {
-        font-size: 0.85rem;
-        color: #6c757d;
-    }
-    
-    /* Modern Table Styling */
-    .modern-table {
-        border-collapse: separate;
-        border-spacing: 0;
-    }
-    
-    .modern-table thead th {
-        background-color: #212529;
-        color: white;
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 0.8rem;
-        letter-spacing: 0.5px;
-        padding: 15px;
-    }
-    
-    .modern-table thead th:first-child {
-        border-top-left-radius: 8px;
-    }
-    
-    .modern-table thead th:last-child {
-        border-top-right-radius: 8px;
-    }
-    
-    .modern-table tbody tr {
-        transition: all 0.2s;
-    }
-    
-    .modern-table tbody tr:hover {
-        background-color: rgba(0, 0, 0, 0.03);
-        transform: scale(1.01);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-    }
-    
-    .modern-table td {
-        padding: 15px;
-        vertical-align: middle;
-    }
-
-    /* Animations */
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .card {
-        animation: fadeIn 0.5s ease-out forwards;
-    }
-    
-    .card:nth-child(1) { animation-delay: 0.1s; }
-    .card:nth-child(2) { animation-delay: 0.2s; }
-    .card:nth-child(3) { animation-delay: 0.3s; }
-    .card:nth-child(4) { animation-delay: 0.4s; }
-    
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-        .status-card .status-count {
-            font-size: 2rem;
-        }
-        
-        .action-btn {
-            width: 32px;
-            height: 32px;
-        }
     }
 </style>
 
@@ -581,10 +377,10 @@
                         {{ receive }}
                     ],
                     backgroundColor: [
-                        '#ffc107', // warning
-                        '#0dcaf0', // info
-                        '#198754', // success
-                        '#0d6efd'  // primary
+                        '#f59e0b', // warning
+                        '#06b6d4', // info
+                        '#10b981', // success
+                        '#2563eb'  // primary
                     ],
                     borderWidth: 0,
                     borderRadius: 5,
@@ -609,9 +405,9 @@
                     },
                     tooltip: {
                         backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                        titleColor: '#212529',
-                        bodyColor: '#212529',
-                        borderColor: '#dee2e6',
+                        titleColor: '#1e293b',
+                        bodyColor: '#1e293b',
+                        borderColor: '#e2e8f0',
                         borderWidth: 1,
                         padding: 15,
                         cornerRadius: 8,
@@ -672,7 +468,7 @@
                                 statusText = 'Received';
                                 break;
                             default:
-                                badgeClass = 'badge-secondary';
+                                badgeClass = 'bg-secondary';
                         }
                         
                         return `
@@ -761,7 +557,7 @@
                             statusText = 'Received';
                             break;
                         default:
-                            statusElement.classList.add('badge-secondary');
+                            statusElement.classList.add('bg-secondary');
                     }
                     
                     statusElement.textContent = statusText;
@@ -917,69 +713,6 @@
                 });
         }
         
-        // Modern toast notification
-        function showToast(message, type = 'info') {
-            // Create toast container if it doesn't exist
-            let toastContainer = document.querySelector('.toast-container');
-            if (!toastContainer) {
-                toastContainer = document.createElement('div');
-                toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-                document.body.appendChild(toastContainer);
-            }
-            
-            // Set icon and background based on type
-            let icon, bgClass;
-            switch(type) {
-                case 'success':
-                    icon = 'fas fa-check-circle';
-                    bgClass = 'bg-success';
-                    break;
-                case 'error':
-                    icon = 'fas fa-exclamation-circle';
-                    bgClass = 'bg-danger';
-                    break;
-                case 'warning':
-                    icon = 'fas fa-exclamation-triangle';
-                    bgClass = 'bg-warning';
-                    break;
-                default:
-                    icon = 'fas fa-info-circle';
-                    bgClass = 'bg-primary';
-            }
-            
-            // Create toast element
-            const toastId = 'toast-' + Date.now();
-            const toastHtml = `
-                <div id="${toastId}" class="toast border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
-                    <div class="toast-header ${bgClass} text-white">
-                        <i class="${icon} me-2"></i>
-                        <strong class="me-auto">Notification</strong>
-                        <small>Just now</small>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
-                    </div>
-                    <div class="toast-body">
-                        ${message}
-                    </div>
-                </div>
-            `;
-            
-            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-            
-            // Initialize and show toast
-            const toastElement = document.getElementById(toastId);
-            const toast = new bootstrap.Toast(toastElement, {
-                autohide: true,
-                delay: 3000
-            });
-            
-            toast.show();
-            
-            // Remove toast after it's hidden
-            toastElement.addEventListener('hidden.bs.toast', function() {
-                toastElement.remove();
-            });
-        }
-        
         // Refresh button click handler
         document.getElementById('refresh-data').addEventListener('click', function() {
             // Add spinner to button
@@ -1009,4 +742,3 @@
     });
 </script>
 {% endblock %}
-

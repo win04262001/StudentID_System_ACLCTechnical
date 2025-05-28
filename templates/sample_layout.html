@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poetsen+One&family=Viga&display=swap" rel="stylesheet">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.jpg') }}">
   <title>ID Card Generator</title>
   <a href="{{ url_for('admin_applications') }}" class="btn btn-secondary btn-lg">
     Back
@@ -61,7 +66,7 @@
 
         <!-- Input Sections -->
         <div>
-          <input type="text" class="name-input1" id="nameInput" placeholder="Enter Name">
+          <span type="text" class="name-input1" id="nameDisplay" placeholder="Enter Name"></span>
         </div>
         <div>
           <input type="text" class="course-input" id="courseInput" placeholder="Enter Course">
@@ -74,11 +79,9 @@
           </div>
         </div>
 
-        <!-- Barcode Holder Section -->
-        <div class="section large-footer barcode-holder">
-          <img id="barcode-preview" alt="Barcode" style="display: none;">
-        </div>
 
+
+        
         <!-- Signature Container -->
         <div class="section signature-container">
           <div class="signature-box">
@@ -91,11 +94,23 @@
             <span class="signature-label">Student's Signature</span>
           </div>
         </div>
+      
+        <!-- Barcode Holder Section -->
+        <div class="section large-footer barcode-holder">
+          <img id="barcode-preview" alt="Barcode" style="display: none;">
+        </div>
       </div>
 
       <!-- Buttons -->
-      <button onclick="downloadFront()">Download Front</button>
-      <button onclick="printFront()">Print Front</button>
+      <div class="d-flex gap-2">
+        <button class="btn btn-primary" onclick="downloadFront()">
+          <i class="bi bi-download me-2"></i>Download Front
+        </button>
+        
+        <button class="btn btn-outline-primary" onclick="printFront()">
+          <i class="bi bi-printer me-2"></i>Print Front
+        </button>
+      </div>
     </div>
 
     <!-- Back ID Card -->
@@ -135,8 +150,16 @@
           <div class="designation" style="margin-top: 13px; font-weight: bold;">SCHOOL DIRECTOR</div>
         </div>
       </div>
-      <button onclick="downloadBack()">Download Back</button>
-      <button onclick="printBack()">Print Back</button>
+
+      <div class="d-flex gap-2">
+        <button class="btn btn-primary" onclick="downloadBack()">
+          <i class="bi bi-download me-2"></i>Download Front
+        </button>
+        
+        <button class="btn btn-outline-primary" onclick="printBack()">
+          <i class="bi bi-printer me-2"></i>Print Front
+        </button>
+      </div>
     </div>
   </div>
 
@@ -212,7 +235,7 @@
         document.getElementById("barcode-preview").style.display = "block";
       }
       if (studentName) {
-        document.getElementById("nameInput").value = studentName;
+        document.getElementById("nameDisplay").innerText = studentName;
       }
       if (studentCourse) {
         document.getElementById("courseInput").value = studentCourse;
@@ -357,15 +380,7 @@
     // Add click event to the signature image
     document.getElementById("signature-preview-front").addEventListener("click", openSignatureTool);
     
-    // Download functions
-    function downloadFront() {
-      html2canvas(document.getElementById("front-id-card")).then(canvas => {
-        const link = document.createElement("a");
-        link.download = "student_id_front.png";
-        link.href = canvas.toDataURL("image/png");
-        link.click();
-      });
-    }
+
     
     function downloadBack() {
       html2canvas(document.getElementById("back-id-card")).then(canvas => {
@@ -402,31 +417,42 @@
     }
 
     function formatNameBeforeDownload() {
-      const nameInput = document.getElementById('nameInput');
-      if (nameInput) {
-        // Convert to uppercase and trim extra spaces
-        nameInput.value = nameInput.value.toUpperCase().trim();
-        
-        // Ensure the name fits by reducing font size if needed
-        const nameLength = nameInput.value.length;
-        if (nameLength > 20) {
-          nameInput.style.fontSize = '18px';
-        } else {
-          nameInput.style.fontSize = '22px';
-        }
+      const nameDisplay = document.getElementById('nameDisplay');
+      if (nameDisplay) {
+          nameDisplay.innerText = nameDisplay.innerText.toUpperCase().trim();
+          
+          // Adjust font size if name is too long
+          const nameLength = nameDisplay.innerText.length;
+          if (nameLength > 20) {
+              nameDisplay.style.fontSize = '18px';
+          } else {
+              nameDisplay.style.fontSize = '28px';
+          }
       }
-    }
+   }
     
     // Modify your download functions to call this first
     function downloadFront() {
       formatNameBeforeDownload();
-      html2canvas(document.getElementById("front-id-card")).then(canvas => {
-        const link = document.createElement("a");
-        link.download = "student_id_front.png";
-        link.href = canvas.toDataURL("image/png");
-        link.click();
+      html2canvas(document.getElementById("front-id-card"), {
+          scale: 2 // Optional: Increase the scale for better resolution
+      }).then(canvas => {
+          const link = document.createElement("a");
+          link.download = "student_id_front.png";
+          link.href = canvas.toDataURL("image/png");
+          link.click();
       });
-    }
+   }
+
+      // Download functions
+      function downloadFront() {
+        html2canvas(document.getElementById("front-id-card")).then(canvas => {
+          const link = document.createElement("a");
+          link.download = "student_id_front.png";
+          link.href = canvas.toDataURL("image/png");
+          link.click();
+        });
+      }
   </script>
 
   <!-- Bootstrap JS for Modal -->

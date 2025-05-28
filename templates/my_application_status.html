@@ -3,20 +3,115 @@
 {% block title %}Application Status{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2 class="text-center">📌 Application Status</h2>
-    <div class="text-center">
-        <h3 class="fw-bold text-primary">{{ status|capitalize }}</h3>
+<div class="container mt-5">
+    <div class="card shadow-lg border-0" style="background-color: #e6f2ff;">
+        <div class="card-header text-center py-3" style="background-color: #b3d9ff; border-bottom: 2px solid #66b3ff;">
+            <h2 class="fw-bold mb-0" style="color: #003366;">
+                <i class="bi bi-clipboard2-pulse-fill"></i> Application Status
+            </h2>
+        </div>
+        
+        <div class="card-body p-4 p-md-5 text-center">
+            <!-- Status Badge -->
+            <div class="status-badge mb-4">
+                {% if status == "pending" %}
+                    <div class="badge bg-warning text-dark fs-5 p-3">
+                        <i class="bi bi-hourglass-split"></i> {{ status|capitalize }}
+                    </div>
+                {% elif status == "processing" %}
+                    <div class="badge bg-info text-white fs-5 p-3">
+                        <i class="bi bi-gear-wide-connected"></i> {{ status|capitalize }}
+                    </div>
+                {% elif status == "approved" %}
+                    <div class="badge bg-success text-white fs-5 p-3">
+                        <i class="bi bi-check-circle-fill"></i> {{ status|capitalize }}
+                    </div>
+                {% elif status == "rejected" %}
+                    <div class="badge bg-danger text-white fs-5 p-3">
+                        <i class="bi bi-x-circle-fill"></i> {{ status|capitalize }}
+                    </div>
+                {% endif %}
+            </div>
 
-        {% if status == "pending" %}
-            <p class="text-warning">⏳ Your application is under review.</p>
-        {% elif status == "processing" %}
-            <p class="text-info">🔄 Your application is being processed.</p>
-        {% elif status == "approved" %}
-            <p class="text-success">✅ Your application has been approved! Please wait for your ID.</p>
-        {% elif status == "rejected" %}
-            <p class="text-danger">❌ Your application was rejected. Please contact admin.</p>
-        {% endif %}
+            <!-- Status Message -->
+            <div class="status-message mt-4 p-4 rounded" style="background-color: #f0f8ff; border-left: 4px solid #66b3ff;">
+                {% if status == "pending" %}
+                    <h4 class="text-warning fw-bold">
+                        <i class="bi bi-hourglass-top"></i> Under Review
+                    </h4>
+                    <p class="lead text-muted">
+                        Your application is currently being reviewed by our admissions team.
+                    </p>
+                    <div class="progress mt-3" style="height: 10px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" style="width: 30%"></div>
+                    </div>
+                {% elif status == "processing" %}
+                    <h4 class="text-info fw-bold">
+                        <i class="bi bi-arrow-repeat"></i> In Progress
+                    </h4>
+                    <p class="lead text-muted">
+                        We're currently processing your application documents.
+                    </p>
+                    <div class="progress mt-3" style="height: 10px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-info" style="width: 60%"></div>
+                    </div>
+                {% elif status == "approved" %}
+                    <h4 class="text-success fw-bold">
+                        <i class="bi bi-check2-all"></i> Congratulations!
+                    </h4>
+                    <p class="lead text-muted">
+                        Your application has been approved! Your student ID is being prepared.
+                    </p>
+                    <div class="alert alert-success mt-3">
+                        <i class="bi bi-envelope-check"></i> You will receive notification when your ID is ready for pickup.
+                    </div>
+                {% elif status == "rejected" %}
+                    <h4 class="text-danger fw-bold">
+                        <i class="bi bi-exclamation-triangle"></i> Application Not Approved
+                    </h4>
+                    <p class="lead text-muted">
+                        We're sorry, your application wasn't approved at this time.
+                    </p>
+                    <div class="alert alert-danger mt-3">
+                        <i class="bi bi-telephone"></i> Please contact the admissions office for more information.
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Additional Information -->
+            <div class="mt-4 p-3 rounded" style="background-color: #f8fbff;">
+                <p class="mb-2">
+                    <i class="bi bi-question-circle"></i> Need help? Contact our support team:
+                </p>
+                <p class="mb-1">
+                    <i class="bi bi-envelope"></i> AclcTechoffice@aclc.edu
+                </p>
+                <p>
+                    <i class="bi bi-telephone"></i> 09510234567
+                </p>
+            </div>
+        </div>
+        
+        <div class="card-footer text-center py-2" style="background-color: #b3d9ff;">
+            <small class="text-muted" style="color: #003366;">
+                <i class="bi bi-shield-lock"></i> ACLC Student Portal - Secure Application Tracking
+            </small>
+        </div>
     </div>
 </div>
+
+<style>
+    .status-badge .badge {
+        border-radius: 50px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        min-width: 180px;
+    }
+    .status-message {
+        transition: all 0.3s ease;
+    }
+    .status-message:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+</style>
 {% endblock %}

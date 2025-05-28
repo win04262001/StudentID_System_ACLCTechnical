@@ -1,110 +1,115 @@
-{% extends "base.html" %}
-
-{% block title %}Login - School System{% endblock %}
-
-{% block content %}
-<div class="container d-flex justify-content-center align-items-center min-vh-100">
-    <div class="col-lg-4 col-md-6 col-12">
-        <div class="card shadow-lg border-0 rounded-3 bg-dark text-white">
-            <div class="card-body p-4">
-                <h4 class="text-center fw-bold mb-4">Login</h4>
-                <p class="text-center text-muted mb-4">Enter your credentials to access your account</p>
-
-                <form method="POST" action="{{ url_for('login') }}">
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Student ID</label>
-                        <input type="text" name="student_id" class="form-control bg-dark text-white border-secondary" required pattern="\d{11}" placeholder="Enter your USN">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Password</label>
-                        <div class="input-group">
-                            <input type="password" name="password" id="password" class="form-control bg-dark text-white border-secondary" required placeholder="Enter your password">
-                            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
-                                <i class="fas fa-eye" id="toggleIcon"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary w-100 fw-bold mt-3">Login</button>
-                </form>
-
-                <div class="text-center mt-3">
-                    <a href="{{ url_for('register') }}" class="text-decoration-none text-muted">Don't have an account? Register</a>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<style>
-body {
-    background-color: #0d1117; /* GitHub's dark background color */
-    color: #c9d1d9; /* GitHub's light text color */
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
-}
-
-.card {
-    background-color: #161b22; /* GitHub's card background color */
-    border: 1px solid #30363d; /* GitHub's border color */
-    border-radius: 6px; /* GitHub's border radius */
-}
-
-.form-control {
-    background-color: #0d1117; /* GitHub's input background color */
-    border: 1px solid #30363d; /* GitHub's input border color */
-    color: #c9d1d9; /* GitHub's input text color */
-    border-radius: 6px; /* GitHub's input border radius */
-}
-
-.form-control:focus {
-    border-color: #58a6ff; /* GitHub's focus border color */
-    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.3); /* GitHub's focus shadow */
-}
-
-.btn-primary {
-    background-color: #238636; /* GitHub's primary button color */
-    border: none;
-    border-radius: 6px; /* GitHub's button border radius */
-}
-
-.btn-primary:hover {
-    background-color: #2ea043; /* GitHub's primary button hover color */
-}
-
-.text-muted {
-    color: #8b949e !important; /* GitHub's muted text color */
-}
-
-.alert-danger {
-    background-color: #f85149; /* GitHub's danger alert background color */
-    border-color: #f85149; /* GitHub's danger alert border color */
-    color: #fff; /* GitHub's danger alert text color */
-}
-
-.alert-danger .btn-close {
-    filter: invert(1); /* Invert close button color for better visibility */
-}
-</style>
-
-<script>
-function togglePassword() {
-    let passwordInput = document.getElementById("password");
-    let toggleIcon = document.getElementById("toggleIcon");
-
-    if (passwordInput.type === "password") {
-        passwordInput.type = "text";
-        toggleIcon.classList.replace("fa-eye", "fa-eye-slash");
-    } else {
-        passwordInput.type = "password";
-        toggleIcon.classList.replace("fa-eye-slash", "fa-eye");
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login - ACLC Student ID System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.jpg') }}">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'aclc-blue': '#87CEEB',
+            'aclc-darkblue': '#4682B4',
+          }
+        }
+      }
     }
+  </script>
+</head>
+<body class="bg-gradient-to-b from-aclc-blue to-aclc-darkblue min-h-screen flex items-center justify-center p-4">
 
-    // Animation effect
-    toggleIcon.style.transform = "scale(1.2)";
-    setTimeout(() => {
-        toggleIcon.style.transform = "scale(1)";
-    }, 150);
-}
-</script>
-{% endblock %}
+  <div class="w-full max-w-md">
+    <!-- Main Login Card -->
+    <div class="bg-white rounded-xl shadow-xl overflow-hidden">
+      <!-- Header with gradient -->
+      <div class="bg-gradient-to-r from-aclc-blue to-aclc-darkblue py-6 px-8 text-center">
+        <img src="/static/logo.png" alt="ACLC Logo" class="mx-auto h-16 mb-2">
+        <h1 class="text-2xl font-bold text-white">ACLC Student ID System</h1>
+        <p class="text-white text-opacity-80 text-sm mt-1">Enter your email and password</p>
+      </div>
+
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="mx-8 mt-4 p-3 rounded-lg text-center 
+              {% if category == 'success' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+              {% if category == 'success' %}
+                <i class="fas fa-check-circle mr-2"></i>
+              {% else %}
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+              {% endif %}
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <!-- Login Form -->
+      <form class="p-6" method="POST" action="{{ url_for('login') }}">
+        <!-- Updated Email Field -->
+        <div class="mb-4">
+          <label for="email" class="block text-gray-700 text-sm font-medium mb-2">
+            School Email
+          </label>
+          <input type="email" name="email" id="email" 
+                 class="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                 required placeholder="e.g. student@aclcbutuan.edu.ph">
+        </div>
+
+        <!-- Password Field -->
+        <div class="mb-6">
+          <label for="password" class="block text-gray-700 text-sm font-medium mb-2">
+            Password
+          </label>
+          <div class="relative">
+            <input type="password" name="password" id="password" 
+                   class="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                   required placeholder="Enter your password">
+            <button type="button" onclick="togglePassword()" class="absolute right-3 top-3 text-gray-400 hover:text-blue-500">
+              <i class="fas fa-eye" id="toggleIcon"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="mb-4">
+          <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
+            Login
+          </button>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center pt-4 border-t border-gray-200">
+          <a href="/" class="text-blue-600 hover:underline">Home</a>
+          <p class="text-sm text-gray-600 mt-2">
+            Don't have an account?
+            <a href="{{ url_for('register') }}" class="text-blue-600 hover:underline">Register here</a>
+          </p>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toggle Password Visibility Script -->
+  <script>
+    function togglePassword() {
+      const passwordInput = document.getElementById("password");
+      const toggleIcon = document.getElementById("toggleIcon");
+      if (passwordInput.type === "password") {
+        passwordInput.type = "text";
+        toggleIcon.classList.remove("fa-eye");
+        toggleIcon.classList.add("fa-eye-slash");
+      } else {
+        passwordInput.type = "password";
+        toggleIcon.classList.remove("fa-eye-slash");
+        toggleIcon.classList.add("fa-eye");
+      }
+    }
+  </script>
+</body>
+</html>
