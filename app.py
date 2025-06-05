@@ -1,5 +1,5 @@
 from binascii import Error
-from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session, send_file
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import timedelta
 import mysql.connector
@@ -19,6 +19,9 @@ import io
 from markupsafe import Markup
 import random
 import time
+from math import ceil
+import pandas as pd
+
 
 # Import the OpenCV-based face validation module
 from face_validation import FaceValidator
@@ -31,6 +34,25 @@ from datetime import datetime
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer
 import os
+
+
+# Import necessary libraries for file handling and Excel generation
+import zipfile
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.drawing.image import Image as OpenpyxlImage
+from openpyxl.utils.dataframe import dataframe_to_rows
+from PIL import Image as PILImage
+import base64
+import uuid
+
+
+import tempfile
+from flask import Response, stream_template
+import shutil
+from werkzeug.wsgi import FileWrapper
+
+
 
 #------------------------------------------------------------------------------------
 # Define Flask App
@@ -267,8 +289,32 @@ def generate_barcode(usn):
     return barcode_filename
 
 
+# Helper function to get semester start date
+def get_semester_start_date(academic_year, semester):
+    if not academic_year or '-' not in academic_year:
+        return datetime.now()
+        
+    start_year = int(academic_year.split('-')[0])
+    
+    if semester == 1:  # First semester starts in June
+        return datetime(start_year, 6, 1)
+    else:  # Second semester starts in January of the next year
+        return datetime(start_year + 1, 1, 1)
 
+# Calculate status for a student record
+def calculate_student_status(student):
+    if student['received_date']:
+        received_date = student['received_date']
+        semester_start = get_semester_start_date(student['academic_year'], student['semester'])
+        
+        # If received date is within 16 weeks of semester start, it's "New", otherwise "Old"
+        sixteen_weeks = timedelta(weeks=16)
+        return "New" if received_date <= (semester_start + sixteen_weeks) else "Old"
+    else:
+        return "New"  # Default to New if no date
+    
 
+# Test Email Route
 
 @app.route('/test-email')
 def test_email():
@@ -1025,7 +1071,7 @@ def get_student(student_id):
 #----------------------------------------------------------------------------------------------------------------------------------
 
 # Purpose: Update a student's application status
-# This route handles status changes and maintains a history of status updates
+# This route handles status changes, sends notifications, and maintains a history of status updates
 @app.route('/update_application_status/<student_id>', methods=['POST'])
 @login_required("admin")
 def update_application_status(student_id):
@@ -1034,7 +1080,7 @@ def update_application_status(student_id):
         new_status = data.get('status')
         previous_status = data.get('previousStatus')
         update_history = data.get('updateHistory', False)
-        
+
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
@@ -1082,7 +1128,7 @@ def update_application_status(student_id):
         # Add to status history if requested
         if update_history:
             admin_username = session.get('user_name', 'Admin')
-            
+
             cursor.execute("""
                 INSERT INTO status_history (
                     student_id, status, changed_by, previous_status, changed_at
@@ -1091,18 +1137,34 @@ def update_application_status(student_id):
                 student_id, new_status, admin_username, previous_status
             ))
 
+        # ✅ Send email if status is set to 'done'
+        if new_status == 'done' and student.get('email'):
+            student_email = student["email"]
+            student_name = student["name"]
+
+            try:
+                msg = Message(
+                    subject="🎉 Your Student ID is Ready for Pickup!",
+                    recipients=[student_email],
+                    body=f"Hello {student_name},\n\nYour student ID has been processed and is now ready for pickup at the TSD office.\n\nThank you!"
+                )
+                mail.send(msg)
+            except Exception as email_error:
+                print("Failed to send email:", email_error)
+
         conn.commit()
         return jsonify({'success': True, 'barcode': student.get('barcode')})
 
     except Exception as e:
         conn.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
-        
+
     finally:
         if 'cursor' in locals():
             cursor.close()
         if 'conn' in locals():
             conn.close()
+
 
 #----------------------------------------------------------------------------------------------------------------------------------
 
@@ -1112,14 +1174,69 @@ def update_application_status(student_id):
 @app.route('/student_id_history')
 @login_required("admin")
 def student_id_history():
+    # Get current academic year
+    current_year = datetime.now().year
+    if datetime.now().month < 6:  # Before June, use previous year
+        current_year -= 1
+    current_academic_year = f"{current_year}-{current_year + 1}"
+    
+    # Get list of academic years (current and 4 previous)
+    academic_years = []
+    for i in range(5):
+        year = current_year - i
+        academic_years.append(f"{year}-{year + 1}")
+    
+    # Get semester (1 for June-December, 2 for January-May)
+    current_month = datetime.now().month
+    current_semester = 1 if 6 <= current_month <= 12 else 2
+    
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-
-    cursor.execute("SELECT * FROM student_history") 
-    received_students = cursor.fetchall()
-
+    
+    # Query with filtering
+    query = """
+        SELECT * FROM student_history 
+        WHERE semester = %s AND academic_year = %s
+        ORDER BY received_date DESC
+        LIMIT 10
+    """
+    cursor.execute(query, (current_semester, current_academic_year))
+    student_history = cursor.fetchall()
+    
+    # Update status for each record based on received_date
+    for student in student_history:
+        if student['received_date']:
+            received_date = student['received_date']
+            semester_start = get_semester_start_date(student['academic_year'], student['semester'])
+            
+            # If received date is within 16 weeks of semester start, it's "New", otherwise "Old"
+            sixteen_weeks = timedelta(weeks=16)
+            student['status'] = "New" if received_date <= (semester_start + sixteen_weeks) else "Old"
+        else:
+            student['status'] = "New"  # Default to New if no date
+    
+    cursor.close()
     conn.close()
-    return render_template("student_id_history.html", student_history=received_students)
+    
+    return render_template(
+        "student_id_history.html", 
+        student_history=student_history,
+        current_semester=current_semester,
+        current_academic_year=current_academic_year,
+        academic_years=academic_years
+    )
+
+# Helper function to get semester start date
+def get_semester_start_date(academic_year, semester):
+    if not academic_year or '-' not in academic_year:
+        return datetime.now()
+        
+    start_year = int(academic_year.split('-')[0])
+    
+    if semester == 1:  # First semester starts in June
+        return datetime(start_year, 6, 1)
+    else:  # Second semester starts in January of the next year
+        return datetime(start_year + 1, 1, 1)
 
 #----------------------------------------------------------------------------------------------------------------------------------
 
@@ -1135,12 +1252,760 @@ def get_student_history(student_id):
     cursor.execute("SELECT * FROM student_history WHERE student_id = %s", (student_id,))
     student = cursor.fetchone()
 
-    conn.close()
-
     if not student:
+        cursor.close()
+        conn.close()
         return jsonify({"error": "Student not found"}), 404
 
+    # Calculate status based on received_date
+    if student['received_date']:
+        received_date = student['received_date']
+        semester_start = get_semester_start_date(student['academic_year'], student['semester'])
+        
+        # If received date is within 16 weeks of semester start, it's "New", otherwise "Old"
+        sixteen_weeks = timedelta(weeks=16)
+        student['status'] = "New" if received_date <= (semester_start + sixteen_weeks) else "Old"
+    else:
+        student['status'] = "New"  # Default to New if no date
+
+    # Ensure barcode path is correct
+    barcode_filename = student.get("barcode")
+    if barcode_filename:
+        barcode_path = os.path.join("static", "barcodes", barcode_filename)
+        if not os.path.exists(barcode_path):
+            # Generate barcode if it doesn't exist
+            os.makedirs("static/barcodes", exist_ok=True)
+            CODE39 = get_barcode_class('code39')
+            generated_barcode = Code39(student_id.strip(), writer=ImageWriter(), add_checksum=False)
+            generated_barcode.save(barcode_path.replace(".png", ""), {"format": "PNG"})
+
+    cursor.close()
+    conn.close()
+    
     return jsonify(student)
+
+#----------------------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/api/student_history')
+@login_required("admin")
+def api_student_history():
+    semester = request.args.get('semester', 1, type=int)
+    academic_year = request.args.get('academic_year', '2025-2026')
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '')
+    per_page = 10
+    
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    # Build query with search
+    query = """
+        SELECT * FROM student_history 
+        WHERE semester = %s AND academic_year = %s
+    """
+    count_query = """
+        SELECT COUNT(*) as total FROM student_history 
+        WHERE semester = %s AND academic_year = %s
+    """
+    params = [semester, academic_year]
+    
+    if search:
+        query += " AND (student_id LIKE %s OR name LIKE %s)"
+        count_query += " AND (student_id LIKE %s OR name LIKE %s)"
+        search_param = f"%{search}%"
+        params.extend([search_param, search_param])
+    
+    # Add pagination
+    query += " ORDER BY received_date DESC LIMIT %s OFFSET %s"
+    offset = (page - 1) * per_page
+    query_params = params + [per_page, offset]
+    
+    # Get total count
+    cursor.execute(count_query, params)
+    total = cursor.fetchone()['total']
+    
+    # Get paginated results
+    cursor.execute(query, query_params)
+    students = cursor.fetchall()
+    
+    # Calculate status for each record
+    for student in students:
+        if student['received_date']:
+            received_date = student['received_date']
+            semester_start = get_semester_start_date(student['academic_year'], student['semester'])
+            
+            # If received date is within 16 weeks of semester start, it's "New", otherwise "Old"
+            sixteen_weeks = timedelta(weeks=16)
+            student['status'] = "New" if received_date <= (semester_start + sixteen_weeks) else "Old"
+        else:
+            student['status'] = "New"  # Default to New if no date
+    
+    cursor.close()
+    conn.close()
+    
+    return jsonify({
+        'students': students,
+        'total': total,
+        'page': page,
+        'per_page': per_page,
+        'has_next': (page * per_page) < total
+    })
+
+# Add export functionality
+@app.route('/export_student_history')
+@login_required("admin")
+def export_student_history():
+    semester = request.args.get('semester', 1, type=int)
+    academic_year = request.args.get('academic_year', '2025-2026')
+    include_images = request.args.get('include_images', 'false').lower() == 'true'
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        query = """
+            SELECT student_id, name, course, contact, guardian_name, address, 
+                   received_date, academic_year, semester, profile_picture, signature, barcode
+            FROM student_history 
+            WHERE semester = %s AND academic_year = %s
+            ORDER BY received_date DESC
+        """
+        cursor.execute(query, (semester, academic_year))
+        students = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        if not students:
+            return jsonify({'error': 'No data found for the selected semester and academic year'}), 404
+        
+        # Calculate status for each record
+        for student in students:
+            student['status'] = calculate_student_status(student)
+            # Format received_date
+            if student['received_date']:
+                student['received_date'] = student['received_date'].strftime('%Y-%m-%d %H:%M:%S')
+        
+        if include_images:
+            return create_zip_export_simple(students, semester, academic_year)
+        else:
+            return create_excel_export_simple(students, semester, academic_year)
+            
+    except Exception as e:
+        print(f"Export error: {str(e)}")
+        return jsonify({'error': f'Export failed: {str(e)}'}), 500
+
+def create_excel_export_simple(students, semester, academic_year):
+    """Create an Excel export with embedded images"""
+    try:
+        # Create temporary file
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx')
+        temp_file.close()
+        
+        # Create workbook and worksheet
+        wb = Workbook()
+        ws = wb.active
+        ws.title = f"Semester {semester} - {academic_year}"
+        
+        # Add title and metadata
+        ws['A1'] = f"Student ID History - {semester}{'st' if semester == 1 else 'nd'} Semester {academic_year}"
+        ws['A2'] = f"Exported on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | Total Records: {len(students)}"
+        
+        # Style the title
+        title_cell = ws['A1']
+        title_cell.font = Font(bold=True, size=14)
+        ws.merge_cells('A1:L1')
+        
+        # Style the metadata
+        meta_cell = ws['A2']
+        meta_cell.font = Font(size=10, italic=True)
+        ws.merge_cells('A2:L2')
+        
+        # Add headers starting from row 4
+        headers = ['Student ID', 'Full Name', 'Course', 'Contact Number', 'Guardian Name', 
+                  'Address', 'Profile Image', 'Signature', 'Received Date', 'Status', 'Academic Year', 'Semester']
+        
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=4, column=col)
+            cell.value = header
+            cell.font = Font(bold=True, size=10)
+            cell.fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+            cell.font = Font(bold=True, color="FFFFFF")
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+        
+        # Set column widths
+        column_widths = [15, 25, 35, 15, 20, 30, 15, 15, 18, 10, 12, 10]
+        for i, width in enumerate(column_widths, 1):
+            ws.column_dimensions[chr(64 + i)].width = width
+        
+        # Add data with embedded images
+        for row_idx, student in enumerate(students, 5):
+            # Set row height for images
+            ws.row_dimensions[row_idx].height = 60
+            
+            # Add text data
+            ws.cell(row=row_idx, column=1, value=student['student_id'])
+            ws.cell(row=row_idx, column=2, value=student['name'])
+            ws.cell(row=row_idx, column=3, value=student['course'])
+            ws.cell(row=row_idx, column=4, value=student['contact'])
+            ws.cell(row=row_idx, column=5, value=student['guardian_name'])
+            ws.cell(row=row_idx, column=6, value=student['address'])
+            
+            # Add profile image
+            if student.get('profile_picture'):
+                profile_path = os.path.join("static", "uploads", student['profile_picture'])
+                if os.path.exists(profile_path):
+                    try:
+                        # Resize and add profile image
+                        profile_img = resize_image_for_excel(profile_path, 50, 50)
+                        if profile_img:
+                            profile_img.anchor = f'G{row_idx}'
+                            ws.add_image(profile_img)
+                    except Exception as e:
+                        print(f"Error adding profile image: {e}")
+                        ws.cell(row=row_idx, column=7, value="Image Error")
+            
+            # Add signature image
+            if student.get('signature'):
+                signature_path = os.path.join("static", "uploads", student['signature'])
+                if os.path.exists(signature_path):
+                    try:
+                        # Resize and add signature image
+                        signature_img = resize_image_for_excel(signature_path, 80, 40)
+                        if signature_img:
+                            signature_img.anchor = f'H{row_idx}'
+                            ws.add_image(signature_img)
+                    except Exception as e:
+                        print(f"Error adding signature image: {e}")
+                        ws.cell(row=row_idx, column=8, value="Image Error")
+            
+            # Add remaining data
+            ws.cell(row=row_idx, column=9, value=student['received_date'])
+            ws.cell(row=row_idx, column=10, value=student.get('status', 'New'))
+            ws.cell(row=row_idx, column=11, value=student.get('academic_year', academic_year))
+            ws.cell(row=row_idx, column=12, value=semester)
+            
+            # Center align all cells in this row
+            for col in range(1, 13):
+                cell = ws.cell(row=row_idx, column=col)
+                cell.alignment = Alignment(horizontal="center", vertical="center")
+                cell.border = Border(
+                    left=Side(style='thin'),
+                    right=Side(style='thin'),
+                    top=Side(style='thin'),
+                    bottom=Side(style='thin')
+                )
+        
+        # Add borders to header row
+        for col in range(1, 13):
+            cell = ws.cell(row=4, column=col)
+            cell.border = Border(
+                left=Side(style='thin'),
+                right=Side(style='thin'),
+                top=Side(style='thin'),
+                bottom=Side(style='thin')
+            )
+        
+        # Save workbook
+        wb.save(temp_file.name)
+        
+        filename = f"student_history_{academic_year}_sem{semester}_with_images.xlsx"
+        
+        return send_file(
+            temp_file.name,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        
+    except Exception as e:
+        print(f"Error creating Excel with images: {e}")
+        # Fallback to basic Excel without images
+        return create_basic_excel_export(students, semester, academic_year)
+
+def resize_image_for_excel(image_path, width, height):
+    """Resize image for Excel embedding"""
+    try:
+        # Open and resize image
+        with PILImage.open(image_path) as img:
+            # Convert to RGB if necessary
+            if img.mode in ('RGBA', 'LA', 'P'):
+                img = img.convert('RGB')
+            
+            # Resize image maintaining aspect ratio
+            img.thumbnail((width, height), PILImage.Resampling.LANCZOS)
+            
+            # Create a new image with white background
+            new_img = PILImage.new('RGB', (width, height), 'white')
+            
+            # Paste the resized image centered
+            x = (width - img.width) // 2
+            y = (height - img.height) // 2
+            new_img.paste(img, (x, y))
+            
+            # Save to bytes
+            img_bytes = io.BytesIO()
+            new_img.save(img_bytes, format='PNG')
+            img_bytes.seek(0)
+            
+            # Create openpyxl image
+            excel_img = OpenpyxlImage(img_bytes)
+            excel_img.width = width
+            excel_img.height = height
+            
+            return excel_img
+            
+    except Exception as e:
+        print(f"Error resizing image {image_path}: {e}")
+        return None
+
+def create_basic_excel_export(students, semester, academic_year):
+    """Fallback Excel export without images"""
+    try:
+        # Create DataFrame
+        df = pd.DataFrame(students)
+        
+        # Select and reorder columns
+        columns = ['student_id', 'name', 'course', 'contact', 'guardian_name', 
+                  'address', 'received_date', 'status', 'academic_year', 'semester']
+        df = df[columns]
+        
+        # Create temporary file
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx')
+        temp_file.close()
+        
+        # Create workbook and worksheet
+        wb = Workbook()
+        ws = wb.active
+        ws.title = f"Semester {semester} - {academic_year}"
+        
+        # Add title
+        ws['A1'] = f"Student ID History - {semester}{'st' if semester == 1 else 'nd'} Semester {academic_year}"
+        ws['A2'] = f"Exported on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | Total Records: {len(df)}"
+        
+        # Add headers starting from row 4
+        headers = ['Student ID', 'Full Name', 'Course', 'Contact Number', 'Guardian Name', 
+                  'Address', 'Received Date', 'Status', 'Academic Year', 'Semester']
+        
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=4, column=col)
+            cell.value = header
+            cell.font = Font(bold=True)
+        
+        # Add data
+        for row_idx, (_, row_data) in enumerate(df.iterrows(), 5):
+            for col_idx, column in enumerate(columns, 1):
+                cell = ws.cell(row=row_idx, column=col_idx)
+                cell.value = row_data.get(column, '')
+        
+        # Auto-adjust column widths
+        for column_cells in ws.columns:
+            length = max(len(str(cell.value or '')) for cell in column_cells)
+            ws.column_dimensions[column_cells[0].column_letter].width = min(length + 2, 50)
+        
+        # Save workbook
+        wb.save(temp_file.name)
+        
+        filename = f"student_history_{academic_year}_sem{semester}.xlsx"
+        
+        return send_file(
+            temp_file.name,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        
+    except Exception as e:
+        print(f"Error creating basic Excel: {e}")
+        # Final fallback to CSV
+        df = pd.DataFrame(students)
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.csv', mode='w', newline='')
+        df.to_csv(temp_file.name, index=False)
+        
+        filename = f"student_history_{academic_year}_sem{semester}.csv"
+        return send_file(
+            temp_file.name,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='text/csv'
+        )
+
+def create_zip_export_simple(students, semester, academic_year):
+    """Create a simple ZIP export with Excel and images"""
+    try:
+        # Create temporary directory
+        temp_dir = tempfile.mkdtemp()
+        
+        # Create Excel file first
+        df = pd.DataFrame(students)
+        excel_filename = f"student_history_{academic_year}_sem{semester}.xlsx"
+        excel_path = os.path.join(temp_dir, excel_filename)
+        
+        # Simple Excel creation
+        wb = Workbook()
+        ws = wb.active
+        ws.title = f"Semester {semester}"
+        
+        # Add headers
+        headers = ['Student ID', 'Name', 'Course', 'Contact', 'Guardian', 'Address', 'Received Date', 'Status']
+        for col, header in enumerate(headers, 1):
+            ws.cell(row=1, column=col, value=header)
+        
+        # Add data
+        for row_idx, student in enumerate(students, 2):
+            ws.cell(row=row_idx, column=1, value=student['student_id'])
+            ws.cell(row=row_idx, column=2, value=student['name'])
+            ws.cell(row=row_idx, column=3, value=student['course'])
+            ws.cell(row=row_idx, column=4, value=student['contact'])
+            ws.cell(row=row_idx, column=5, value=student['guardian_name'])
+            ws.cell(row=row_idx, column=6, value=student['address'])
+            ws.cell(row=row_idx, column=7, value=student['received_date'])
+            ws.cell(row=row_idx, column=8, value=student['status'])
+        
+        wb.save(excel_path)
+        
+        # Create ZIP file
+        zip_filename = f"student_history_{academic_year}_sem{semester}_with_images.zip"
+        zip_path = os.path.join(temp_dir, zip_filename)
+        
+        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            # Add Excel file
+            zipf.write(excel_path, excel_filename)
+            
+            # Add images
+            images_added = 0
+            for student in students:
+                student_id = student['student_id']
+                
+                # Add profile picture
+                if student.get('profile_picture'):
+                    profile_path = os.path.join("static", "uploads", student['profile_picture'])
+                    if os.path.exists(profile_path):
+                        zipf.write(profile_path, f"images/{student_id}/profile_{student['profile_picture']}")
+                        images_added += 1
+                
+                # Add signature
+                if student.get('signature'):
+                    signature_path = os.path.join("static", "uploads", student['signature'])
+                    if os.path.exists(signature_path):
+                        zipf.write(signature_path, f"images/{student_id}/signature_{student['signature']}")
+                        images_added += 1
+                
+                # Add barcode
+                if student.get('barcode'):
+                    barcode_path = os.path.join("static", "barcodes", student['barcode'])
+                    if os.path.exists(barcode_path):
+                        zipf.write(barcode_path, f"images/{student_id}/barcode_{student['barcode']}")
+                        images_added += 1
+            
+            # Add README
+            readme_content = f"""Student ID History Export
+Academic Year: {academic_year}
+Semester: {semester}
+Total Students: {len(students)}
+Images Included: {images_added}
+Export Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+Files:
+- {excel_filename}: Student data
+- images/[student_id]/: Student images
+"""
+            zipf.writestr("README.txt", readme_content)
+        
+        # Send the ZIP file
+        return send_file(
+            zip_path,
+            as_attachment=True,
+            download_name=zip_filename,
+            mimetype='application/zip'
+        )
+        
+    except Exception as e:
+        print(f"Error creating ZIP: {e}")
+        # Fallback to Excel only
+        return create_excel_export_simple(students, semester, academic_year)
+    
+    finally:
+        # Clean up temporary directory
+        try:
+            shutil.rmtree(temp_dir)
+        except:
+            pass
+
+# Add error handling middleware for large file downloads
+@app.errorhandler(413)
+def request_entity_too_large(error):
+    return jsonify({'error': 'File too large'}), 413
+
+@app.errorhandler(500)
+def internal_server_error(error):
+    return jsonify({'error': 'Internal server error during export'}), 500
+
+
+
+# Add import functionality
+@app.route('/import_student_history', methods=['POST'])
+@login_required("admin")
+def import_student_history():
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'error': 'No file part'})
+    
+    file = request.files['file']
+    semester = request.form.get('semester', 1, type=int)
+    academic_year = request.form.get('academic_year', '2025-2026')
+    
+    if file.filename == '':
+        return jsonify({'success': False, 'error': 'No selected file'})
+    
+    try:
+        # Handle different file types
+        if file.filename.endswith('.zip'):
+            return handle_zip_import(file, semester, academic_year)
+        elif file.filename.endswith(('.xlsx', '.xls')):
+            return handle_excel_import(file, semester, academic_year)
+        elif file.filename.endswith('.csv'):
+            return handle_csv_import(file, semester, academic_year)
+        else:
+            return jsonify({'success': False, 'error': 'Unsupported file format. Please use CSV, Excel, or ZIP files.'})
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Import failed: {str(e)}'})
+
+def handle_zip_import(file, semester, academic_year):
+    """Handle ZIP file import with images"""
+    # Create temporary directory
+    temp_dir = os.path.join("static", "temp", str(uuid.uuid4()))
+    os.makedirs(temp_dir, exist_ok=True)
+    
+    try:
+        # Save and extract ZIP file
+        zip_path = os.path.join(temp_dir, "import.zip")
+        file.save(zip_path)
+        
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(temp_dir)
+        
+        # Find Excel/CSV file in extracted contents
+        data_file = None
+        for root, dirs, files in os.walk(temp_dir):
+            for f in files:
+                if f.endswith(('.xlsx', '.xls', '.csv')) and not f.startswith('~'):
+                    data_file = os.path.join(root, f)
+                    break
+            if data_file:
+                break
+        
+        if not data_file:
+            return jsonify({'success': False, 'error': 'No Excel or CSV file found in ZIP archive'})
+        
+        # Process the data file
+        if data_file.endswith('.csv'):
+            df = pd.read_csv(data_file)
+        else:
+            df = pd.read_excel(data_file)
+        
+        # Process images and data
+        result = process_import_data(df, semester, academic_year, temp_dir)
+        
+        return jsonify(result)
+        
+    finally:
+        # Clean up temporary directory
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
+
+def handle_excel_import(file, semester, academic_year):
+    """Handle Excel file import"""
+    # Save file temporarily
+    temp_dir = os.path.join("static", "temp", str(uuid.uuid4()))
+    os.makedirs(temp_dir, exist_ok=True)
+    
+    try:
+        file_path = os.path.join(temp_dir, "import.xlsx")
+        file.save(file_path)
+        
+        # Read Excel file
+        df = pd.read_excel(file_path)
+        
+        result = process_import_data(df, semester, academic_year)
+        
+        return jsonify(result)
+        
+    finally:
+        # Clean up
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
+
+def handle_csv_import(file, semester, academic_year):
+    """Handle CSV file import"""
+    try:
+        # Read CSV directly from memory
+        df = pd.read_csv(file)
+        
+        result = process_import_data(df, semester, academic_year)
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return {'success': False, 'error': f'CSV processing failed: {str(e)}'}
+
+def process_import_data(df, semester, academic_year, image_dir=None):
+    """Process the imported data and handle images"""
+    # Validate required columns
+    required_columns = ['student_id', 'name']
+    missing_columns = [col for col in required_columns if col not in df.columns]
+    if missing_columns:
+        return {'success': False, 'error': f"Missing required columns: {', '.join(missing_columns)}"}
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    success_count = 0
+    error_count = 0
+    errors = []
+    
+    try:
+        for index, row in df.iterrows():
+            try:
+                # Validate required fields
+                if pd.isna(row['student_id']) or pd.isna(row['name']):
+                    error_count += 1
+                    errors.append(f"Row {index + 1}: Missing student_id or name")
+                    continue
+                
+                student_id = str(row['student_id']).strip()
+                name = str(row['name']).strip()
+                
+                # Get optional fields
+                course = str(row.get('course', '')) if not pd.isna(row.get('course', '')) else ''
+                contact = str(row.get('contact', '')) if not pd.isna(row.get('contact', '')) else ''
+                guardian_name = str(row.get('guardian_name', '')) if not pd.isna(row.get('guardian_name', '')) else ''
+                address = str(row.get('address', '')) if not pd.isna(row.get('address', '')) else ''
+                
+                # Handle images if image directory is provided
+                profile_picture = None
+                signature = None
+                barcode = None
+                
+                if image_dir:
+                    profile_picture, signature, barcode = process_student_images(student_id, image_dir)
+                
+                # Insert or update record
+                query = """
+                    INSERT INTO student_history 
+                    (student_id, name, course, contact, guardian_name, address, 
+                     received_date, academic_year, semester, profile_picture, signature, barcode)
+                    VALUES (%s, %s, %s, %s, %s, %s, NOW(), %s, %s, %s, %s, %s)
+                    ON DUPLICATE KEY UPDATE
+                    name = VALUES(name),
+                    course = VALUES(course),
+                    contact = VALUES(contact),
+                    guardian_name = VALUES(guardian_name),
+                    address = VALUES(address),
+                    received_date = NOW(),
+                    academic_year = VALUES(academic_year),
+                    semester = VALUES(semester)
+                """
+                
+                cursor.execute(query, (
+                    student_id, name, course, contact, guardian_name, address,
+                    academic_year, semester, profile_picture, signature, barcode
+                ))
+                
+                success_count += 1
+                
+            except Exception as row_error:
+                error_count += 1
+                errors.append(f"Row {index + 1}: {str(row_error)}")
+        
+        conn.commit()
+        
+        result = {
+            'success': True,
+            'imported': success_count,
+            'errors': error_count,
+            'total': len(df)
+        }
+        
+        if errors:
+            result['error_details'] = errors[:10]  # Limit to first 10 errors
+        
+        return result
+        
+    except Exception as e:
+        conn.rollback()
+        return {'success': False, 'error': f'Database error: {str(e)}'}
+        
+    finally:
+        cursor.close()
+        conn.close()
+
+def process_student_images(student_id, image_dir):
+    """Process and copy student images from import directory"""
+    profile_picture = None
+    signature = None
+    barcode = None
+    
+    # Look for student images in the extracted directory
+    student_image_dir = os.path.join(image_dir, "images", student_id)
+    
+    if os.path.exists(student_image_dir):
+        for filename in os.listdir(student_image_dir):
+            file_path = os.path.join(student_image_dir, filename)
+            
+            if filename.startswith('profile_'):
+                profile_picture = copy_image_to_uploads(file_path, f"{student_id}_profile")
+            elif filename.startswith('signature_'):
+                signature = copy_image_to_uploads(file_path, f"{student_id}_signature")
+            elif filename.startswith('barcode_'):
+                barcode = copy_image_to_barcodes(file_path, f"{student_id}_barcode")
+    
+    return profile_picture, signature, barcode
+
+def copy_image_to_uploads(source_path, base_name):
+    """Copy image to uploads directory with proper naming"""
+    if not os.path.exists(source_path):
+        return None
+    
+    # Get file extension
+    _, ext = os.path.splitext(source_path)
+    if not ext:
+        ext = '.png'  # Default extension
+    
+    # Create unique filename
+    filename = f"{base_name}_{uuid.uuid4().hex[:8]}{ext}"
+    dest_path = os.path.join("static", "uploads", filename)
+    
+    # Ensure uploads directory exists
+    os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+    
+    # Copy file
+    shutil.copy2(source_path, dest_path)
+    
+    return filename
+
+def copy_image_to_barcodes(source_path, base_name):
+    """Copy barcode image to barcodes directory"""
+    if not os.path.exists(source_path):
+        return None
+    
+    # Get file extension
+    _, ext = os.path.splitext(source_path)
+    if not ext:
+        ext = '.png'  # Default extension
+    
+    # Create unique filename
+    filename = f"{base_name}_{uuid.uuid4().hex[:8]}{ext}"
+    dest_path = os.path.join("static", "barcodes", filename)
+    
+    # Ensure barcodes directory exists
+    os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+    
+    # Copy file
+    shutil.copy2(source_path, dest_path)
+    
+    return filename
 
 #----------------------------------------------------------------------------------------------------------------------------------
 
@@ -1148,13 +2013,83 @@ def get_student_history(student_id):
 # ---------- Admin User Management ----------
 # Purpose: Display and manage all users in the system
 # This route provides an interface for administrators to manage user accounts
+
+@login_required("admin")
+def admin_get_users():
+    try:
+        # Get page number from query parameters (default to 1)
+        page = int(request.args.get('page', 1))
+        per_page = 10  # Number of users per page
+        
+        # Calculate offset for SQL query
+        offset = (page - 1) * per_page
+        
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Get total count of users
+        cursor.execute("SELECT COUNT(*) as count FROM users")
+        total_users = cursor.fetchone()['count']
+        
+        # Calculate total pages
+        total_pages = ceil(total_users / per_page)
+        
+        # Get paginated users
+        cursor.execute("""
+            SELECT u.id, u.student_id, u.name, u.role, 
+                   CASE WHEN s.id IS NOT NULL THEN 1 ELSE 0 END as has_profile,
+                   s.application_status
+            FROM users u
+            LEFT JOIN students s ON u.student_id = s.student_id
+            ORDER BY u.role DESC, u.name ASC
+            LIMIT %s OFFSET %s
+        """, (per_page, offset))
+        users = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        # Calculate range values (e.g., "Showing 1-10 of 100")
+        start_range = offset + 1 if users else 0
+        end_range = min(offset + per_page, total_users)
+        
+        return jsonify({
+            'success': True,
+            'users': users,
+            'current_page': page,
+            'total_pages': total_pages,
+            'total_users': total_users,
+            'start_range': start_range,
+            'end_range': end_range
+        })
+        
+    except Exception as e:
+        print(f"Error fetching users: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+# Update the existing admin_manage_users route to include pagination
 @app.route('/admin/manage_users')
 @login_required("admin")
 def admin_manage_users():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     
-    # Get all users
+    # Get pagination parameters
+    page = int(request.args.get('page', 1))
+    per_page = 10  # Number of users per page
+    offset = (page - 1) * per_page
+    
+    # Get total count of users
+    cursor.execute("SELECT COUNT(*) as count FROM users")
+    total_users = cursor.fetchone()['count']
+    
+    # Calculate total pages
+    total_pages = ceil(total_users / per_page)
+    
+    # Get paginated users
     cursor.execute("""
         SELECT u.id, u.student_id, u.name, u.role, 
                CASE WHEN s.id IS NOT NULL THEN 1 ELSE 0 END as has_profile,
@@ -1162,7 +2097,8 @@ def admin_manage_users():
         FROM users u
         LEFT JOIN students s ON u.student_id = s.student_id
         ORDER BY u.role DESC, u.name ASC
-    """)
+        LIMIT %s OFFSET %s
+    """, (per_page, offset))
     users = cursor.fetchall()
     
     # Get admin profile if exists
@@ -1173,8 +2109,14 @@ def admin_manage_users():
     cursor.close()
     conn.close()
     
-    return render_template("admin_manage_users.html", users=users, admin_profile=admin_profile)
-
+    return render_template(
+        "admin_manage_users.html", 
+        users=users, 
+        admin_profile=admin_profile,
+        current_page=page,
+        total_pages=total_pages,
+        total_users=total_users
+    )
 #----------------------------------------------------------------------------------------------------------------------------------
 
 # Purpose: Create a new user account

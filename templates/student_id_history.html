@@ -2,672 +2,1621 @@
 {% block title %}Student ID History{% endblock %}
 
 {% block content %}
-<div class="page-header d-flex justify-content-between align-items-center mb-4">
-  <div>
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
       <h2 class="fw-bold">
-          <i class="fas fa-history me-2 text-primary"></i> Student ID History
-          <span class="admin-badge">Admin View</span>
+        <i class="fas fa-history me-2 text-primary"></i> Student ID History
+        <span class="admin-badge">Admin View</span>
       </h2>
       <p class="text-muted">Track and manage student ID issuance history</p>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-dark rounded-pill px-4" id="exportBtn">
+        <i class="fas fa-download me-2"></i> Export
+      </button>
+      <button class="btn btn-dark rounded-pill px-4" id="importBtn">
+        <i class="fas fa-upload me-2"></i> Import
+      </button>
+    </div>
   </div>
-  <div>
-      <div class="input-group">
-          <span class="input-group-text bg-primary text-white border-0">
-              <i class="fas fa-search"></i>
-          </span>
-          <input type="text" id="searchInput" class="form-control shadow-sm" placeholder="Search by Student ID or Name...">
-      </div>
-  </div>
-</div>
 
-<!-- Student History Table -->
-<div class="card border-0 shadow-sm mb-4">
-  <div class="card-body p-0">
+  <!-- Semester Filter Buttons -->
+  <div class="d-flex justify-content-center mb-4">
+    <div class="d-flex gap-3">
+      <div class="dropdown semester-dropdown">
+        <button class="btn btn-primary rounded-pill px-5 py-2 dropdown-toggle semester-btn active" type="button" id="firstSemBtn" data-bs-toggle="dropdown" aria-expanded="false">
+          1<sup>st</sup> Sem <i class="fas fa-chevron-down ms-2"></i>
+        </button>
+        <ul class="dropdown-menu shadow-lg" aria-labelledby="firstSemBtn" id="firstSemDropdown">
+          <li><h6 class="dropdown-header">Academic Years</h6></li>
+          <!-- Academic years will be populated by JavaScript -->
+        </ul>
+      </div>
+      <div class="dropdown semester-dropdown">
+        <button class="btn btn-outline-primary rounded-pill px-5 py-2 dropdown-toggle semester-btn" type="button" id="secondSemBtn" data-bs-toggle="dropdown" aria-expanded="false">
+          2<sup>nd</sup> Sem <i class="fas fa-chevron-down ms-2"></i>
+        </button>
+        <ul class="dropdown-menu shadow-lg" aria-labelledby="secondSemBtn" id="secondSemDropdown">
+          <li><h6 class="dropdown-header">Academic Years</h6></li>
+          <!-- Academic years will be populated by JavaScript -->
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Academic Year Header -->
+  <div class="text-center mb-4">
+    <h3 class="fw-bold text-dark" id="semesterHeader">
+      1<sup>st</sup> Semester | 2025-2026
+    </h3>
+  </div>
+
+  <!-- Search -->
+  <div class="mb-4">
+    <div class="input-group" style="max-width: 400px;">
+      <span class="input-group-text bg-primary text-white border-0">
+        <i class="fas fa-search"></i>
+      </span>
+      <input type="text" id="searchInput" class="form-control shadow-sm" placeholder="Search by Student ID or Name...">
+    </div>
+  </div>
+
+  <!-- Student History Table -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-0">
       <div class="table-responsive">
-          <table class="table table-hover modern-table mb-0">
-              <thead class="table-dark">
-                  <tr>
-                      <th class="ps-4">Student ID</th>
-                      <th>Name</th>
-                      <th>Received Date</th>
-                      <th class="text-end pe-4">Actions</th>
-                  </tr>
-              </thead>
-              <tbody id="studentHistoryTable">
-                  {% for student in student_history %}
-                  <tr class="fade-in">
-                      <td class="ps-4">{{ student.student_id }}</td>
-                      <td>{{ student.name }}</td>
-                      <td>{{ student.received_date.strftime('%B %d, %Y') }}</td>
-                      <td class="text-end pe-4">
-                          <button class="btn btn-primary btn-sm rounded-pill px-3" onclick="loadStudentHistory('{{ student.student_id }}')">
-                              <i class="fas fa-eye me-1"></i> View Details
-                          </button>
-                      </td>
-                  </tr>
-                  {% endfor %}
-                  {% if not student_history %}
-                  <tr>
-                      <td colspan="4" class="text-center py-5">
-                          <div class="empty-state">
-                              <i class="fas fa-history"></i>
-                              <h5>No ID History Found</h5>
-                              <p class="text-muted">No student ID records are available at this time.</p>
-                          </div>
-                      </td>
-                  </tr>
-                  {% endif %}
-              </tbody>
-          </table>
+        <table class="table table-hover modern-table mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th class="ps-4">STUDENT ID</th>
+              <th>NAME</th>
+              <th>RECEIVED DATE</th>
+              <th class="text-center">STATUS</th>
+              <th class="text-end pe-4">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody id="studentHistoryTable">
+            {% for student in student_history %}
+            <tr class="fade-in" 
+                data-semester="{{ student.semester or 1 }}" 
+                data-academic-year="{{ student.academic_year or '2025-2026' }}"
+                data-status="{{ student.status or 'New' }}">
+              <td class="ps-4">{{ student.student_id }}</td>
+              <td>{{ student.name }}</td>
+              <td>{{ student.received_date.strftime('%B %d, %Y') if student.received_date else 'N/A' }}</td>
+              <td class="text-center">
+                <span class="status-badge status-{{ student.status|lower or 'new' }}">
+                  {{ student.status or 'New' }}
+                </span>
+              </td>
+              <td class="text-end pe-4">
+                <button class="btn btn-primary btn-sm rounded-pill px-3" onclick="loadStudentHistory('{{ student.student_id }}')">
+                  <i class="fas fa-eye me-1"></i> View Details
+                </button>
+              </td>
+            </tr>
+            {% endfor %}
+            {% if not student_history %}
+            <tr>
+              <td colspan="5" class="text-center py-5">
+                <div class="empty-state">
+                  <i class="fas fa-history"></i>
+                  <h5>No ID History Found</h5>
+                  <p class="text-muted">No student ID records are available for this semester.</p>
+                </div>
+              </td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
       </div>
+    </div>
   </div>
-</div>
 
-<!-- Student ID History Modal -->
-<div class="modal fade" id="studentHistoryModal" tabindex="-1" aria-labelledby="studentHistoryModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
+  <!-- Pagination -->
+  <div class="d-flex justify-content-end mb-4">
+    <button class="btn btn-primary rounded-pill px-5" id="nextBtn">Next</button>
+  </div>
+
+  <!-- Student ID History Modal -->
+  <div class="modal fade" id="studentHistoryModal" tabindex="-1" aria-labelledby="studentHistoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
       <div class="modal-content border-0 shadow">
-          <div class="modal-header border-0 bg-primary text-white">
-              <h5 class="modal-title" id="studentHistoryModalLabel">
-                  <i class="fas fa-id-card me-2"></i> Student ID Details
-              </h5>
-              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body p-4">
-              <!-- Profile, Barcode & Signature -->
-              <div class="row mb-4">
-                  <!-- Profile Picture -->
-                  <div class="col-md-4 mb-3 mb-md-0">
-                      <div class="card h-100 border-0 shadow-sm">
-                          <div class="card-header bg-transparent border-0 py-3">
-                              <h6 class="mb-0 fw-bold text-primary">
-                                  <i class="fas fa-user me-2"></i> Profile Picture
-                              </h6>
-                          </div>
-                          <div class="card-body text-center p-3">
-                              <div class="position-relative mb-3 mx-auto" style="width: 120px; height: 120px;">
-                                  <img id="profilePicture" src="/placeholder.svg" class="img-preview rounded-circle object-fit-cover w-100 h-100 border shadow-sm" alt="Profile Picture">
-                              </div>
-                              <a id="downloadProfile" href="#" download class="btn btn-sm btn-outline-primary rounded-pill mt-2">
-                                  <i class="fas fa-download me-1"></i> Download
-                              </a>
-                          </div>
-                      </div>
+        <div class="modal-header border-0 bg-primary text-white">
+          <h5 class="modal-title" id="studentHistoryModalLabel">
+            <i class="fas fa-id-card me-2"></i> Student ID Details
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <!-- Profile, Barcode & Signature -->
+          <div class="row mb-4">
+            <!-- Profile Picture -->
+            <div class="col-md-4 mb-3 mb-md-0">
+              <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0 py-3">
+                  <h6 class="mb-0 fw-bold text-primary">
+                    <i class="fas fa-user me-2"></i> Profile Picture
+                  </h6>
+                </div>
+                <div class="card-body text-center p-3">
+                  <div class="position-relative mb-3 mx-auto" style="width: 120px; height: 120px;">
+                    <img id="profilePicture" src="/placeholder.svg" class="img-preview rounded-circle object-fit-cover w-100 h-100 border shadow-sm" alt="Profile Picture">
                   </div>
-
-                  <!-- Barcode -->
-                  <div class="col-md-4 mb-3 mb-md-0">
-                      <div class="card h-100 border-0 shadow-sm">
-                          <div class="card-header bg-transparent border-0 py-3">
-                              <h6 class="mb-0 fw-bold text-primary">
-                                  <i class="fas fa-barcode me-2"></i> Barcode
-                              </h6>
-                          </div>
-                          <div class="card-body text-center p-3">
-                              <div class="position-relative mb-3 mx-auto" style="height: 120px;">
-                                  <img id="barcodeImage" src="/placeholder.svg" class="img-preview img-fluid h-100 border rounded shadow-sm" style="object-fit: contain;" alt="Barcode">
-                              </div>
-                              <a id="downloadBarcode" href="#" download class="btn btn-sm btn-outline-primary rounded-pill mt-2">
-                                  <i class="fas fa-download me-1"></i> Download
-                              </a>
-                          </div>
-                      </div>
-                  </div>
-
-                  <!-- Signature -->
-                  <div class="col-md-4">
-                      <div class="card h-100 border-0 shadow-sm">
-                          <div class="card-header bg-transparent border-0 py-3">
-                              <h6 class="mb-0 fw-bold text-primary">
-                                  <i class="fas fa-signature me-2"></i> Signature
-                              </h6>
-                          </div>
-                          <div class="card-body text-center p-3">
-                              <div class="position-relative mb-3 mx-auto" style="height: 120px;">
-                                  <img id="signatureImage" src="/placeholder.svg" class="img-preview img-fluid h-100 border rounded shadow-sm" style="object-fit: contain;" alt="Signature">
-                              </div>
-                              <a id="downloadSignature" href="#" download class="btn btn-sm btn-outline-primary rounded-pill mt-2">
-                                  <i class="fas fa-download me-1"></i> Download
-                              </a>
-                          </div>
-                      </div>
-                  </div>
+                  <a id="downloadProfile" href="#" download class="btn btn-sm btn-outline-primary rounded-pill mt-2">
+                    <i class="fas fa-download me-1"></i> Download
+                  </a>
+                </div>
               </div>
+            </div>
 
-              <!-- Student Details -->
-              <div class="card border-0 shadow-sm mb-4">
-                  <div class="card-header bg-transparent border-0 py-3">
-                      <h6 class="mb-0 fw-bold text-primary">
-                          <i class="fas fa-info-circle me-2"></i> Student Information
-                      </h6>
+            <!-- Barcode -->
+            <div class="col-md-4 mb-3 mb-md-0">
+              <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0 py-3">
+                  <h6 class="mb-0 fw-bold text-primary">
+                    <i class="fas fa-barcode me-2"></i> Barcode
+                  </h6>
+                </div>
+                <div class="card-body text-center p-3">
+                  <div class="position-relative mb-3 mx-auto" style="height: 120px;">
+                    <img id="barcodeImage" src="/placeholder.svg" class="img-preview img-fluid h-100 border rounded shadow-sm" style="object-fit: contain;" alt="Barcode">
                   </div>
-                  <div class="card-body p-0">
-                      <div class="table-responsive">
-                          <table class="table table-hover mb-0">
-                              <tbody>
-                                  <tr>
-                                      <th class="ps-4" style="width: 30%;">Student ID</th>
-                                      <td id="studentID" class="pe-4"></td>
-                                  </tr>
-                                  <tr>
-                                      <th class="ps-4">Name</th>
-                                      <td id="studentName" class="pe-4"></td>
-                                  </tr>
-                                  <tr>
-                                      <th class="ps-4">Course</th>
-                                      <td id="studentCourse" class="pe-4"></td>
-                                  </tr>
-                                  <tr>
-                                      <th class="ps-4">Contact</th>
-                                      <td id="studentContact" class="pe-4"></td>
-                                  </tr>
-                                  <tr>
-                                      <th class="ps-4">Guardian Name</th>
-                                      <td id="studentGuardian" class="pe-4"></td>
-                                  </tr>
-                                  <tr>
-                                      <th class="ps-4">Address</th>
-                                      <td id="studentAddress" class="pe-4"></td>
-                                  </tr>
-                                  <tr>
-                                      <th class="ps-4">Received Date</th>
-                                      <td id="receivedDate" class="pe-4"></td>
-                                  </tr>
-                              </tbody>
-                          </table>
-                      </div>
-                  </div>
+                  <a id="downloadBarcode" href="#" download class="btn btn-sm btn-outline-primary rounded-pill mt-2">
+                    <i class="fas fa-download me-1"></i> Download
+                  </a>
+                </div>
               </div>
-              
-              <!-- Status History -->
-              <div class="card border-0 shadow-sm mb-4">
-                  <div class="card-header bg-transparent border-0 py-3">
-                      <h6 class="mb-0 fw-bold text-primary">
-                          <i class="fas fa-clock-rotate-left me-2"></i> Status History
-                      </h6>
+            </div>
+
+            <!-- Signature -->
+            <div class="col-md-4">
+              <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0 py-3">
+                  <h6 class="mb-0 fw-bold text-primary">
+                    <i class="fas fa-signature me-2"></i> Signature
+                  </h6>
+                </div>
+                <div class="card-body text-center p-3">
+                  <div class="position-relative mb-3 mx-auto" style="height: 120px;">
+                    <img id="signatureImage" src="/placeholder.svg" class="img-preview img-fluid h-100 border rounded shadow-sm" style="object-fit: contain;" alt="Signature">
                   </div>
-                  <div class="card-body p-0">
-                      <div class="table-responsive">
-                          <table class="table table-hover mb-0">
-                              <thead>
-                                  <tr>
-                                      <th class="ps-4">Status</th>
-                                      <th>Date</th>
-                                      <th class="pe-4">Updated By</th>
-                                  </tr>
-                              </thead>
-                              <tbody id="statusHistoryTable">
-                                  <!-- Status history will be populated here -->
-                              </tbody>
-                          </table>
-                      </div>
-                  </div>
+                  <a id="downloadSignature" href="#" download class="btn btn-sm btn-outline-primary rounded-pill mt-2">
+                    <i class="fas fa-download me-1"></i> Download
+                  </a>
+                </div>
               </div>
+            </div>
           </div>
-          <div class="modal-footer border-0">
-              <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
-              <button id="downloadHistory" class="btn btn-primary rounded-pill px-4">
-                  <i class="fas fa-download me-2"></i> Download as Image
-              </button>
+
+          <!-- Student Details -->
+          <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-transparent border-0 py-3">
+              <h6 class="mb-0 fw-bold text-primary">
+                <i class="fas fa-info-circle me-2"></i> Student Information
+              </h6>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                  <tbody>
+                    <tr>
+                      <th class="ps-4" style="width: 30%;">Student ID</th>
+                      <td id="studentID" class="pe-4"></td>
+                    </tr>
+                    <tr>
+                      <th class="ps-4">Name</th>
+                      <td id="studentName" class="pe-4"></td>
+                    </tr>
+                    <tr>
+                      <th class="ps-4">Course</th>
+                      <td id="studentCourse" class="pe-4"></td>
+                    </tr>
+                    <tr>
+                      <th class="ps-4">Contact</th>
+                      <td id="studentContact" class="pe-4"></td>
+                    </tr>
+                    <tr>
+                      <th class="ps-4">Guardian Name</th>
+                      <td id="studentGuardian" class="pe-4"></td>
+                    </tr>
+                    <tr>
+                      <th class="ps-4">Address</th>
+                      <td id="studentAddress" class="pe-4"></td>
+                    </tr>
+                    <tr>
+                      <th class="ps-4">Received Date</th>
+                      <td id="receivedDate" class="pe-4"></td>
+                    </tr>
+                    <tr>
+                      <th class="ps-4">Academic Year</th>
+                      <td id="academicYear" class="pe-4"></td>
+                    </tr>
+                    <tr>
+                      <th class="ps-4">Semester</th>
+                      <td id="semesterInfo" class="pe-4"></td>
+                    </tr>
+                    <tr>
+                      <th class="ps-4">Status</th>
+                      <td id="statusInfo" class="pe-4"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
+          
+          <!-- Status History -->
+          <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-transparent border-0 py-3">
+              <h6 class="mb-0 fw-bold text-primary">
+                <i class="fas fa-clock-rotate-left me-2"></i> Status History
+              </h6>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                  <thead>
+                    <tr>
+                      <th class="ps-4">Status</th>
+                      <th>Date</th>
+                      <th class="pe-4">Updated By</th>
+                    </tr>
+                  </thead>
+                  <tbody id="statusHistoryTable">
+                    <!-- Status history will be populated here -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+          <button id="downloadHistory" class="btn btn-primary rounded-pill px-4">
+            <i class="fas fa-download me-2"></i> Download as Image
+          </button>
+        </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Enhanced Export Modal -->
+  <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header border-0 bg-success text-white">
+          <h5 class="modal-title" id="exportModalLabel">
+            <i class="fas fa-download me-2"></i> Export Student History
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="mb-4">
+            <h6 class="fw-bold text-success mb-3">
+              <i class="fas fa-info-circle me-2"></i> Export Options
+            </h6>
+            <p class="text-muted small">Choose your export preferences below:</p>
+          </div>
+          
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="includeImages" checked>
+            <label class="form-check-label" for="includeImages">
+              <strong>Include Images</strong>
+              <small class="d-block text-muted">Embed profile pictures and signatures directly in Excel cells</small>
+            </label>
+          </div>
+          
+          <div class="alert alert-info border-0" role="alert" id="exportDetailsAlert">
+            <div class="d-flex">
+              <i class="fas fa-lightbulb me-2 mt-1"></i>
+              <div>
+                <strong>Export Details:</strong>
+                <ul class="mb-0 mt-2 small" id="exportDetailsList">
+                  <li>Excel file with embedded profile pictures and signatures</li>
+                  <li>Professional formatting with proper image sizing</li>
+                  <li>All student data in a single comprehensive file</li>
+                  <li>Images displayed directly in Excel cells</li>
+                  <li>Ready for printing or digital sharing</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          <div class="export-preview bg-light rounded p-3">
+            <h6 class="fw-bold mb-2">
+              <i class="fas fa-eye me-2"></i> Export Preview
+            </h6>
+            <div class="small text-muted">
+              <div class="row">
+                <div class="col-6">
+                  <strong>Semester:</strong> <span id="exportSemester">1st Semester</span>
+                </div>
+                <div class="col-6">
+                  <strong>Academic Year:</strong> <span id="exportAcademicYear">2025-2026</span>
+                </div>
+              </div>
+              <div class="mt-2">
+                <strong>Estimated Records:</strong> <span id="exportRecordCount">Loading...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-success rounded-pill px-4" id="confirmExport">
+            <i class="fas fa-download me-2"></i> Export Now
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Enhanced Import Modal -->
+  <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header border-0 bg-primary text-white">
+          <h5 class="modal-title" id="importModalLabel">
+            <i class="fas fa-upload me-2"></i> Import Student History
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <!-- Import Steps -->
+          <div class="import-steps mb-4">
+            <div class="row text-center">
+              <div class="col-4">
+                <div class="step-item active" id="step1">
+                  <div class="step-circle">1</div>
+                  <small class="step-label">Choose File</small>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="step-item" id="step2">
+                  <div class="step-circle">2</div>
+                  <small class="step-label">Validate</small>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="step-item" id="step3">
+                  <div class="step-circle">3</div>
+                  <small class="step-label">Import</small>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- File Upload Area -->
+          <div class="upload-area border-2 border-dashed rounded p-4 text-center mb-4" id="uploadArea">
+            <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+            <h6 class="fw-bold">Drag & Drop your file here</h6>
+            <p class="text-muted mb-3">or click to browse</p>
+            <input type="file" id="importFile" class="d-none" accept=".csv,.xlsx,.xls,.zip">
+            <button type="button" class="btn btn-outline-primary rounded-pill" onclick="document.getElementById('importFile').click()">
+              <i class="fas fa-folder-open me-2"></i> Browse Files
+            </button>
+            <div class="mt-3">
+              <small class="text-muted">
+                Supported formats: CSV, Excel (.xlsx, .xls), ZIP (with images)
+              </small>
+            </div>
+          </div>
+          
+          <!-- File Info -->
+          <div class="file-info d-none" id="fileInfo">
+            <div class="alert alert-success border-0">
+              <div class="d-flex align-items-center">
+                <i class="fas fa-file-check fa-2x me-3"></i>
+                <div class="flex-grow-1">
+                  <h6 class="mb-1" id="fileName"></h6>
+                  <small class="text-muted" id="fileSize"></small>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill" onclick="clearFile()">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Import Instructions -->
+          <div class="import-instructions">
+            <h6 class="fw-bold text-primary mb-3">
+              <i class="fas fa-info-circle me-2"></i> Import Instructions
+            </h6>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="instruction-item mb-3">
+                  <div class="d-flex">
+                    <i class="fas fa-table text-success me-2 mt-1"></i>
+                    <div>
+                      <strong>CSV/Excel Files</strong>
+                      <small class="d-block text-muted">Required columns: student_id, name</small>
+                    </div>
+                  </div>
+                </div>
+                <div class="instruction-item mb-3">
+                  <div class="d-flex">
+                    <i class="fas fa-file-archive text-warning me-2 mt-1"></i>
+                    <div>
+                      <strong>ZIP Files</strong>
+                      <small class="d-block text-muted">Include Excel/CSV + images folder</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="instruction-item mb-3">
+                  <div class="d-flex">
+                    <i class="fas fa-images text-info me-2 mt-1"></i>
+                    <div>
+                      <strong>Image Structure</strong>
+                      <small class="d-block text-muted">images/[student_id]/profile_*, signature_*, barcode_*</small>
+                    </div>
+                  </div>
+                </div>
+                <div class="instruction-item mb-3">
+                  <div class="d-flex">
+                    <i class="fas fa-download text-primary me-2 mt-1"></i>
+                    <div>
+                      <strong>Need Template?</strong>
+                      <small class="d-block text-muted">Export data to get a template</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Import Progress -->
+          <div class="import-progress d-none" id="importProgress">
+            <div class="d-flex align-items-center mb-3">
+              <div class="spinner-border spinner-border-sm text-primary me-3" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <div>
+                <h6 class="mb-0">Processing Import...</h6>
+                <small class="text-muted" id="progressText">Validating file...</small>
+              </div>
+            </div>
+            <div class="progress">
+              <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%" id="progressBar"></div>
+            </div>
+          </div>
+          
+          <!-- Import Results -->
+          <div class="import-results d-none" id="importResults">
+            <div class="alert border-0" id="resultsAlert">
+              <div class="d-flex align-items-center">
+                <i class="fas fa-check-circle fa-2x me-3 text-success"></i>
+                <div>
+                  <h6 class="mb-1">Import Completed Successfully!</h6>
+                  <div class="import-stats">
+                    <small class="text-muted">
+                      <span id="importedCount">0</span> records imported, 
+                      <span id="errorCount">0</span> errors
+                    </small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary rounded-pill px-4" id="startImport" disabled>
+            <i class="fas fa-upload me-2"></i> Start Import
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
+
+<!-- Toast Container -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-      // Create toast container
-      const toastContainer = document.createElement('div');
-      toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-      document.body.appendChild(toastContainer);
+    // Global variables for filtering
+    let currentSemester = 1;
+    let currentAcademicYear = "2025-2026";
+    let currentPage = 1;
+    const recordsPerPage = 10;
+    
+    // Function to generate academic years (current and future)
+    function generateAcademicYears() {
+      const currentYear = new Date().getFullYear();
+      const years = [];
       
-      // Function to load student history details
-      window.loadStudentHistory = function(studentId) {
-          fetch(`/get_student_history/${studentId}`)
-          .then(response => {
-              if (!response.ok) {
-                  throw new Error('Network response was not ok');
-              }
-              return response.json();
-          })
-          .then(student => {
-              // Set profile picture
-              const profilePicture = document.getElementById("profilePicture");
-              if (student.profile_picture) {
-                  profilePicture.src = `/static/uploads/${student.profile_picture}`;
-                  document.getElementById("downloadProfile").href = `/static/uploads/${student.profile_picture}`;
-                  document.getElementById("downloadProfile").download = student.profile_picture;
-              } else {
-                  profilePicture.src = "/static/default_profile.png";
-                  document.getElementById("downloadProfile").href = "/static/default_profile.png";
-                  document.getElementById("downloadProfile").download = "default_profile.png";
-              }
-              
-              // Set signature
-              const signatureImage = document.getElementById("signatureImage");
-              if (student.signature) {
-                  signatureImage.src = `/static/uploads/${student.signature}`;
-                  document.getElementById("downloadSignature").href = `/static/uploads/${student.signature}`;
-                  document.getElementById("downloadSignature").download = student.signature;
-              } else {
-                  signatureImage.src = "/static/default_signature.png";
-                  document.getElementById("downloadSignature").href = "/static/default_signature.png";
-                  document.getElementById("downloadSignature").download = "default_signature.png";
-              }
-              
-              // Set barcode
-              const barcodeImage = document.getElementById("barcodeImage");
-              if (student.barcode) {
-                  barcodeImage.src = `/static/barcodes/${student.barcode}`;
-                  document.getElementById("downloadBarcode").href = `/static/barcodes/${student.barcode}`;
-                  document.getElementById("downloadBarcode").download = student.barcode;
-              } else {
-                  barcodeImage.src = "/static/default_barcode.jpg";
-                  document.getElementById("downloadBarcode").href = "/static/default_barcode.jpg";
-                  document.getElementById("downloadBarcode").download = "default_barcode.jpg";
-              }
-              
-              // Set student details
-              document.getElementById("studentID").textContent = student.student_id || 'N/A';
-              document.getElementById("studentName").textContent = student.name || 'N/A';
-              document.getElementById("studentCourse").textContent = student.course || 'N/A';
-              document.getElementById("studentContact").textContent = student.contact || 'N/A';
-              document.getElementById("studentGuardian").textContent = student.guardian_name || 'N/A';
-              document.getElementById("studentAddress").textContent = student.address || 'N/A';
-              document.getElementById("receivedDate").textContent = formatDate(student.received_date) || 'N/A';
-              
-              // Populate status history table
-              populateStatusHistory(student.status_history || []);
-              
-              // Show the modal
-              const studentHistoryModal = new bootstrap.Modal(document.getElementById("studentHistoryModal"));
-              studentHistoryModal.show();
-              
-              // Show success toast
-              showToast('Student details loaded successfully', 'success');
-          })
-          .catch(error => {
-              console.error("Error fetching student history:", error);
-              showToast('Error loading student details. Please try again.', 'error');
+      // Generate current year and next 5 years
+      for (let i = 0; i <= 5; i++) {
+        const startYear = currentYear + i;
+        const endYear = startYear + 1;
+        years.push(`${startYear}-${endYear}`);
+      }
+      
+      return years;
+    }
+    
+    // Update academic year dropdowns
+    function updateAcademicYearDropdowns() {
+      const academicYears = generateAcademicYears();
+      const firstSemDropdown = document.getElementById('firstSemDropdown');
+      const secondSemDropdown = document.getElementById('secondSemDropdown');
+      
+      // Clear existing year options
+      [firstSemDropdown, secondSemDropdown].forEach(dropdown => {
+        const yearOptions = dropdown.querySelectorAll('.year-option');
+        yearOptions.forEach(option => option.remove());
+      });
+      
+      // Add new year options
+      academicYears.forEach(year => {
+        // First semester dropdown
+        const li1 = document.createElement('li');
+        const a1 = document.createElement('a');
+        a1.className = 'dropdown-item year-option';
+        if (year === currentAcademicYear) {
+          a1.classList.add('active');
+        }
+        a1.href = '#';
+        a1.dataset.semester = '1';
+        a1.dataset.year = year;
+        a1.textContent = year;
+        li1.appendChild(a1);
+        firstSemDropdown.appendChild(li1);
+        
+        // Second semester dropdown
+        const li2 = document.createElement('li');
+        const a2 = document.createElement('a');
+        a2.className = 'dropdown-item year-option';
+        a2.href = '#';
+        a2.dataset.semester = '2';
+        a2.dataset.year = year;
+        a2.textContent = year;
+        li2.appendChild(a2);
+        secondSemDropdown.appendChild(li2);
+        
+        // Add click event listeners
+        [a1, a2].forEach(a => {
+          a.addEventListener('click', function(e) {
+            e.preventDefault();
+            const semester = parseInt(this.dataset.semester);
+            const academicYear = this.dataset.year;
+            
+            // Update active semester button
+            document.querySelectorAll('.semester-btn').forEach(btn => {
+              btn.classList.remove('btn-primary', 'active');
+              btn.classList.add('btn-outline-primary');
+            });
+            
+            const semesterBtn = semester === 1 ? document.getElementById('firstSemBtn') : document.getElementById('secondSemBtn');
+            semesterBtn.classList.remove('btn-outline-primary');
+            semesterBtn.classList.add('btn-primary', 'active');
+            
+            // Update active year option
+            document.querySelectorAll('.year-option').forEach(opt => {
+              opt.classList.remove('active');
+            });
+            this.classList.add('active');
+            
+            currentSemester = semester;
+            currentAcademicYear = academicYear;
+            currentPage = 1;
+            
+            updateSemesterHeader();
+            loadStudentHistoryData();
           });
-      };
+        });
+      });
+    }
+    
+    function updateSemesterHeader() {
+      const semesterLabel = currentSemester === 1 ? '1<sup>st</sup>' : '2<sup>nd</sup>';
+      document.getElementById('semesterHeader').innerHTML = 
+        `${semesterLabel} Semester | ${currentAcademicYear}`;
+    }
+    
+    function loadStudentHistoryData() {
+      // Show loading state
+      const tableBody = document.getElementById('studentHistoryTable');
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="5" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading student records...</p>
+          </td>
+        </tr>
+      `;
       
-      // Function to populate status history table
-      function populateStatusHistory(history) {
-          const statusHistoryTable = document.getElementById('statusHistoryTable');
-          statusHistoryTable.innerHTML = '';
-          
-          if (!history || history.length === 0) {
-              // If no history is available, create a default entry for "received" status
-              const receivedDate = document.getElementById("receivedDate").textContent;
-              statusHistoryTable.innerHTML = `
-                  <tr>
-                      <td class="ps-4"><span class="badge badge-receive"><i class="fas fa-smile"></i> Received</span></td>
-                      <td>${receivedDate}</td>
-                      <td class="pe-4">System</td>
-                  </tr>
-              `;
-              return;
+      // Fetch data from API
+      const searchTerm = document.getElementById('searchInput').value || '';
+      fetch(`/api/student_history?semester=${currentSemester}&academic_year=${currentAcademicYear}&page=${currentPage}&search=${encodeURIComponent(searchTerm)}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
           }
-          
-          // Sort history by date (newest first)
-          history.sort((a, b) => new Date(b.date) - new Date(a.date));
-          
-          history.forEach(entry => {
-              const statusBadge = getStatusBadge(entry.status);
+          return response.json();
+        })
+        .then(data => {
+          if (data.students && data.students.length > 0) {
+            tableBody.innerHTML = '';
+            
+            data.students.forEach((student, index) => {
               const row = document.createElement('tr');
+              row.className = 'fade-in';
+              row.dataset.semester = student.semester || 1;
+              row.dataset.academicYear = student.academic_year || currentAcademicYear;
+              row.dataset.status = student.status || 'New';
+              
               row.innerHTML = `
-                  <td class="ps-4">${statusBadge}</td>
-                  <td>${formatDate(entry.date)}</td>
-                  <td class="pe-4">${entry.updated_by || 'System'}</td>
+                <td class="ps-4">${student.student_id}</td>
+                <td>${student.name}</td>
+                <td>${formatDate(student.received_date)}</td>
+                <td class="text-center">
+                  <span class="status-badge status-${(student.status || 'new').toLowerCase()}">
+                    ${student.status || 'New'}
+                  </span>
+                </td>
+                <td class="text-end pe-4">
+                  <button class="btn btn-primary btn-sm rounded-pill px-3" onclick="loadStudentHistory('${student.student_id}')">
+                    <i class="fas fa-eye me-1"></i> View Details
+                  </button>
+                </td>
               `;
-              statusHistoryTable.appendChild(row);
-          });
-      }
-      
-      // Function to get status badge HTML
-      function getStatusBadge(status) {
-          let badgeClass = '';
-          let icon = '';
-          let text = '';
-          
-          switch(status) {
-              case 'pending':
-                  badgeClass = 'badge-pending';
-                  icon = '<i class="fas fa-clock"></i>';
-                  text = 'Pending';
-                  break;
-              case 'processing':
-                  badgeClass = 'badge-processing';
-                  icon = '<i class="fas fa-cogs"></i>';
-                  text = 'Processing';
-                  break;
-              case 'done':
-                  badgeClass = 'badge-done';
-                  icon = '<i class="fas fa-check-circle"></i>';
-                  text = 'Done';
-                  break;
-              case 'receive':
-                  badgeClass = 'badge-receive';
-                  icon = '<i class="fas fa-smile"></i>';
-                  text = 'Received';
-                  break;
-              default:
-                  badgeClass = 'badge-secondary';
-                  icon = '<i class="fas fa-info-circle"></i>';
-                  text = status || 'Unknown';
+              
+              tableBody.appendChild(row);
+            });
+            
+            // Update pagination info
+            document.getElementById('nextBtn').disabled = !data.has_next;
+            
+          } else {
+            // Show empty state
+            tableBody.innerHTML = `
+              <tr>
+                <td colspan="5" class="text-center py-5">
+                  <div class="empty-state">
+                    <i class="fas fa-history"></i>
+                    <h5>No ID History Found</h5>
+                    <p class="text-muted">No student ID records are available for this semester.</p>
+                  </div>
+                </td>
+              </tr>
+            `;
+          }
+        })
+        .catch(error => {
+          console.error("Error fetching student history:", error);
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="5" class="text-center py-5">
+                <div class="empty-state">
+                  <i class="fas fa-exclamation-triangle text-danger"></i>
+                  <h5>Error Loading Data</h5>
+                  <p class="text-muted">There was a problem loading the student records. Please try again.</p>
+                </div>
+              </td>
+            </tr>
+          `;
+          showToast('Error loading student records. Please try again.', 'error');
+        });
+    }
+    
+    // Function to load student history details
+    window.loadStudentHistory = function(studentId) {
+      fetch(`/get_student_history/${studentId}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
+        .then(student => {
+          // Set profile picture
+          const profilePicture = document.getElementById("profilePicture");
+          if (student.profile_picture) {
+            profilePicture.src = `/static/uploads/${student.profile_picture}`;
+            document.getElementById("downloadProfile").href = `/static/uploads/${student.profile_picture}`;
+            document.getElementById("downloadProfile").download = student.profile_picture;
+          } else {
+            profilePicture.src = "/static/default_profile.png";
+            document.getElementById("downloadProfile").href = "/static/default_profile.png";
+            document.getElementById("downloadProfile").download = "default_profile.png";
           }
           
-          return `<span class="badge ${badgeClass}">${icon} ${text}</span>`;
-      }
-      
-      // Function to format date
-      function formatDate(dateString) {
-          if (!dateString) return 'N/A';
-          
-          const date = new Date(dateString);
-          if (isNaN(date.getTime())) {
-              // Try to parse MySQL datetime format
-              const parts = dateString.split(/[- :]/);
-              if (parts.length >= 3) {
-                  const newDate = new Date(parts[0], parts[1]-1, parts[2], 
-                                         parts[3] || 0, parts[4] || 0, parts[5] || 0);
-                  if (!isNaN(newDate.getTime())) {
-                      return newDate.toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                      });
-                  }
-              }
-              return dateString; // Return as is if parsing fails
+          // Set signature
+          const signatureImage = document.getElementById("signatureImage");
+          if (student.signature) {
+            signatureImage.src = `/static/uploads/${student.signature}`;
+            document.getElementById("downloadSignature").href = `/static/uploads/${student.signature}`;
+            document.getElementById("downloadSignature").download = student.signature;
+          } else {
+            signatureImage.src = "/static/default_signature.png";
+            document.getElementById("downloadSignature").href = "/static/default_signature.png";
+            document.getElementById("downloadSignature").download = "default_signature.png";
           }
           
-          return date.toLocaleDateString('en-US', {
+          // Set barcode
+          const barcodeImage = document.getElementById("barcodeImage");
+          if (student.barcode) {
+            barcodeImage.src = `/static/barcodes/${student.barcode}`;
+            document.getElementById("downloadBarcode").href = `/static/barcodes/${student.barcode}`;
+            document.getElementById("downloadBarcode").download = student.barcode;
+          } else {
+            barcodeImage.src = "/static/default_barcode.jpg";
+            document.getElementById("downloadBarcode").href = "/static/default_barcode.jpg";
+            document.getElementById("downloadBarcode").download = "default_barcode.jpg";
+          }
+          
+          // Set student details
+          document.getElementById("studentID").textContent = student.student_id || 'N/A';
+          document.getElementById("studentName").textContent = student.name || 'N/A';
+          document.getElementById("studentCourse").textContent = student.course || 'N/A';
+          document.getElementById("studentContact").textContent = student.contact || 'N/A';
+          document.getElementById("studentGuardian").textContent = student.guardian_name || 'N/A';
+          document.getElementById("studentAddress").textContent = student.address || 'N/A';
+          document.getElementById("receivedDate").textContent = formatDate(student.received_date) || 'N/A';
+          document.getElementById("academicYear").textContent = student.academic_year || 'N/A';
+          document.getElementById("semesterInfo").textContent = student.semester === 1 ? '1st Semester' : '2nd Semester';
+          
+          // Set status with badge
+          const statusInfo = document.getElementById("statusInfo");
+          statusInfo.innerHTML = `<span class="status-badge status-${(student.status || 'new').toLowerCase()}">${student.status || 'New'}</span>`;
+          
+          // Populate status history table
+          populateStatusHistory(student.status_history || []);
+          
+          // Show the modal
+          const studentHistoryModal = new bootstrap.Modal(document.getElementById("studentHistoryModal"));
+          studentHistoryModal.show();
+          
+          // Show success toast
+          showToast('Student details loaded successfully', 'success');
+        })
+        .catch(error => {
+          console.error("Error fetching student history:", error);
+          showToast('Error loading student details. Please try again.', 'error');
+        });
+    };
+    
+    // Function to populate status history table
+    function populateStatusHistory(history) {
+      const statusHistoryTable = document.getElementById('statusHistoryTable');
+      statusHistoryTable.innerHTML = '';
+      
+      if (!history || history.length === 0) {
+        // If no history is available, create a default entry for "received" status
+        const receivedDate = document.getElementById("receivedDate").textContent;
+        statusHistoryTable.innerHTML = `
+          <tr>
+            <td class="ps-4"><span class="badge badge-receive"><i class="fas fa-smile"></i> Received</span></td>
+            <td>${receivedDate}</td>
+            <td class="pe-4">System</td>
+          </tr>
+        `;
+        return;
+      }
+      
+      // Sort history by date (newest first)
+      history.sort((a, b) => new Date(b.date) - new Date(a.date));
+      
+      history.forEach(entry => {
+        const statusBadge = getStatusBadge(entry.status);
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td class="ps-4">${statusBadge}</td>
+          <td>${formatDate(entry.date)}</td>
+          <td class="pe-4">${entry.updated_by || 'System'}</td>
+        `;
+        statusHistoryTable.appendChild(row);
+      });
+    }
+    
+    // Function to get status badge HTML
+    function getStatusBadge(status) {
+      let badgeClass = '';
+      let icon = '';
+      let text = '';
+      
+      switch(status) {
+        case 'pending':
+          badgeClass = 'badge-pending';
+          icon = '<i class="fas fa-clock"></i>';
+          text = 'Pending';
+          break;
+        case 'processing':
+          badgeClass = 'badge-processing';
+          icon = '<i class="fas fa-cogs"></i>';
+          text = 'Processing';
+          break;
+        case 'done':
+          badgeClass = 'badge-done';
+          icon = '<i class="fas fa-check-circle"></i>';
+          text = 'Done';
+          break;
+        case 'receive':
+          badgeClass = 'badge-receive';
+          icon = '<i class="fas fa-smile"></i>';
+          text = 'Received';
+          break;
+        case 'Old':
+          badgeClass = 'badge-old';
+          icon = '<i class="fas fa-history"></i>';
+          text = 'Old';
+          break;
+        case 'New':
+          badgeClass = 'badge-new';
+          icon = '<i class="fas fa-star"></i>';
+          text = 'New';
+          break;
+        default:
+          badgeClass = 'badge-secondary';
+          icon = '<i class="fas fa-info-circle"></i>';
+          text = status || 'Unknown';
+      }
+      
+      return `<span class="badge ${badgeClass}">${icon} ${text}</span>`;
+    }
+    
+    // Function to format date
+    function formatDate(dateString) {
+      if (!dateString) return 'N/A';
+      
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        // Try to parse MySQL datetime format
+        const parts = dateString.split(/[- :]/);
+        if (parts.length >= 3) {
+          const newDate = new Date(parts[0], parts[1]-1, parts[2], 
+                                 parts[3] || 0, parts[4] || 0, parts[5] || 0);
+          if (!isNaN(newDate.getTime())) {
+            return newDate.toLocaleDateString('en-US', {
               year: 'numeric',
               month: 'long',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-          });
+              day: 'numeric'
+            });
+          }
+        }
+        return dateString; // Return as is if parsing fails
       }
       
-      // Download Modal Content as an Image
-      document.getElementById("downloadHistory").addEventListener("click", function() {
-          const modalElement = document.querySelector("#studentHistoryModal .modal-content");
-          const studentName = document.getElementById("studentName").textContent;
-          const studentId = document.getElementById("studentID").textContent;
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    }
+    
+    // Download Modal Content as an Image
+    document.getElementById("downloadHistory").addEventListener("click", function() {
+      const modalElement = document.querySelector("#studentHistoryModal .modal-content");
+      const studentName = document.getElementById("studentName").textContent;
+      const studentId = document.getElementById("studentID").textContent;
+      
+      // Add loading state to button
+      const originalButtonText = this.innerHTML;
+      this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Generating...';
+      this.disabled = true;
+      
+      html2canvas(modalElement, { 
+        scale: 2, 
+        logging: false, 
+        useCORS: true,
+        backgroundColor: document.body.classList.contains('dark-mode') ? '#1e1e1e' : '#ffffff'
+      }).then(canvas => {
+        // Create download link
+        const link = document.createElement("a");
+        link.href = canvas.toDataURL("image/png");
+        link.download = `${studentId}_${studentName.replace(/\s+/g, '_')}_ID_History.png`;
+        link.click();
+        
+        // Reset button state
+        this.innerHTML = originalButtonText;
+        this.disabled = false;
+        
+        // Show success toast
+        showToast('Image downloaded successfully', 'success');
+      }).catch(error => {
+        console.error("Error generating image:", error);
+        this.innerHTML = originalButtonText;
+        this.disabled = false;
+        showToast('Error generating image. Please try again.', 'error');
+      });
+    });
+    
+    // Search Functionality
+    document.getElementById("searchInput").addEventListener("keyup", function() {
+      clearTimeout(this.searchTimeout);
+      this.searchTimeout = setTimeout(() => {
+        currentPage = 1;
+        loadStudentHistoryData();
+      }, 300);
+    });
+    
+    // Next button functionality
+    document.getElementById("nextBtn").addEventListener("click", function() {
+      currentPage++;
+      loadStudentHistoryData();
+    });
+    
+    // Enhanced Export functionality
+    document.getElementById("exportBtn").addEventListener("click", function() {
+      // Update export preview
+      document.getElementById('exportSemester').textContent = currentSemester === 1 ? '1st Semester' : '2nd Semester';
+      document.getElementById('exportAcademicYear').textContent = currentAcademicYear;
+      
+      // Get record count
+      fetch(`/api/student_history?semester=${currentSemester}&academic_year=${currentAcademicYear}`)
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('exportRecordCount').textContent = data.total || 0;
+        })
+        .catch(error => {
+          console.error('Error fetching record count:', error);
+          document.getElementById('exportRecordCount').textContent = 'Unknown';
+        });
+      
+      // Show export modal
+      const exportModal = new bootstrap.Modal(document.getElementById('exportModal'));
+      exportModal.show();
+    });
+
+    // Enhanced confirm export with embedded images
+    document.getElementById("confirmExport").addEventListener("click", function() {
+      const includeImages = document.getElementById('includeImages').checked;
+      const url = `/export_student_history?semester=${currentSemester}&academic_year=${currentAcademicYear}&include_images=${includeImages}`;
+      
+      // Add loading state
+      const originalText = this.innerHTML;
+      this.innerHTML = includeImages 
+        ? '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Creating Excel with Images...'
+        : '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Exporting...';
+      this.disabled = true;
+      
+      // Create progress tracking
+      let progressInterval;
+      let progress = 0;
+      
+      const updateProgress = () => {
+        progress += Math.random() * 10;
+        if (progress > 90) progress = 90;
+        
+        if (includeImages) {
+          this.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status"></span> Embedding Images... ${Math.round(progress)}%`;
+        } else {
+          this.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status"></span> Exporting... ${Math.round(progress)}%`;
+        }
+      };
+      
+      progressInterval = setInterval(updateProgress, 500);
+      
+      // Create download with better error handling
+      const downloadFile = (url) => {
+        return new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("GET", url, true);
+          xhr.responseType = "blob";
+          xhr.timeout = 300000; // 5 minute timeout for image processing
           
-          // Add loading state to button
-          const originalButtonText = this.innerHTML;
-          this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Generating...';
-          this.disabled = true;
-          
-          html2canvas(modalElement, { 
-              scale: 2, 
-              logging: false, 
-              useCORS: true,
-              backgroundColor: document.body.classList.contains('dark-mode') ? '#1e1e1e' : '#ffffff'
-          }).then(canvas => {
-              // Create download link
+          xhr.onload = () => {
+            if (xhr.status === 200) {
+              const blob = xhr.response;
               const link = document.createElement("a");
-              link.href = canvas.toDataURL("image/png");
-              link.download = `${studentId}_${studentName.replace(/\s+/g, '_')}_ID_History.png`;
+              link.href = window.URL.createObjectURL(blob);
+              
+              // Generate filename based on format
+              const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
+              const baseFilename = `student_history_${currentAcademicYear}_sem${currentSemester}`;
+              const extension = includeImages ? "_with_images.xlsx" : ".xlsx";
+              link.download = `${baseFilename}${extension}`;
+              
+              document.body.appendChild(link);
               link.click();
-              
-              // Reset button state
-              this.innerHTML = originalButtonText;
-              this.disabled = false;
-              
-              // Show success toast
-              showToast('Image downloaded successfully', 'success');
-          }).catch(error => {
-              console.error("Error generating image:", error);
-              this.innerHTML = originalButtonText;
-              this.disabled = false;
-              showToast('Error generating image. Please try again.', 'error');
-          });
-      });
-      
-      // Search Functionality
-      document.getElementById("searchInput").addEventListener("keyup", function() {
-          const filter = this.value.toLowerCase();
-          const rows = document.querySelectorAll("#studentHistoryTable tr:not(.empty-row)");
-          let hasResults = false;
+              document.body.removeChild(link);
+              window.URL.revokeObjectURL(link.href);
+              resolve();
+            } else {
+              reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
+            }
+          };
           
-          rows.forEach(row => {
-              if (row.cells && row.cells.length > 0) {
-                  const studentID = row.cells[0].textContent.toLowerCase();
-                  const studentName = row.cells[1].textContent.toLowerCase();
-                  const isVisible = (studentID.includes(filter) || studentName.includes(filter));
-                  
-                  row.style.display = isVisible ? "" : "none";
-                  if (isVisible) hasResults = true;
-              }
-          });
+          xhr.onerror = () => reject(new Error("Network error"));
+          xhr.ontimeout = () => reject(new Error("Request timeout - Image processing may take longer"));
           
-          // Check if we need to show "no results" message
-          let emptyRow = document.querySelector(".empty-row");
-          if (!hasResults) {
-              if (!emptyRow) {
-                  const tbody = document.getElementById("studentHistoryTable");
-                  emptyRow = document.createElement("tr");
-                  emptyRow.className = "empty-row";
-                  emptyRow.innerHTML = `
-                      <td colspan="4" class="text-center py-5">
-                          <div class="empty-state">
-                              <i class="fas fa-search"></i>
-                              <h5>No Results Found</h5>
-                              <p class="text-muted">Try adjusting your search criteria</p>
-                          </div>
-                      </td>
-                  `;
-                  tbody.appendChild(emptyRow);
-              }
-              emptyRow.style.display = "";
-          } else if (emptyRow) {
-              emptyRow.style.display = "none";
-          }
-      });
-      
-      // Image preview hover effect
-      document.querySelectorAll('.img-preview').forEach(img => {
-          img.addEventListener('mouseover', function() {
-              this.style.transform = 'scale(1.05)';
-          });
+          xhr.onprogress = (e) => {
+            if (e.lengthComputable) {
+              const percentComplete = (e.loaded / e.total) * 100;
+              progress = Math.max(progress, percentComplete);
+              updateProgress();
+            }
+          };
           
-          img.addEventListener('mouseout', function() {
-              this.style.transform = 'scale(1)';
-          });
-      });
+          xhr.send();
+        });
+      };
       
-      // Toast notification function
-      function showToast(message, type = 'info') {
-          // Set icon and background based on type
-          let icon, bgClass;
-          switch(type) {
-              case 'success':
-                  icon = 'fas fa-check-circle';
-                  bgClass = 'bg-success';
-                  break;
-              case 'error':
-                  icon = 'fas fa-exclamation-circle';
-                  bgClass = 'bg-danger';
-                  break;
-              case 'warning':
-                  icon = 'fas fa-exclamation-triangle';
-                  bgClass = 'bg-warning';
-                  break;
-              default:
-                  icon = 'fas fa-info-circle';
-                  bgClass = 'bg-primary';
+      // Start download
+      downloadFile(url)
+        .then(() => {
+          clearInterval(progressInterval);
+          this.innerHTML = '<i class="fas fa-check me-2"></i> Export Complete!';
+          
+          if (includeImages) {
+            showToast("Excel file with embedded images exported successfully!", "success");
+          } else {
+            showToast("Excel file exported successfully!", "success");
           }
           
-          // Create toast element
-          const toastId = 'toast-' + Date.now();
-          const toastHtml = `
-              <div id="${toastId}" class="toast border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
-                  <div class="toast-header ${bgClass} text-white">
-                      <i class="${icon} me-2"></i>
-                      <strong class="me-auto">Notification</strong>
-                      <small>Just now</small>
-                      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
-                  </div>
-                  <div class="toast-body">
-                      ${message}
-                  </div>
-              </div>
-          `;
+          setTimeout(() => {
+            this.innerHTML = originalText;
+            this.disabled = false;
+            bootstrap.Modal.getInstance(document.getElementById('exportModal')).hide();
+          }, 2000);
+        })
+        .catch((error) => {
+          clearInterval(progressInterval);
+          console.error("Export error:", error);
           
-          toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+          this.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i> Export Failed';
+          showToast(`Export failed: ${error.message}`, "error");
           
-          // Initialize and show toast
-          const toastElement = document.getElementById(toastId);
-          const toast = new bootstrap.Toast(toastElement, {
-              autohide: true,
-              delay: 3000
-          });
-          
-          toast.show();
-          
-          // Remove toast after it's hidden
-          toastElement.addEventListener('hidden.bs.toast', function() {
-              toastElement.remove();
-          });
+          setTimeout(() => {
+            this.innerHTML = originalText;
+            this.disabled = false;
+          }, 3000);
+        });
+    });
+    
+    // Update export modal description for embedded images
+    const includeImagesCheckbox = document.getElementById("includeImages");
+    const exportDetailsList = document.getElementById("exportDetailsList");
+    
+    includeImagesCheckbox.addEventListener("change", function() {
+      if (this.checked) {
+        exportDetailsList.innerHTML = `
+          <li>Excel file with embedded profile pictures and signatures</li>
+          <li>Professional formatting with proper image sizing</li>
+          <li>All student data in a single comprehensive file</li>
+          <li>Images displayed directly in Excel cells</li>
+          <li>Ready for printing or digital sharing</li>
+        `;
+      } else {
+        exportDetailsList.innerHTML = `
+          <li>Excel file with professional formatting</li>
+          <li>Student data without images</li>
+          <li>Smaller file size for quick sharing</li>
+          <li>Compatible with all Excel versions</li>
+        `;
       }
+    });
+    
+    // Enhanced Import functionality
+    document.getElementById("importBtn").addEventListener("click", function() {
+      // Reset import modal
+      resetImportModal();
+      
+      // Show import modal
+      const importModal = new bootstrap.Modal(document.getElementById('importModal'));
+      importModal.show();
+    });
+    
+    // File upload handling
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('importFile');
+    
+    // Drag and drop
+    uploadArea.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      this.classList.add('border-primary', 'bg-light');
+    });
+    
+    uploadArea.addEventListener('dragleave', function(e) {
+      e.preventDefault();
+      this.classList.remove('border-primary', 'bg-light');
+    });
+    
+    uploadArea.addEventListener('drop', function(e) {
+      e.preventDefault();
+      this.classList.remove('border-primary', 'bg-light');
+      
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        handleFileSelection(files[0]);
+      }
+    });
+    
+    // File input change
+    fileInput.addEventListener('change', function() {
+      if (this.files.length > 0) {
+        handleFileSelection(this.files[0]);
+      }
+    });
+    
+    // Start import
+    document.getElementById('startImport').addEventListener('click', function() {
+      if (fileInput.files.length > 0) {
+        startImport(fileInput.files[0]);
+      }
+    });
+    
+    function handleFileSelection(file) {
+      // Validate file type
+      const allowedTypes = ['.csv', '.xlsx', '.xls', '.zip'];
+      const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+      
+      if (!allowedTypes.includes(fileExtension)) {
+        showToast('Invalid file type. Please select CSV, Excel, or ZIP files.', 'error');
+        return;
+      }
+      
+      // Show file info
+      document.getElementById('fileName').textContent = file.name;
+      document.getElementById('fileSize').textContent = formatFileSize(file.size);
+      document.getElementById('fileInfo').classList.remove('d-none');
+      document.getElementById('uploadArea').classList.add('d-none');
+      document.getElementById('startImport').disabled = false;
+      
+      // Update step
+      updateStep(2);
+    }
+    
+    function startImport(file) {
+      // Show progress
+      document.getElementById('importProgress').classList.remove('d-none');
+      document.getElementById('startImport').disabled = true;
+      updateStep(3);
+      
+      // Create form data
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('semester', currentSemester);
+      formData.append('academic_year', currentAcademicYear);
+      
+      // Update progress
+      updateProgress(25, 'Uploading file...');
+      
+      // Send request
+      fetch('/import_student_history', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => {
+        updateProgress(75, 'Processing data...');
+        return response.json();
+      })
+      .then(data => {
+        updateProgress(100, 'Import completed!');
+        
+        setTimeout(() => {
+          showImportResults(data);
+          if (data.success) {
+            loadStudentHistoryData(); // Refresh the table
+          }
+        }, 1000);
+      })
+      .catch(error => {
+        console.error('Import error:', error);
+        showImportResults({
+          success: false,
+          error: 'Import failed. Please try again.'
+        });
+      });
+    }
+    
+    function showImportResults(data) {
+      document.getElementById('importProgress').classList.add('d-none');
+      document.getElementById('importResults').classList.remove('d-none');
+      
+      const resultsAlert = document.getElementById('resultsAlert');
+      const icon = resultsAlert.querySelector('i');
+      const title = resultsAlert.querySelector('h6');
+      
+      if (data.success) {
+        resultsAlert.className = 'alert alert-success border-0';
+        icon.className = 'fas fa-check-circle fa-2x me-3 text-success';
+        title.textContent = 'Import Completed Successfully!';
+        
+        document.getElementById('importedCount').textContent = data.imported || 0;
+        document.getElementById('errorCount').textContent = data.errors || 0;
+        
+        showToast(`Successfully imported ${data.imported} records`, 'success');
+      } else {
+        resultsAlert.className = 'alert alert-danger border-0';
+        icon.className = 'fas fa-exclamation-circle fa-2x me-3 text-danger';
+        title.textContent = 'Import Failed';
+        
+        const statsDiv = resultsAlert.querySelector('.import-stats');
+        statsDiv.innerHTML = `<small class="text-muted">${data.error}</small>`;
+        
+        showToast(`Import failed: ${data.error}`, 'error');
+      }
+    }
+    
+    function updateProgress(percent, text) {
+      document.getElementById('progressBar').style.width = percent + '%';
+      document.getElementById('progressText').textContent = text;
+    }
+    
+    function updateStep(stepNumber) {
+      document.querySelectorAll('.step-item').forEach((step, index) => {
+        if (index < stepNumber) {
+          step.classList.add('active');
+        } else {
+          step.classList.remove('active');
+        }
+      });
+    }
+    
+    function resetImportModal() {
+      document.getElementById('fileInfo').classList.add('d-none');
+      document.getElementById('uploadArea').classList.remove('d-none');
+      document.getElementById('importProgress').classList.add('d-none');
+      document.getElementById('importResults').classList.add('d-none');
+      document.getElementById('startImport').disabled = true;
+      document.getElementById('importFile').value = '';
+      updateStep(1);
+    }
+    
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // Toast notification function
+    function showToast(message, type = 'info') {
+      // Set icon and background based on type
+      let icon, bgClass;
+      switch(type) {
+        case 'success':
+          icon = 'fas fa-check-circle';
+          bgClass = 'bg-success';
+          break;
+        case 'error':
+          icon = 'fas fa-exclamation-circle';
+          bgClass = 'bg-danger';
+          break;
+        case 'warning':
+          icon = 'fas fa-exclamation-triangle';
+          bgClass = 'bg-warning';
+          break;
+        default:
+          icon = 'fas fa-info-circle';
+          bgClass = 'bg-primary';
+      }
+      
+      // Create toast element
+      const toastId = 'toast-' + Date.now();
+      const toastHtml = `
+        <div id="${toastId}" class="toast border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+          <div class="toast-header ${bgClass} text-white">
+            <i class="${icon} me-2"></i>
+            <strong class="me-auto">Notification</strong>
+            <small>Just now</small>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+          </div>
+          <div class="toast-body">
+            ${message}
+          </div>
+        </div>
+      `;
+      
+      const toastContainer = document.getElementById('toastContainer');
+      toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+      
+      // Initialize and show toast
+      const toastElement = document.getElementById(toastId);
+      const toast = new bootstrap.Toast(toastElement, {
+        autohide: true,
+        delay: 3000
+      });
+      
+      toast.show();
+      
+      // Remove toast after it's hidden
+      toastElement.addEventListener('hidden.bs.toast', function() {
+        toastElement.remove();
+      });
+    }
+    
+    // Make clearFile function available globally
+    window.clearFile = function() {
+      resetImportModal();
+    };
+    
+    // Initialize on page load
+    updateAcademicYearDropdowns();
+    updateSemesterHeader();
+    loadStudentHistoryData();
   });
 </script>
 
 <style>
+  /* Semester Filter Buttons */
+  .semester-btn {
+    font-weight: 600;
+    min-width: 120px;
+    transition: all 0.3s ease;
+  }
+  
+  .semester-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
+  }
+  
+  .semester-btn.active {
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.4);
+  }
+  
+  .semester-btn .fa-chevron-down {
+    font-size: 0.75rem;
+    transition: transform 0.2s ease;
+  }
+  
+  .semester-btn[aria-expanded="true"] .fa-chevron-down {
+    transform: rotate(180deg);
+  }
+  
+  .dropdown-toggle::after {
+    display: none;
+  }
+  
+  .dropdown-menu {
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    padding: 0.5rem;
+  }
+  
+  .dropdown-header {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6c757d;
+  }
+  
+  .dropdown-item {
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+  
+  .dropdown-item:hover {
+    background-color: #f8f9fa;
+    color: #0d6efd;
+  }
+  
+  .dropdown-item.active {
+    background-color: #e3f2fd;
+    color: #0d6efd;
+    font-weight: 600;
+  }
+  
   /* Status Badges */
-  .badge {
-      padding: 0.5rem 0.75rem;
-      border-radius: 50rem;
-      font-size: 0.75rem;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.25rem;
+  .status-badge {
+    padding: 0.5rem 0.75rem;
+    border-radius: 50rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  
+  .status-old {
+    background-color: #6c757d;
+    color: white;
+  }
+  
+  .status-new {
+    background-color: #198754;
+    color: white;
   }
   
   .badge-pending {
-      background-color: #ffc107;
-      color: #212529;
+    background-color: #ffc107;
+    color: #212529;
   }
   
   .badge-processing {
-      background-color: #0dcaf0;
-      color: #212529;
+    background-color: #0dcaf0;
+    color: #212529;
   }
   
   .badge-done {
-      background-color: #198754;
-      color: white;
+    background-color: #198754;
+    color: white;
   }
   
   .badge-receive {
-      background-color: #0d6efd;
-      color: white;
+    background-color: #0d6efd;
+    color: white;
+  }
+  
+  .badge-old {
+    background-color: #6c757d;
+    color: white;
+  }
+  
+  .badge-new {
+    background-color: #198754;
+    color: white;
   }
   
   .badge-secondary {
-      background-color: #6c757d;
-      color: white;
+    background-color: #6c757d;
+    color: white;
   }
   
   /* Empty State */
   .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
   }
   
   .empty-state i {
-      font-size: 3rem;
-      color: #dee2e6;
-      margin-bottom: 1rem;
+    font-size: 3rem;
+    color: #dee2e6;
+    margin-bottom: 1rem;
   }
   
   .empty-state h5 {
-      font-weight: 600;
-      margin-bottom: 0.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
   }
   
   /* Toast Container */
   .toast-container {
-      z-index: 1060;
+    z-index: 1060;
   }
   
   /* Modern Table */
   .modern-table {
-      border-collapse: separate;
-      border-spacing: 0;
+    border-collapse: separate;
+    border-spacing: 0;
   }
   
   .modern-table thead th {
-      background-color: #212529;
-      color: white;
-      font-weight: 600;
-      text-transform: uppercase;
-      font-size: 0.8rem;
-      letter-spacing: 0.5px;
-      padding: 15px;
+    background-color: #212529;
+    color: white;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+    padding: 15px;
   }
   
   .modern-table thead th:first-child {
-      border-top-left-radius: 8px;
+    border-top-left-radius: 8px;
   }
   
   .modern-table thead th:last-child {
-      border-top-right-radius: 8px;
+    border-top-right-radius: 8px;
   }
   
   .modern-table tbody tr {
-      transition: all 0.2s;
+    transition: all 0.2s;
   }
   
   .modern-table tbody tr:hover {
-      background-color: rgba(0, 0, 0, 0.03);
-      transform: scale(1.01);
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    background-color: rgba(0, 0, 0, 0.03);
+    transform: scale(1.01);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
   }
   
   /* Admin Badge */
   .admin-badge {
-      background-color: #dc3545;
-      color: white;
-      font-size: 0.8rem;
-      padding: 4px 12px;
-      border-radius: 20px;
-      margin-left: 10px;
-      font-weight: 500;
-      display: inline-block;
-      box-shadow: 0 2px 5px rgba(220, 53, 69, 0.3);
+    background-color: #dc3545;
+    color: white;
+    font-size: 0.8rem;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-left: 10px;
+    font-weight: 500;
+    display: inline-block;
+    box-shadow: 0 2px 5px rgba(220, 53, 69, 0.3);
   }
   
   /* Fade In Animation */
   @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
   }
   
   .fade-in {
-      animation: fadeIn 0.5s ease-out forwards;
+    animation: fadeIn 0.5s ease-out forwards;
   }
   
   /* Image Preview */
   .img-preview {
-      transition: transform 0.3s;
+    transition: transform 0.3s;
   }
   
   .img-preview:hover {
-      transform: scale(1.05);
+    transform: scale(1.05);
+  }
+  
+  /* Import/Export Modal Styles */
+  .step-item {
+    position: relative;
+    opacity: 0.5;
+    transition: all 0.3s ease;
+  }
+
+  .step-item.active {
+    opacity: 1;
+  }
+
+  .step-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 8px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+  }
+
+  .step-item.active .step-circle {
+    background-color: #0d6efd;
+    color: white;
+  }
+
+  .step-label {
+    display: block;
+    font-weight: 500;
+  }
+
+  .upload-area {
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: 2px dashed #dee2e6;
+  }
+
+  .upload-area:hover {
+    border-color: #0d6efd !important;
+    background-color: #f8f9fa !important;
+  }
+
+  .upload-area.border-primary {
+    border-color: #0d6efd !important;
+  }
+
+  .instruction-item {
+    padding: 8px 0;
+  }
+
+  .export-preview {
+    border: 1px solid #dee2e6;
+  }
+
+  .import-stats {
+    font-family: 'Courier New', monospace;
+  }
+
+  .progress {
+    height: 8px;
+    border-radius: 4px;
+  }
+
+  .file-info .alert {
+    margin-bottom: 0;
   }
 </style>
 {% endblock %}
-

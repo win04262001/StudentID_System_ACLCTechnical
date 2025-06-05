@@ -13,9 +13,6 @@
             </h2>
             <p class="text-muted">Manage user accounts and admin profiles</p>
         </div>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
-            <i class="fas fa-user-plus me-2"></i> Create User
-        </button>
     </div>
 
     <!-- Tabs -->
@@ -49,7 +46,7 @@
                                     <th class="text-end pe-4">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="usersTableBody">
                                 {% if users %}
                                     {% for user in users %}
                                         <tr>
@@ -120,6 +117,26 @@
                                 {% endif %}
                             </tbody>
                         </table>
+                    </div>
+                    
+                    <!-- Pagination Controls -->
+                    <div class="d-flex justify-content-between align-items-center p-3 border-top">
+                        <div class="pagination-info">
+                            <span id="paginationInfo">
+                                Showing <span id="startRange">1</span> to <span id="endRange">{{ users|length }}</span> of <span id="totalUsers">{{ total_users }}</span> users
+                            </span>
+                        </div>
+                        <div class="pagination-controls">
+                            <button id="prevPageBtn" class="btn btn-sm btn-outline-secondary me-2" {% if current_page == 1 %}disabled{% endif %}>
+                                <i class="fas fa-chevron-left me-1"></i> Previous
+                            </button>
+                            <span id="pageIndicator" class="mx-2">
+                                Page <span id="currentPage">{{ current_page }}</span> of <span id="totalPages">{{ total_pages }}</span>
+                            </span>
+                            <button id="nextPageBtn" class="btn btn-sm btn-outline-primary ms-2" {% if current_page == total_pages %}disabled{% endif %}>
+                                Next <i class="fas fa-chevron-right ms-1"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -294,6 +311,13 @@
     </div>
 </div>
 
+<!-- Loading Spinner -->
+<div id="loadingSpinner" class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-white bg-opacity-75" style="display: none !important; z-index: 9999;">
+    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+</div>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Edit User Modal
@@ -328,7 +352,185 @@
                 deleteUserName.textContent = userName;
             });
         });
+
+        // Pagination functionality
+        const prevPageBtn = document.getElementById('prevPageBtn');
+        const nextPageBtn = document.getElementById('nextPageBtn');
+        const currentPageEl = document.getElementById('currentPage');
+        const usersTableBody = document.getElementById('usersTableBody');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const startRangeEl = document.getElementById('startRange');
+        const endRangeEl = document.getElementById('endRange');
+        
+        // Initialize pagination variables
+        let currentPage = parseInt(currentPageEl.textContent) || 1;
+        
+        // Function to load users for a specific page
+        function loadUsers(page) {
+            // Show loading spinner
+            loadingSpinner.style.display = 'flex';
+            
+            // Fetch users for the requested page
+            fetch(`/admin/get_users?page=${page}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update pagination info
+                        currentPage = data.current_page;
+                        currentPageEl.textContent = data.current_page;
+                        document.getElementById('totalPages').textContent = data.total_pages;
+                        document.getElementById('totalUsers').textContent = data.total_users;
+                        
+                        // Update range display
+                        startRangeEl.textContent = data.start_range;
+                        endRangeEl.textContent = data.end_range;
+                        
+                        // Enable/disable pagination buttons
+                        prevPageBtn.disabled = currentPage <= 1;
+                        nextPageBtn.disabled = currentPage >= data.total_pages;
+                        
+                        // Clear existing table rows
+                        usersTableBody.innerHTML = '';
+                        
+                        // Add new rows
+                        if (data.users.length > 0) {
+                            data.users.forEach(user => {
+                                const row = createUserRow(user);
+                                usersTableBody.appendChild(row);
+                            });
+                            
+                            // Re-attach event listeners to new buttons
+                            attachEventListeners();
+                        } else {
+                            // Show empty state
+                            const emptyRow = document.createElement('tr');
+                            emptyRow.innerHTML = `
+                                <td colspan="5" class="text-center py-4">
+                                    <div class="empty-state">
+                                        <i class="fas fa-users"></i>
+                                        <p class="mb-0">No users found</p>
+                                    </div>
+                                </td>
+                            `;
+                            usersTableBody.appendChild(emptyRow);
+                        }
+                    } else {
+                        console.error('Failed to load users:', data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading users:', error);
+                })
+                .finally(() => {
+                    // Hide loading spinner
+                    loadingSpinner.style.display = 'none';
+                });
+        }
+        
+        // Function to create a user row from data
+        function createUserRow(user) {
+            const row = document.createElement('tr');
+            
+            // Role badge
+            const roleBadge = user.role === 'admin' 
+                ? '<span class="badge bg-danger">Admin</span>'
+                : '<span class="badge bg-primary">Student</span>';
+            
+            // Status badge
+            let statusBadge = '<span class="badge bg-dark">N/A</span>';
+            if (user.role === 'student') {
+                if (user.has_profile) {
+                    if (user.application_status === 'pending') {
+                        statusBadge = '<span class="badge bg-warning text-dark">Pending</span>';
+                    } else if (user.application_status === 'processing') {
+                        statusBadge = '<span class="badge bg-info">Processing</span>';
+                    } else if (user.application_status === 'done') {
+                        statusBadge = '<span class="badge bg-success">Done</span>';
+                    } else if (user.application_status === 'receive') {
+                        statusBadge = '<span class="badge bg-primary">Received</span>';
+                    }
+                } else {
+                    statusBadge = '<span class="badge bg-secondary">No Profile</span>';
+                }
+            }
+            
+            // Delete button (disabled for current user)
+            const deleteBtn = user.id === parseInt("{{ session.user_id }}") 
+                ? `<button class="btn btn-sm btn-outline-danger" disabled title="Cannot delete your own account">
+                     <i class="fas fa-trash-alt"></i>
+                   </button>`
+                : `<button class="btn btn-sm btn-outline-danger delete-user-btn"
+                     data-id="${user.id}"
+                     data-name="${user.name}"
+                     data-bs-toggle="modal"
+                     data-bs-target="#deleteUserModal">
+                     <i class="fas fa-trash-alt"></i>
+                   </button>`;
+            
+            row.innerHTML = `
+                <td class="ps-4">${user.student_id}</td>
+                <td>${user.name}</td>
+                <td>${roleBadge}</td>
+                <td>${statusBadge}</td>
+                <td class="text-end pe-4">
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-primary edit-user-btn" 
+                                data-id="${user.id}"
+                                data-name="${user.name}"
+                                data-role="${user.role}"
+                                data-bs-toggle="modal" 
+                                data-bs-target="#editUserModal">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        ${deleteBtn}
+                    </div>
+                </td>
+            `;
+            
+            return row;
+        }
+        
+        // Function to re-attach event listeners after updating the table
+        function attachEventListeners() {
+            // Edit User Modal
+            document.querySelectorAll('.edit-user-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const userId = this.getAttribute('data-id');
+                    const userName = this.getAttribute('data-name');
+                    const userRole = this.getAttribute('data-role');
+                    
+                    editUserForm.action = `/admin/update_user/${userId}`;
+                    editUserName.value = userName;
+                    editUserRole.value = userRole;
+                });
+            });
+            
+            // Delete User Modal
+            document.querySelectorAll('.delete-user-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const userId = this.getAttribute('data-id');
+                    const userName = this.getAttribute('data-name');
+                    
+                    deleteUserForm.action = `/admin/delete_user/${userId}`;
+                    deleteUserName.textContent = userName;
+                });
+            });
+        }
+        
+        // Add event listeners for pagination buttons
+        if (prevPageBtn) {
+            prevPageBtn.addEventListener('click', function() {
+                if (currentPage > 1) {
+                    loadUsers(currentPage - 1);
+                }
+            });
+        }
+        
+        if (nextPageBtn) {
+            nextPageBtn.addEventListener('click', function() {
+                loadUsers(currentPage + 1);
+            });
+        }
     });
 </script>
 {% endblock %}
-

@@ -221,6 +221,35 @@
                             </li>
                         </ul>
 
+                        <!-- Confirm Status Change Modal -->
+<!-- Confirmation Modal for DONE status -->
+<div class="modal fade" id="confirmStatusModal" tabindex="-1" aria-labelledby="confirmStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-warning">
+        <div class="modal-header bg-warning text-dark">
+          <h5 class="modal-title" id="confirmStatusModalLabel">⚠️ Confirm Status Change</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          Are you sure you want to mark this application as <strong>DONE</strong>?<br>
+          This will notify the student that their ID is ready for pickup.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="confirmYesBtn">Yes, Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div id="modalLoader" class="d-none text-center">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Processing...</span>
+    </div>
+    <p class="mt-2">Updating status...</p>
+  </div>
+  
+
                         <div class="tab-content" id="studentTabsContent">
                             <!-- Details Tab -->
                             <div class="tab-pane fade show active" id="details" role="tabpanel" aria-labelledby="details-tab">
@@ -716,8 +745,32 @@
         function saveStatusChanges() {
             const newStatus = statusSelect.value;
             const oldStatus = selectedStudent.application_status;
-            
-            // Send status update to server
+        
+            // If status is "done", show confirmation modal first
+            if (newStatus === 'done') {
+                const confirmModal = new bootstrap.Modal(document.getElementById('confirmStatusModal'));
+                confirmModal.show();
+        
+                document.getElementById('confirmYesBtn').onclick = function () {
+                    // Show loader (optional)
+                    document.getElementById('modalLoader')?.classList.remove('d-none');
+                
+                    // Hide modal quickly
+                    confirmModal.hide();
+                
+                    // Proceed with request
+                    proceedStatusUpdate(newStatus, oldStatus);
+                };
+                
+        
+                return; // Stop here until confirmed
+            }
+        
+            // For other statuses, proceed immediately
+            proceedStatusUpdate(newStatus, oldStatus);
+        }
+        
+        function proceedStatusUpdate(newStatus, oldStatus) {
             fetch(`/update_application_status/${selectedStudent.student_id}`, {
                 method: 'POST',
                 headers: {
@@ -729,31 +782,29 @@
             .then(data => {
                 if (data.success) {
                     // Update local data
-                    applications = applications.map(student => 
-                        student.student_id === selectedStudent.student_id 
-                            ? {...student, application_status: newStatus} 
+                    applications = applications.map(student =>
+                        student.student_id === selectedStudent.student_id
+                            ? { ...student, application_status: newStatus }
                             : student
                     );
-                    
-                    // If status changed to or from 'receive', update filtered applications
+        
+                    // Update filtered list if receive status is involved
                     if (newStatus === 'receive' || oldStatus === 'receive') {
                         filteredApplications = applications.filter(app => app.application_status !== 'receive');
                     }
-                    
+        
                     // Show success toast
                     showToast('Status Updated', `${selectedStudent.name}'s application status has been updated to ${newStatus}.`);
-                    
+        
                     // Close modal
                     studentModal.hide();
-                    
+        
                     // Update UI
                     updateStats();
-                    
-                    // If status changed to 'receive', refresh the page to update both tabs
+        
+                    // Reload page if moved to "receive"
                     if (newStatus === 'receive') {
-                        setTimeout(() => {
-                            location.reload();
-                        }, 1000);
+                        setTimeout(() => location.reload(), 1000);
                     }
                 } else {
                     showToast('Error', data.error || 'Failed to update status', 'error');
@@ -764,6 +815,7 @@
                 showToast('Error', 'Failed to update status', 'error');
             });
         }
+        
 
         function setToLocalStorage(key, value) {
             localStorage.setItem(key, value);
