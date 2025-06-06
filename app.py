@@ -14,7 +14,7 @@ import numpy as np
 import easyocr
 import base64
 import re
-from PIL import Image
+from PIL import Image, ImageOps
 import io
 from markupsafe import Markup
 import random
@@ -51,7 +51,6 @@ import tempfile
 from flask import Response, stream_template
 import shutil
 from werkzeug.wsgi import FileWrapper
-
 
 
 #------------------------------------------------------------------------------------
@@ -1524,41 +1523,202 @@ def create_excel_export_simple(students, semester, academic_year):
         # Fallback to basic Excel without images
         return create_basic_excel_export(students, semester, academic_year)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Updated resize_image_for_excel function in your app.py
 def resize_image_for_excel(image_path, width, height):
-    """Resize image for Excel embedding"""
+    """Resize image for Excel embedding with proper signature handling"""
     try:
-        # Open and resize image
-        with PILImage.open(image_path) as img:
-            # Convert to RGB if necessary
-            if img.mode in ('RGBA', 'LA', 'P'):
-                img = img.convert('RGB')
+        # Check if this is a signature file
+        is_signature = 'signature' in os.path.basename(image_path).lower()
+        
+        with Image.open(image_path) as img:
+            print(f"Processing {'signature' if is_signature else 'image'}: {image_path}")
+            print(f"Original mode: {img.mode}, size: {img.size}")
+            
+            if is_signature:
+                # Special processing for signatures
+                if img.mode in ('RGBA', 'LA'):
+                    # Create white background for signatures
+                    background = Image.new('RGB', img.size, (255, 255, 255))
+                    if img.mode == 'RGBA':
+                        # Use alpha channel as mask
+                        background.paste(img, mask=img.split()[-1])
+                    img = background
+                elif img.mode == 'P':
+                    img = img.convert('RGB')
+                elif img.mode == 'L':
+                    img = img.convert('RGB')
+                
+                # Enhance signature contrast
+                import numpy as np
+                import cv2
+                
+                img_array = np.array(img)
+                gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
+                
+                # Apply adaptive threshold for better signature visibility
+                thresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                                             cv2.THRESH_BINARY, 11, 2)
+                
+                # Invert so signature is black on white
+                thresh = 255 - thresh
+                
+                # Convert back to RGB
+                signature_rgb = cv2.cvtColor(thresh, cv2.COLOR_GRAY2RGB)
+                img = Image.fromarray(signature_rgb)
+                
+            else:
+                # Regular processing for profile pictures
+                if img.mode in ('RGBA', 'LA', 'P'):
+                    img = img.convert('RGB')
             
             # Resize image maintaining aspect ratio
-            img.thumbnail((width, height), PILImage.Resampling.LANCZOS)
+            img.thumbnail((width, height), Image.Resampling.LANCZOS)
             
-            # Create a new image with white background
-            new_img = PILImage.new('RGB', (width, height), 'white')
+            # Create new image with white background
+            new_img = Image.new('RGB', (width, height), 'white')
             
             # Paste the resized image centered
             x = (width - img.width) // 2
             y = (height - img.height) // 2
             new_img.paste(img, (x, y))
             
-            # Save to bytes
+            # Save to bytes for Excel
             img_bytes = io.BytesIO()
-            new_img.save(img_bytes, format='PNG')
+            new_img.save(img_bytes, format='PNG', optimize=True)
             img_bytes.seek(0)
             
             # Create openpyxl image
+            from openpyxl.drawing.image import Image as OpenpyxlImage
             excel_img = OpenpyxlImage(img_bytes)
             excel_img.width = width
             excel_img.height = height
             
+            print(f"✅ Successfully processed {'signature' if is_signature else 'image'}")
             return excel_img
             
     except Exception as e:
-        print(f"Error resizing image {image_path}: {e}")
+        print(f"❌ Error resizing image {image_path}: {e}")
         return None
+
+# Test the updated function
+def test_excel_image_processing():
+    test_files = [
+        ("static/uploads/i6.png", "profile"),
+        ("static/uploads/21000602400_signature.png", "signature")
+    ]
+    
+    for file_path, file_type in test_files:
+        if os.path.exists(file_path):
+            print(f"\nTesting {file_type}: {file_path}")
+            if file_type == "signature":
+                result = resize_image_for_excel(file_path, 80, 40)
+            else:
+                result = resize_image_for_excel(file_path, 50, 50)
+            
+            if result:
+                print(f"✅ {file_type} processed successfully")
+            else:
+                print(f"❌ Failed to process {file_type}")
+
+test_excel_image_processing()
+
+
+def process_signature_for_excel(signature_path, width=80, height=40):
+    """
+    Alternative signature processing method
+    Focuses on preserving signature strokes while removing transparency
+    """
+    try:
+        from PIL import Image, ImageEnhance, ImageOps
+        import numpy as np
+        
+        with Image.open(signature_path) as img:
+            # Convert to RGBA if not already
+            if img.mode != 'RGBA':
+                img = img.convert('RGBA')
+            
+            # Extract alpha channel
+            alpha = img.split()[-1]
+            
+            # Create white background
+            background = Image.new('RGB', img.size, (255, 255, 255))
+            
+            # Convert image to RGB
+            rgb_img = Image.new('RGB', img.size, (255, 255, 255))
+            rgb_img.paste(img, mask=alpha)
+            
+            # Convert to grayscale for processing
+            gray = rgb_img.convert('L')
+            
+            # Enhance contrast
+            enhancer = ImageEnhance.Contrast(gray)
+            enhanced = enhancer.enhance(2.0)  # Increase contrast
+            
+            # Apply threshold to make signature more visible
+            threshold = 200  # Adjust this value as needed
+            enhanced_array = np.array(enhanced)
+            binary = np.where(enhanced_array < threshold, 0, 255)
+            
+            # Convert back to PIL Image
+            binary_img = Image.fromarray(binary.astype(np.uint8), mode='L')
+            
+            # Convert to RGB
+            final_img = binary_img.convert('RGB')
+            
+            # Resize
+            final_img.thumbnail((width, height), Image.Resampling.LANCZOS)
+            
+            # Create final canvas
+            canvas = Image.new('RGB', (width, height), 'white')
+            x = (width - final_img.width) // 2
+            y = (height - final_img.height) // 2
+            canvas.paste(final_img, (x, y))
+            
+            return canvas
+            
+    except Exception as e:
+        print(f"Error in alternative signature processing: {e}")
+        return None
+
+# Test the alternative method
+def test_alternative_method():
+    signature_files = [
+        "static/uploads/21000602400_signature.png",
+        "static/uploads/12000602400_signature.png"
+    ]
+    
+    for sig_file in signature_files:
+        if os.path.exists(sig_file):
+            print(f"\nTesting alternative method with {sig_file}:")
+            result = process_signature_for_excel(sig_file)
+            if result:
+                output_path = f"alt_fixed_{os.path.basename(sig_file)}"
+                result.save(output_path)
+                print(f"✅ Alternative method result saved as {output_path}")
+
+test_alternative_method()
+
+
+
+
+
 
 def create_basic_excel_export(students, semester, academic_year):
     """Fallback Excel export without images"""
