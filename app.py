@@ -70,7 +70,7 @@ app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'aclc.id.system@gmail.com'  # your Gmail
-app.config['MAIL_PASSWORD'] = 'popw loyf hjjc etst'        # the app password
+app.config['MAIL_PASSWORD'] = 'jikt daqr xvur rwdt'        # the app password
 app.config['MAIL_DEFAULT_SENDER'] = ('Technical Support Department', 'aclc.id.system@gmail.com')
 app.config['SECRET_KEY'] = '123'
 
@@ -327,9 +327,172 @@ def test_email():
         return f"❌ Failed to send email: {str(e)}"
 
 
+#-----------------------------------------------------------------------------------
 
 
+def get_full_name(student_record):
+    """
+    Get full name from student record, supporting both old and new formats
+    
+    Args:
+        student_record: Dictionary containing student data
+        
+    Returns:
+        str: Full name of the student
+    """
+    # Check if we have separate name fields
+    if student_record.get('first_name') or student_record.get('last_name'):
+        parts = []
+        
+        if student_record.get('first_name'):
+            parts.append(student_record['first_name'])
+        
+        if student_record.get('middle_name'):
+            parts.append(student_record['middle_name'])
+        
+        if student_record.get('last_name'):
+            parts.append(student_record['last_name'])
+        
+        return ' '.join(parts) if parts else student_record.get('name', '')
+    
+    # Fallback to original name field
+    return student_record.get('name', '')
 
+def parse_name_input(full_name_input):
+    """
+    Parse name input from forms into separate components
+    
+    Args:
+        full_name_input: Full name string from form input
+        
+    Returns:
+        dict: Dictionary with first_name, middle_name, last_name
+    """
+    if not full_name_input or not full_name_input.strip():
+        return {'first_name': '', 'middle_name': None, 'last_name': ''}
+    
+    import re
+    name = re.sub(r'\s+', ' ', full_name_input.strip())
+    parts = name.split()
+    
+    if len(parts) == 1:
+        return {'first_name': parts[0], 'middle_name': None, 'last_name': ''}
+    elif len(parts) == 2:
+        return {'first_name': parts[0], 'middle_name': None, 'last_name': parts[1]}
+    elif len(parts) == 3:
+        return {'first_name': parts[0], 'middle_name': parts[1], 'last_name': parts[2]}
+    else:
+        return {
+            'first_name': parts[0], 
+            'middle_name': ' '.join(parts[1:-1]), 
+            'last_name': parts[-1]
+        }
+
+def update_student_with_names(cursor, student_id, name_data, **other_fields):
+    """
+    Update student record with name data, supporting both formats
+    
+    Args:
+        cursor: Database cursor
+        student_id: Student ID
+        name_data: Dictionary with name information or full name string
+        **other_fields: Other fields to update
+    """
+    # Prepare the update query
+    update_fields = []
+    update_values = []
+    
+    # Handle name fields
+    if isinstance(name_data, dict) and ('first_name' in name_data or 'last_name' in name_data):
+        # New format with separate fields
+        update_fields.extend(['first_name = %s', 'middle_name = %s', 'last_name = %s'])
+        update_values.extend([
+            name_data.get('first_name', ''),
+            name_data.get('middle_name'),
+            name_data.get('last_name', '')
+        ])
+        
+        # Also update the full name field for backward compatibility
+        full_name = get_full_name(name_data)
+        update_fields.append('name = %s')
+        update_values.append(full_name)
+    else:
+        # Old format - just update name field and parse into components
+        full_name = str(name_data) if name_data else ''
+        parsed = parse_name_input(full_name)
+        
+        update_fields.extend(['name = %s', 'first_name = %s', 'middle_name = %s', 'last_name = %s'])
+        update_values.extend([
+            full_name,
+            parsed['first_name'],
+            parsed['middle_name'],
+            parsed['last_name']
+        ])
+    
+    # Add other fields
+    for field, value in other_fields.items():
+        update_fields.append(f'{field} = %s')
+        update_values.append(value)
+    
+    # Add student_id for WHERE clause
+    update_values.append(student_id)
+    
+    # Execute update
+    query = f"UPDATE students SET {', '.join(update_fields)} WHERE student_id = %s"
+    cursor.execute(query, update_values)
+
+def insert_student_with_names(cursor, student_id, name_data, **other_fields):
+    """
+    Insert student record with name data, supporting both formats
+    
+    Args:
+        cursor: Database cursor
+        student_id: Student ID
+        name_data: Dictionary with name information or full name string
+        **other_fields: Other fields to insert
+    """
+    # Prepare the insert query
+    fields = ['student_id']
+    values = [student_id]
+    
+    # Handle name fields
+    if isinstance(name_data, dict) and ('first_name' in name_data or 'last_name' in name_data):
+        # New format with separate fields
+        fields.extend(['first_name', 'middle_name', 'last_name'])
+        values.extend([
+            name_data.get('first_name', ''),
+            name_data.get('middle_name'),
+            name_data.get('last_name', '')
+        ])
+        
+        # Also add the full name field for backward compatibility
+        full_name = get_full_name(name_data)
+        fields.append('name')
+        values.append(full_name)
+    else:
+        # Old format - parse into components
+        full_name = str(name_data) if name_data else ''
+        parsed = parse_name_input(full_name)
+        
+        fields.extend(['name', 'first_name', 'middle_name', 'last_name'])
+        values.extend([
+            full_name,
+            parsed['first_name'],
+            parsed['middle_name'],
+            parsed['last_name']
+        ])
+    
+    # Add other fields
+    for field, value in other_fields.items():
+        fields.append(field)
+        values.append(value)
+    
+    # Execute insert
+    placeholders = ', '.join(['%s'] * len(values))
+    query = f"INSERT INTO students ({', '.join(fields)}) VALUES ({placeholders})"
+    cursor.execute(query, values)
+
+print("✅ Helper functions for name handling added successfully!")
 
 
 
@@ -616,20 +779,27 @@ def login():
                 return redirect(url_for('login'))
 
             session['user_id'] = user['id']
-            session['user_name'] = user.get('name', '')
             session['user_role'] = user.get('role', 'student')
             session['user_email'] = user['email']
 
+            # Get name from user record or construct from name fields
+            user_name = get_full_name(user)
+            session['user_name'] = user_name
+
             # ✅ Step 2: Check if student record exists
-            cursor.execute("SELECT student_id, application_status FROM students WHERE email = %s", (email,))
+            cursor.execute("""
+                SELECT student_id, application_status, first_name, middle_name, last_name, name 
+                FROM students WHERE email = %s
+            """, (email,))
             student = cursor.fetchone()
 
             if not student:
                 flash("❌ Your email is not found in the registrar's student list. Please contact TSD.", "danger")
                 return redirect(url_for('login'))
 
-            # ✅ Set student_id in session
+            # ✅ Set student_id and name in session
             session['student_id'] = student['student_id']
+            session['student_name'] = get_full_name(student)
 
             # ✅ Step 3: Check application_status
             if student['application_status'] in ['pending', 'processing', 'done', 'receive']:
@@ -644,6 +814,7 @@ def login():
         conn.close()
 
     return render_template("login.html")
+
 
 
 
@@ -755,13 +926,165 @@ def train_validator():
 
 
 
+# Fixed bulk import route - make sure this route exists and works
+@app.route('/admin/bulk_import_students', methods=['POST'])
+@login_required("admin")
+def admin_bulk_import_students():
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'error': 'No file part'})
+    
+    file = request.files['file']
+    
+    if file.filename == '':
+        return jsonify({'success': False, 'error': 'No selected file'})
+    
+    try:
+        # Handle different file types
+        if file.filename.endswith('.csv'):
+            df = pd.read_csv(file)
+        elif file.filename.endswith(('.xlsx', '.xls')):
+            df = pd.read_excel(file)
+        else:
+            return jsonify({'success': False, 'error': 'Unsupported file format. Please use CSV or Excel files.'})
+        
+        print(f"📊 File columns: {list(df.columns)}")
+        print(f"📊 File shape: {df.shape}")
+        
+        # Validate required columns - FIXED
+        required_columns = ['student_id']
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        
+        # Check for name columns - either 'name' OR ('first_name' AND 'last_name')
+        has_full_name = 'name' in df.columns
+        has_separate_names = 'first_name' in df.columns and 'last_name' in df.columns
+        
+        if not (has_full_name or has_separate_names):
+            missing_columns.append('name or first_name/last_name')
+        
+        if missing_columns:
+            return jsonify({'success': False, 'error': f"Missing required columns: {', '.join(missing_columns)}"})
+        
+        # Process the data
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        success_count = 0
+        error_count = 0
+        errors = []
+        
+        try:
+            for index, row in df.iterrows():
+                try:
+                    # Validate required fields
+                    if pd.isna(row['student_id']):
+                        error_count += 1
+                        errors.append(f"Row {index + 2}: Missing student_id")
+                        continue
+                    
+                    student_id = str(row['student_id']).strip()
+                    
+                    # Determine name format and parse
+                    if has_full_name and not pd.isna(row['name']):
+                        # Using full name column - parse it
+                        full_name = str(row['name']).strip()
+                        parsed_names = parse_name_input(full_name)
+                        first_name = parsed_names['first_name']
+                        middle_name = parsed_names['middle_name']
+                        last_name = parsed_names['last_name']
+                    elif has_separate_names and not pd.isna(row['first_name']) and not pd.isna(row['last_name']):
+                        # Using separate name columns
+                        first_name = str(row['first_name']).strip()
+                        middle_name = str(row['middle_name']).strip() if 'middle_name' in row and not pd.isna(row['middle_name']) else None
+                        last_name = str(row['last_name']).strip()
+                        # Construct full name
+                        name_parts = [first_name]
+                        if middle_name:
+                            name_parts.append(middle_name)
+                        name_parts.append(last_name)
+                        full_name = ' '.join(name_parts)
+                    else:
+                        error_count += 1
+                        errors.append(f"Row {index + 2}: Missing name information")
+                        continue
+                    
+                    # Get other fields
+                    email = str(row['email']).strip().lower() if 'email' in row and not pd.isna(row['email']) else ''
+                    course = str(row['course']) if 'course' in row and not pd.isna(row['course']) else ''
+                    contact = str(row['contact']) if 'contact' in row and not pd.isna(row['contact']) else ''
+                    guardian_name = str(row['guardian_name']) if 'guardian_name' in row and not pd.isna(row['guardian_name']) else ''
+                    address = str(row['address']) if 'address' in row and not pd.isna(row['address']) else ''
+                    
+                    # Check for duplicate student_id
+                    cursor.execute("SELECT 1 FROM students WHERE student_id = %s", (student_id,))
+                    if cursor.fetchone():
+                        error_count += 1
+                        errors.append(f"Row {index + 2}: Student with ID {student_id} already exists")
+                        continue
+                    
+                    # Insert student with explicit name fields
+                    cursor.execute("""
+                        INSERT INTO students (
+                            student_id, name, first_name, middle_name, last_name,
+                            email, course, contact, guardian_name, address
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (
+                        student_id, full_name, first_name, middle_name, last_name,
+                        email, course, contact, guardian_name, address
+                    ))
+                    
+                    success_count += 1
+                    print(f"✅ Imported: {student_id} - {full_name} (First: {first_name}, Middle: {middle_name}, Last: {last_name})")
+                    
+                except Exception as row_error:
+                    error_count += 1
+                    errors.append(f"Row {index + 2}: {str(row_error)}")
+                    print(f"❌ Row error: {str(row_error)}")
+            
+            conn.commit()
+            
+            result = {
+                'success': True,
+                'imported': success_count,
+                'errors': error_count,
+                'total': len(df)
+            }
+            
+            if errors:
+                result['error_details'] = errors[:10]  # Limit to first 10 errors
+            
+            return jsonify(result)
+            
+        except Exception as e:
+            conn.rollback()
+            return jsonify({'success': False, 'error': f'Database error: {str(e)}'})
+            
+        finally:
+            cursor.close()
+            conn.close()
+            
+    except Exception as e:
+        print(f"❌ File processing error: {str(e)}")
+        return jsonify({'success': False, 'error': f'File processing error: {str(e)}'})
+
+
+
+
 # Add this new route for admin import page
+# Fixed manual import route
 @app.route('/admin/import_students', methods=['GET', 'POST'])
 @login_required("admin")
 def admin_import_students():
     if request.method == 'POST':
         student_id = request.form.get("student_id", "").strip()
-        name = request.form.get("name", "").strip()
+        
+        # Check for separate name fields first
+        first_name = request.form.get("first_name", "").strip()
+        middle_name = request.form.get("middle_name", "").strip() or None
+        last_name = request.form.get("last_name", "").strip()
+        
+        # For backward compatibility, also check for full name
+        full_name = request.form.get("name", "").strip()
+        
         email = request.form.get("email", "").strip().lower()
         course = request.form.get("course", "").strip()
         contact = request.form.get("contact", "").strip()
@@ -773,8 +1096,31 @@ def admin_import_students():
             flash("Invalid USN. Must be 11 digits.", "danger")
             return redirect(url_for("admin_import_students"))
 
-        if not name or not email:
-            flash("Name and email are required.", "danger")
+        # Determine name format and ensure parsing happens
+        if first_name or last_name:
+            # Using separate name fields
+            name_data = {
+                'first_name': first_name,
+                'middle_name': middle_name,
+                'last_name': last_name
+            }
+            # Also create full name for backward compatibility
+            full_name_for_db = get_full_name(name_data)
+        elif full_name:
+            # Parse the full name into components
+            parsed_names = parse_name_input(full_name)
+            name_data = {
+                'first_name': parsed_names['first_name'],
+                'middle_name': parsed_names['middle_name'],
+                'last_name': parsed_names['last_name']
+            }
+            full_name_for_db = full_name
+        else:
+            flash("Name is required.", "danger")
+            return redirect(url_for("admin_import_students"))
+
+        if not email:
+            flash("Email is required.", "danger")
             return redirect(url_for("admin_import_students"))
 
         conn = get_db_connection()
@@ -787,18 +1133,30 @@ def admin_import_students():
                 flash("Student with this USN or email already exists.", "danger")
                 return redirect(url_for("admin_import_students"))
 
-            # Insert into students
+            # Insert with explicit name fields - FIXED VERSION
             cursor.execute("""
-                INSERT INTO students (student_id, name, email, course, contact, guardian_name, address)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-            """, (student_id, name, email, course, contact, guardian_name, address))
+                INSERT INTO students (
+                    student_id, name, first_name, middle_name, last_name,
+                    email, course, contact, guardian_name, address
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                student_id, 
+                full_name_for_db,
+                name_data['first_name'],
+                name_data['middle_name'],
+                name_data['last_name'],
+                email, course, contact, guardian_name, address
+            ))
 
             conn.commit()
             flash("Student record added successfully!", "success")
+            print(f"✅ Added student: {student_id} - {full_name_for_db}")
+            print(f"   First: {name_data['first_name']}, Middle: {name_data['middle_name']}, Last: {name_data['last_name']}")
 
         except Exception as e:
             conn.rollback()
             flash(f"Database error: {str(e)}", "danger")
+            print(f"❌ Error adding student: {str(e)}")
 
         finally:
             cursor.close()
@@ -807,7 +1165,6 @@ def admin_import_students():
         return redirect(url_for("admin_import_students"))
 
     return render_template("admin_import_students.html")
-
 
 
     
@@ -1071,6 +1428,7 @@ def get_student(student_id):
 
 # Purpose: Update a student's application status
 # This route handles status changes, sends notifications, and maintains a history of status updates
+# Fixed status update function to properly handle name fields
 @app.route('/update_application_status/<student_id>', methods=['POST'])
 @login_required("admin")
 def update_application_status(student_id):
@@ -1083,8 +1441,11 @@ def update_application_status(student_id):
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
-        # Fetch student details
-        cursor.execute("SELECT * FROM students WHERE student_id = %s", (student_id,))
+        # Fetch student details with all name fields
+        cursor.execute("""
+            SELECT *, first_name, middle_name, last_name, name 
+            FROM students WHERE student_id = %s
+        """, (student_id,))
         student = cursor.fetchone()
 
         if not student:
@@ -1104,18 +1465,38 @@ def update_application_status(student_id):
             """, (student_id,))
             existing_history = cursor.fetchone()
 
-            # Only insert if no existing receive record or if we want to force a new one
+            # Only insert if no existing receive record
             if not existing_history:
+                # Get full name for history record
+                full_name = get_full_name(student)
+                
+                # FIXED: Insert with proper name fields
                 cursor.execute("""
                     INSERT INTO student_history (
-                        student_id, name, course, contact, guardian_name, 
-                        address, profile_picture, signature, barcode, received_date
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+                        student_id, name, first_name, middle_name, last_name,
+                        course, contact, guardian_name, address, 
+                        profile_picture, signature, barcode, received_date,
+                        academic_year, semester
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), %s, %s)
                 """, (
-                    student["student_id"], student["name"], student["course"], 
-                    student["contact"], student["guardian_name"], student["address"],
-                    student["profile_picture"], student["signature"], student["barcode"]
+                    student["student_id"], 
+                    full_name,
+                    student.get("first_name"), 
+                    student.get("middle_name"), 
+                    student.get("last_name"),
+                    student["course"], 
+                    student["contact"], 
+                    student["guardian_name"], 
+                    student["address"],
+                    student["profile_picture"], 
+                    student["signature"], 
+                    student["barcode"],
+                    student.get("academic_year", "2025-2026"), 
+                    student.get("semester", 1)
                 ))
+                
+                print(f"✅ Added to history: {student_id} - {full_name}")
+                print(f"   First: {student.get('first_name')}, Middle: {student.get('middle_name')}, Last: {student.get('last_name')}")
 
         # Update student status
         cursor.execute("""
@@ -1136,10 +1517,10 @@ def update_application_status(student_id):
                 student_id, new_status, admin_username, previous_status
             ))
 
-        # ✅ Send email if status is set to 'done'
+        # Send email if status is set to 'done'
         if new_status == 'done' and student.get('email'):
             student_email = student["email"]
-            student_name = student["name"]
+            student_name = get_full_name(student)
 
             try:
                 msg = Message(
@@ -1156,6 +1537,7 @@ def update_application_status(student_id):
 
     except Exception as e:
         conn.rollback()
+        print(f"❌ Status update error: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
     finally:
@@ -1351,52 +1733,10 @@ def api_student_history():
         'has_next': (page * per_page) < total
     })
 
-# Add export functionality
-@app.route('/export_student_history')
-@login_required("admin")
-def export_student_history():
-    semester = request.args.get('semester', 1, type=int)
-    academic_year = request.args.get('academic_year', '2025-2026')
-    include_images = request.args.get('include_images', 'false').lower() == 'true'
-    
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-        
-        query = """
-            SELECT student_id, name, course, contact, guardian_name, address, 
-                   received_date, academic_year, semester, profile_picture, signature, barcode
-            FROM student_history 
-            WHERE semester = %s AND academic_year = %s
-            ORDER BY received_date DESC
-        """
-        cursor.execute(query, (semester, academic_year))
-        students = cursor.fetchall()
-        
-        cursor.close()
-        conn.close()
-        
-        if not students:
-            return jsonify({'error': 'No data found for the selected semester and academic year'}), 404
-        
-        # Calculate status for each record
-        for student in students:
-            student['status'] = calculate_student_status(student)
-            # Format received_date
-            if student['received_date']:
-                student['received_date'] = student['received_date'].strftime('%Y-%m-%d %H:%M:%S')
-        
-        if include_images:
-            return create_zip_export_simple(students, semester, academic_year)
-        else:
-            return create_excel_export_simple(students, semester, academic_year)
-            
-    except Exception as e:
-        print(f"Export error: {str(e)}")
-        return jsonify({'error': f'Export failed: {str(e)}'}), 500
 
-def create_excel_export_simple(students, semester, academic_year):
-    """Create an Excel export with embedded images"""
+
+def create_excel_export_with_names(students, semester, academic_year):
+    """Create Excel export with separate name columns"""
     try:
         # Create temporary file
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx')
@@ -1414,17 +1754,21 @@ def create_excel_export_simple(students, semester, academic_year):
         # Style the title
         title_cell = ws['A1']
         title_cell.font = Font(bold=True, size=14)
-        ws.merge_cells('A1:L1')
+        ws.merge_cells('A1:O1')  # Adjusted for more columns
         
         # Style the metadata
         meta_cell = ws['A2']
         meta_cell.font = Font(size=10, italic=True)
-        ws.merge_cells('A2:L2')
+        ws.merge_cells('A2:O2')
+        
+        # Updated headers with separate name columns
+        headers = [
+            'Student ID', 'Full Name', 'First Name', 'Middle Name/Initial', 'Last Name',
+            'Course', 'Contact Number', 'Guardian Name', 'Address', 
+            'Profile Image', 'Signature', 'Received Date', 'Status', 'Academic Year', 'Semester'
+        ]
         
         # Add headers starting from row 4
-        headers = ['Student ID', 'Full Name', 'Course', 'Contact Number', 'Guardian Name', 
-                  'Address', 'Profile Image', 'Signature', 'Received Date', 'Status', 'Academic Year', 'Semester']
-        
         for col, header in enumerate(headers, 1):
             cell = ws.cell(row=4, column=col)
             cell.value = header
@@ -1434,59 +1778,63 @@ def create_excel_export_simple(students, semester, academic_year):
             cell.alignment = Alignment(horizontal="center", vertical="center")
         
         # Set column widths
-        column_widths = [15, 25, 35, 15, 20, 30, 15, 15, 18, 10, 12, 10]
+        column_widths = [15, 25, 15, 15, 15, 35, 15, 20, 30, 15, 15, 18, 10, 12, 10]
         for i, width in enumerate(column_widths, 1):
             ws.column_dimensions[chr(64 + i)].width = width
         
-        # Add data with embedded images
+        # Add data with separate name fields
         for row_idx, student in enumerate(students, 5):
             # Set row height for images
             ws.row_dimensions[row_idx].height = 60
             
+            # Get full name using helper function
+            full_name = get_full_name(student)
+            
             # Add text data
             ws.cell(row=row_idx, column=1, value=student['student_id'])
-            ws.cell(row=row_idx, column=2, value=student['name'])
-            ws.cell(row=row_idx, column=3, value=student['course'])
-            ws.cell(row=row_idx, column=4, value=student['contact'])
-            ws.cell(row=row_idx, column=5, value=student['guardian_name'])
-            ws.cell(row=row_idx, column=6, value=student['address'])
+            ws.cell(row=row_idx, column=2, value=full_name)
+            ws.cell(row=row_idx, column=3, value=student.get('first_name', ''))
+            ws.cell(row=row_idx, column=4, value=student.get('middle_name', ''))
+            ws.cell(row=row_idx, column=5, value=student.get('last_name', ''))
+            ws.cell(row=row_idx, column=6, value=student['course'])
+            ws.cell(row=row_idx, column=7, value=student['contact'])
+            ws.cell(row=row_idx, column=8, value=student['guardian_name'])
+            ws.cell(row=row_idx, column=9, value=student['address'])
             
             # Add profile image
             if student.get('profile_picture'):
                 profile_path = os.path.join("static", "uploads", student['profile_picture'])
                 if os.path.exists(profile_path):
                     try:
-                        # Resize and add profile image
                         profile_img = resize_image_for_excel(profile_path, 50, 50)
                         if profile_img:
-                            profile_img.anchor = f'G{row_idx}'
+                            profile_img.anchor = f'J{row_idx}'
                             ws.add_image(profile_img)
                     except Exception as e:
                         print(f"Error adding profile image: {e}")
-                        ws.cell(row=row_idx, column=7, value="Image Error")
+                        ws.cell(row=row_idx, column=10, value="Image Error")
             
             # Add signature image
             if student.get('signature'):
                 signature_path = os.path.join("static", "uploads", student['signature'])
                 if os.path.exists(signature_path):
                     try:
-                        # Resize and add signature image
                         signature_img = resize_image_for_excel(signature_path, 80, 40)
                         if signature_img:
-                            signature_img.anchor = f'H{row_idx}'
+                            signature_img.anchor = f'K{row_idx}'
                             ws.add_image(signature_img)
                     except Exception as e:
                         print(f"Error adding signature image: {e}")
-                        ws.cell(row=row_idx, column=8, value="Image Error")
+                        ws.cell(row=row_idx, column=11, value="Image Error")
             
             # Add remaining data
-            ws.cell(row=row_idx, column=9, value=student['received_date'])
-            ws.cell(row=row_idx, column=10, value=student.get('status', 'New'))
-            ws.cell(row=row_idx, column=11, value=student.get('academic_year', academic_year))
-            ws.cell(row=row_idx, column=12, value=semester)
+            ws.cell(row=row_idx, column=12, value=student['received_date'])
+            ws.cell(row=row_idx, column=13, value=student.get('status', 'New'))
+            ws.cell(row=row_idx, column=14, value=student.get('academic_year', academic_year))
+            ws.cell(row=row_idx, column=15, value=semester)
             
             # Center align all cells in this row
-            for col in range(1, 13):
+            for col in range(1, 16):
                 cell = ws.cell(row=row_idx, column=col)
                 cell.alignment = Alignment(horizontal="center", vertical="center")
                 cell.border = Border(
@@ -1497,7 +1845,7 @@ def create_excel_export_simple(students, semester, academic_year):
                 )
         
         # Add borders to header row
-        for col in range(1, 13):
+        for col in range(1, 16):
             cell = ws.cell(row=4, column=col)
             cell.border = Border(
                 left=Side(style='thin'),
@@ -1509,7 +1857,7 @@ def create_excel_export_simple(students, semester, academic_year):
         # Save workbook
         wb.save(temp_file.name)
         
-        filename = f"student_history_{academic_year}_sem{semester}_with_images.xlsx"
+        filename = f"student_history_{academic_year}_sem{semester}_with_names.xlsx"
         
         return send_file(
             temp_file.name,
@@ -1519,15 +1867,236 @@ def create_excel_export_simple(students, semester, academic_year):
         )
         
     except Exception as e:
-        print(f"Error creating Excel with images: {e}")
-        # Fallback to basic Excel without images
-        return create_basic_excel_export(students, semester, academic_year)
+        print(f"Error creating Excel with names: {e}")
+        return None
+
+
+# Purpose: Export student history as Excel or ZIP file
+# Add export functionality
+@app.route('/export_student_history')
+@login_required("admin")
+def export_student_history():
+    semester = request.args.get('semester', 1, type=int)
+    academic_year = request.args.get('academic_year', '2025-2026')
+    include_images = request.args.get('include_images', 'false').lower() == 'true'
+    export_format = request.args.get('format', 'excel')  # excel or csv
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Updated query to include name fields
+        query = """
+            SELECT student_id, name, first_name, middle_name, last_name, 
+                   course, contact, guardian_name, address, 
+                   received_date, academic_year, semester, profile_picture, signature, barcode
+            FROM student_history 
+            WHERE semester = %s AND academic_year = %s
+            ORDER BY received_date DESC
+        """
+        cursor.execute(query, (semester, academic_year))
+        students = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        if not students:
+            return jsonify({'error': 'No data found for the selected semester and academic year'}), 404
+        
+        # Calculate status for each record and ensure full names
+        for student in students:
+            student['status'] = calculate_student_status(student)
+            # Ensure we have a full name for display
+            if not student.get('name'):
+                student['name'] = get_full_name(student)
+            # Format received_date
+            if student['received_date']:
+                student['received_date'] = student['received_date'].strftime('%Y-%m-%d %H:%M:%S')
+        
+        if export_format == 'csv':
+            # CSV export with separate name fields
+            return create_csv_export_with_names(students, semester, academic_year)
+        else:
+            # Excel export with separate name fields
+            return create_excel_export_with_names(students, semester, academic_year)
+            
+    except Exception as e:
+        print(f"Export error: {str(e)}")
+        return jsonify({'error': f'Export failed: {str(e)}'}), 500
+
+def create_csv_export_with_names(students, semester, academic_year):
+    """Create CSV export with separate name columns"""
+    try:
+        # Prepare data with separate name fields
+        export_data = []
+        
+        for student in students:
+            # Ensure we have a full name
+            full_name = get_full_name(student)
+            
+            export_data.append({
+                'Student ID': student['student_id'],
+                'Full Name': full_name,
+                'First Name': student.get('first_name', ''),
+                'Middle Name/Initial': student.get('middle_name', ''),
+                'Last Name': student.get('last_name', ''),
+                'Course': student['course'],
+                'Contact Number': student['contact'],
+                'Guardian Name': student['guardian_name'],
+                'Address': student['address'],
+                'Received Date': student['received_date'],
+                'Status': student.get('status', 'New'),
+                'Academic Year': student.get('academic_year', academic_year),
+                'Semester': semester
+            })
+        
+        # Create DataFrame
+        df = pd.DataFrame(export_data)
+        
+        # Create temporary file
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.csv', mode='w', newline='')
+        df.to_csv(temp_file.name, index=False)
+        
+        filename = f"student_history_{academic_year}_sem{semester}_with_names.csv"
+        
+        return send_file(
+            temp_file.name,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='text/csv'
+        )
+        
+    except Exception as e:
+        print(f"Error creating CSV with names: {e}")
+        return None
+
+print("✅ Updated export functions for separate name fields completed!")
 
 
 
 
 
+@app.context_processor
+def inject_name_helpers():
+    """Inject name helper functions into all templates"""
+    return {
+        'get_full_name': get_full_name,
+        'parse_name_input': parse_name_input
+    }
 
+# Updated status history insertion to handle names properly
+def update_application_status_with_names(student_id, new_status, previous_status, update_history=False):
+    """Updated function to handle status updates with proper name handling"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # Fetch student details with all name fields
+        cursor.execute("""
+            SELECT *, first_name, middle_name, last_name, name 
+            FROM students WHERE student_id = %s
+        """, (student_id,))
+        student = cursor.fetchone()
+
+        if not student:
+            return {'success': False, 'error': 'Student not found'}
+
+        # Check if status is actually changing
+        if student['application_status'] == new_status:
+            return {'success': True, 'message': 'Status unchanged'}
+
+        # If new status is 'receive', check if already exists in history
+        if new_status == 'receive':
+            cursor.execute("""
+                SELECT * FROM student_history 
+                WHERE student_id = %s 
+                ORDER BY received_date DESC 
+                LIMIT 1
+            """, (student_id,))
+            existing_history = cursor.fetchone()
+
+            # Only insert if no existing receive record
+            if not existing_history:
+                # Get full name for history record
+                full_name = get_full_name(student)
+                
+                cursor.execute("""
+                    INSERT INTO student_history (
+                        student_id, name, first_name, middle_name, last_name,
+                        course, contact, guardian_name, address, 
+                        profile_picture, signature, barcode, received_date,
+                        academic_year, semester
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), %s, %s)
+                """, (
+                    student["student_id"], full_name, 
+                    student.get("first_name"), student.get("middle_name"), student.get("last_name"),
+                    student["course"], student["contact"], student["guardian_name"], student["address"],
+                    student["profile_picture"], student["signature"], student["barcode"],
+                    student.get("academic_year", "2025-2026"), student.get("semester", 1)
+                ))
+
+        # Update student status
+        cursor.execute("""
+            UPDATE students 
+            SET application_status = %s 
+            WHERE student_id = %s
+        """, (new_status, student_id))
+
+        # Add to status history if requested
+        if update_history:
+            admin_username = session.get('user_name', 'Admin')
+
+            cursor.execute("""
+                INSERT INTO status_history (
+                    student_id, status, changed_by, previous_status, changed_at
+                ) VALUES (%s, %s, %s, %s, NOW())
+            """, (
+                student_id, new_status, admin_username, previous_status
+            ))
+
+        # Send email if status is set to 'done'
+        if new_status == 'done' and student.get('email'):
+            student_email = student["email"]
+            student_name = get_full_name(student)
+
+            try:
+                msg = Message(
+                    subject="🎉 Your Student ID is Ready for Pickup!",
+                    recipients=[student_email],
+                    body=f"Hello {student_name},\n\nYour student ID has been processed and is now ready for pickup at the TSD office.\n\nThank you!"
+                )
+                mail.send(msg)
+            except Exception as email_error:
+                print("Failed to send email:", email_error)
+
+        conn.commit()
+        return {'success': True, 'barcode': student.get('barcode')}
+
+    except Exception as e:
+        conn.rollback()
+        return {'success': False, 'error': str(e)}
+
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+print("✅ Template context processor and updated status functions added!")
+print("📋 Summary of changes:")
+print("   • Added helper functions for name handling")
+print("   • Updated registration and login routes")
+print("   • Updated student dashboard and profile routes")
+print("   • Updated admin import and user creation")
+print("   • Updated export functions with separate name columns")
+print("   • Added template context processor")
+print("   • Updated status history with proper name handling")
+print("\n🔧 Next steps:")
+print("   1. Add these functions to your app.py file")
+print("   2. Update your HTML templates to use separate name fields")
+print("   3. Test the registration and login process")
+print("   4. Test the export functionality")
+print("   5. Verify backward compatibility with existing data")
 
 
 
@@ -1884,7 +2453,7 @@ Files:
     except Exception as e:
         print(f"Error creating ZIP: {e}")
         # Fallback to Excel only
-        return create_excel_export_simple(students, semester, academic_year)
+        return create_basic_excel_export(students, semester, academic_year)
     
     finally:
         # Clean up temporary directory
@@ -2286,12 +2855,35 @@ def admin_manage_users():
 def admin_create_user():
     if request.method == 'POST':
         student_id = request.form.get('student_id').strip()
-        name = request.form.get('name').strip()
+        
+        # Check for separate name fields first
+        first_name = request.form.get('first_name', '').strip()
+        middle_name = request.form.get('middle_name', '').strip() or None
+        last_name = request.form.get('last_name', '').strip()
+        
+        # For backward compatibility, also check for full name
+        full_name = request.form.get('name', '').strip()
+        
         password = request.form.get('password').strip()
         role = request.form.get('role')
         
+        # Determine name format
+        if first_name or last_name:
+            name_data = {
+                'first_name': first_name,
+                'middle_name': middle_name,
+                'last_name': last_name
+            }
+            display_name = get_full_name(name_data)
+        elif full_name:
+            name_data = full_name
+            display_name = full_name
+        else:
+            flash("⚠️ Name is required!", "danger")
+            return redirect(url_for('admin_manage_users'))
+        
         # Validate required fields
-        if not all([student_id, name, password, role]):
+        if not all([student_id, display_name, password, role]):
             flash("⚠️ All fields are required!", "danger")
             return redirect(url_for('admin_manage_users'))
         
@@ -2313,18 +2905,29 @@ def admin_create_user():
                 flash("⚠️ User ID already exists!", "danger")
                 return redirect(url_for('admin_manage_users'))
             
-            # Insert user
-            cursor.execute("""
-                INSERT INTO users (student_id, name, password, role) 
-                VALUES (%s, %s, %s, %s)
-            """, (student_id, name, hashed_password, role))
+            # Insert user with name fields
+            if isinstance(name_data, dict):
+                cursor.execute("""
+                    INSERT INTO users (student_id, name, first_name, middle_name, last_name, password, role) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """, (student_id, display_name, name_data.get('first_name'), 
+                      name_data.get('middle_name'), name_data.get('last_name'), hashed_password, role))
+            else:
+                parsed = parse_name_input(name_data)
+                cursor.execute("""
+                    INSERT INTO users (student_id, name, first_name, middle_name, last_name, password, role) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """, (student_id, display_name, parsed['first_name'], 
+                      parsed['middle_name'], parsed['last_name'], hashed_password, role))
             
             # If student role, create student record
             if role == 'student':
-                cursor.execute("""
-                    INSERT INTO students (student_id, name, application_status) 
-                    VALUES (%s, %s, 'pending')
-                """, (student_id, name))
+                insert_student_with_names(
+                    cursor,
+                    student_id,
+                    name_data,
+                    application_status='pending'
+                )
             
             conn.commit()
             flash("✅ User created successfully!", "success")
@@ -2339,6 +2942,7 @@ def admin_create_user():
             
         return redirect(url_for('admin_manage_users'))
 
+print("✅ Updated student routes for name handling completed!")
 
 #----------------------------------------------------------------------------------------------------------------------------------
 
@@ -2815,7 +3419,10 @@ def student_dashboard():
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM students WHERE student_id = %s", (student_id,))
+    cursor.execute("""
+        SELECT *, first_name, middle_name, last_name, name 
+        FROM students WHERE student_id = %s
+    """, (student_id,))
     student = cursor.fetchone()
     cursor.close()
     conn.close()
@@ -2833,7 +3440,7 @@ def student_dashboard():
     # Store student details in session for quick access
     session.update({
         "application_status": student["application_status"],
-        "name": student["name"],
+        "name": get_full_name(student),  # Use helper function
         "course": student["course"],
         "contact": student["contact"],
         "guardian_name": student["guardian_name"],
@@ -2842,7 +3449,12 @@ def student_dashboard():
         "signature": student["signature"]
     })
 
+    # Add full name to student record for template
+    student['full_name'] = get_full_name(student)
+
     return render_template("student_dashboard.html", student=student)
+
+print("✅ Updated Flask routes for name handling completed!")
 
 
 
@@ -2952,7 +3564,30 @@ def update_student_info():
         flash("Session expired. Please log in again.", "danger")
         return redirect(url_for("login"))
 
-    name = request.form.get("name")
+    # Get name data from form - check for separate fields first
+    first_name = request.form.get("first_name", "").strip()
+    middle_name = request.form.get("middle_name", "").strip() or None
+    last_name = request.form.get("last_name", "").strip()
+    
+    # For backward compatibility, also check for full name
+    full_name = request.form.get("name", "").strip()
+    
+    # Determine which format we're using
+    if first_name or last_name:
+        # New format with separate fields
+        name_data = {
+            'first_name': first_name,
+            'middle_name': middle_name,
+            'last_name': last_name
+        }
+    elif full_name:
+        # Old format - parse the full name
+        name_data = full_name
+    else:
+        flash("Name is required.", "danger")
+        return redirect(url_for("complete_student_profile"))
+
+    # Get other form data
     course = request.form.get("course")
     contact = request.form.get("contact")
     guardian_name = request.form.get("guardian_name")
@@ -2979,7 +3614,7 @@ def update_student_info():
         flash("Signature is required. Please draw your signature.", "danger")
         return redirect(url_for("complete_student_profile"))
 
-    # Validate profile picture (AI or fallback)
+    # Validate profile picture
     if photo_validator and photo_validator.model:
         result = photo_validator.validate(image_path=profile_path)
     else:
@@ -2989,30 +3624,39 @@ def update_student_info():
         flash(f"Profile picture validation failed: {result.get('error', 'Unknown error')}", "danger")
         return redirect(url_for("complete_student_profile"))
 
-    # ✅ Generate barcode from USN
+    # Generate barcode
     barcode_filename = generate_barcode(student_id)
 
-    # ✅ Save all to database
+    # Save to database using the new helper function
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("""
-        UPDATE students 
-        SET name=%s, course=%s, contact=%s, guardian_name=%s, address=%s, 
-            profile_picture=%s, signature=%s, barcode=%s, application_status='pending'
-        WHERE student_id=%s
-    """, (
-        name, course, contact, guardian_name, address,
-        profile_picture_filename, signature_filename,
-        barcode_filename, student_id
-    ))
-
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-    flash("✅ Profile updated successfully!", "success")
-    return redirect(url_for("student_dashboard"))
-
+    
+    try:
+        update_student_with_names(
+            cursor, 
+            student_id, 
+            name_data,
+            course=course,
+            contact=contact,
+            guardian_name=guardian_name,
+            address=address,
+            profile_picture=profile_picture_filename,
+            signature=signature_filename,
+            barcode=barcode_filename,
+            application_status='pending'
+        )
+        
+        conn.commit()
+        flash("✅ Profile updated successfully!", "success")
+        return redirect(url_for("student_dashboard"))
+        
+    except Exception as e:
+        conn.rollback()
+        flash(f"Error updating profile: {str(e)}", "danger")
+        return redirect(url_for("complete_student_profile"))
+    finally:
+        cursor.close()
+        conn.close()
 
 #----------------------------------------------------------------------------------------------------------------------------------
 

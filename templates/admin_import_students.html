@@ -15,171 +15,239 @@
             </div>
         </div>
 
-
         <!-- Form Section -->
         <div class="card-body">
-            <form method="POST" action="/admin/import_students" class="needs-validation" novalidate>
-                <div class="row g-3">
-                    <!-- Required Fields Section -->
-                    <div class="col-md-6">
-                        <h5 class="text-primary mb-3"><i class="fas fa-asterisk text-danger me-2"></i>Required Fields</h5>
-                        
-                        <!-- Student ID -->
-                        <div class="mb-3">
-                            <label for="student_id" class="form-label">Student ID (USN)</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-id-card"></i></span>
-                                <input type="text" name="student_id" id="student_id" class="form-control" 
-                                       pattern="\d{11}" required placeholder="11-digit student ID">
-                                <div class="invalid-feedback">
-                                    Please provide a valid 11-digit student ID.
-                                </div>
-                            </div>
-                            <small class="text-muted">Format: 11 digits only (e.g. 21000602300)</small>
-                        </div>
-
-                        <!-- Full Name -->
-                        <div class="mb-3">
-                            <label for="name" class="form-label">Full Name</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-user"></i></span>
-                                <input type="text" name="name" id="name" class="form-control" required 
-                                       placeholder="First Name, Middle Initial, Last Name">
-                                <div class="invalid-feedback">
-                                    Please provide the student's full name.
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Email -->
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email Address</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-envelope"></i></span>
-                                <input type="email" name="email" id="email" class="form-control" required 
-                                       placeholder="student@aclcbutuan.edu.ph">
-                                <div class="invalid-feedback">
-                                    Please provide a valid email address.
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Optional Fields Section -->
-                    <div class="col-md-6">
-                        <h5 class="text-primary mb-3"><i class="fas fa-info-circle text-primary me-2"></i>Additional Information</h5>
-                        
-                        <!-- Course -->
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="course" class="form-label">Course</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-graduation-cap"></i></span>
-                                    <select name="course" id="course" class="form-select" required>
-                                        <option value="" selected disabled>Select course</option>
-                                        <option value="BS in INFORMATION TECHNOLOGY">BS in Information Technology</option>
-                                        <option value="BS in COMPUTER SCIENCE">BS in Computer Science</option>
-                                        <option value="BSBA-Financial Management">BSBA - Financial Management</option>
-                                        <option value="BSBA-MARKETING">BSBA - Marketing</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Contact Number -->
-                        <div class="mb-3">
-                            <label for="contact" class="form-label">Contact Number</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-phone"></i></span>
-                                <input type="tel" name="contact" id="contact" class="form-control" 
-                                       placeholder="09123456789">
-                            </div>
-                        </div>
-
-                        <!-- Guardian Name -->
-                        <div class="mb-3">
-                            <label for="guardian_name" class="form-label">Guardian Name</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-user-shield"></i></span>
-                                <input type="text" name="guardian_name" id="guardian_name" class="form-control" 
-                                       placeholder="Parent or guardian's full name">
-                            </div>
-                        </div>
-
-                        <!-- Address -->
-                        <div class="mb-3">
-                            <label for="address" class="form-label">Address</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-home"></i></span>
-                                <input type="text" name="address" id="address" class="form-control" 
-                                       placeholder="Complete residential address">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Form Actions -->
-                <div class="d-flex justify-content-between mt-4 pt-3 border-top">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#bulkImportModal">
+            <ul class="nav nav-tabs mb-4" id="importTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="manual-tab" data-bs-toggle="tab" data-bs-target="#manual" type="button" role="tab" aria-controls="manual" aria-selected="true">
+                        <i class="fas fa-user-plus me-2"></i>Manual Entry
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="bulk-tab" data-bs-toggle="tab" data-bs-target="#bulk" type="button" role="tab" aria-controls="bulk" aria-selected="false">
                         <i class="fas fa-file-import me-2"></i>Bulk Import
                     </button>
-                    <button type="submit" class="btn btn-primary px-4">
-                        <i class="fas fa-save me-2"></i>Save Student Record
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+                </li>
+            </ul>
+            
+            <div class="tab-content" id="importTabsContent">
+                <!-- Manual Entry Tab -->
+                <div class="tab-pane fade show active" id="manual" role="tabpanel" aria-labelledby="manual-tab">
+                    <form method="POST" action="/admin/import_students" class="needs-validation" novalidate>
+                        <div class="row g-3">
+                            <!-- Required Fields Section -->
+                            <div class="col-md-6">
+                                <h5 class="text-primary mb-3"><i class="fas fa-asterisk text-danger me-2"></i>Required Fields</h5>
+                                
+                                <!-- Student ID -->
+                                <div class="mb-3">
+                                    <label for="student_id" class="form-label">Student ID (USN)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                                        <input type="text" name="student_id" id="student_id" class="form-control" 
+                                               pattern="\d{11}" required placeholder="11-digit student ID">
+                                        <div class="invalid-feedback">
+                                            Please provide a valid 11-digit student ID.
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">Format: 11 digits only (e.g. 21000602300)</small>
+                                </div>
 
-<!-- Bulk Import Modal -->
-<div class="modal fade" id="bulkImportModal" tabindex="-1" aria-labelledby="bulkImportModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="bulkImportModalLabel"><i class="fas fa-file-import me-2"></i>Bulk Import Students</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i> You can import multiple students at once using a CSV file.
+                                <!-- Name Fields - Two Options -->
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label class="form-label mb-0">Student Name</label>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="separateNameFields">
+                                            <label class="form-check-label small" for="separateNameFields">Use separate name fields</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Full Name (Single Field) -->
+                                    <div id="fullNameField" class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                        <input type="text" name="name" id="name" class="form-control" required 
+                                               placeholder="Full Name (First Middle Last)">
+                                        <div class="invalid-feedback">
+                                            Please provide the student's full name.
+                                        </div>
+                                    </div>
+                                    <small class="text-muted" id="fullNameHelp">Enter complete name - will be automatically parsed into first, middle, and last name</small>
+                                    
+                                    <!-- Separate Name Fields -->
+                                    <div id="separateNameFields-container" class="d-none">
+                                        <div class="row g-2 mt-2">
+                                            <div class="col-md-4">
+                                                <input type="text" name="first_name" id="first_name" class="form-control" 
+                                                       placeholder="First Name">
+                                                <div class="invalid-feedback">
+                                                    Required
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <input type="text" name="middle_name" id="middle_name" class="form-control" 
+                                                       placeholder="Middle Name">
+                                            </div>
+                                            <div class="col-md-5">
+                                                <input type="text" name="last_name" id="last_name" class="form-control" 
+                                                       placeholder="Last Name">
+                                                <div class="invalid-feedback">
+                                                    Required
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Email -->
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email Address</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                        <input type="email" name="email" id="email" class="form-control" required 
+                                               placeholder="student@aclcbutuan.edu.ph">
+                                        <div class="invalid-feedback">
+                                            Please provide a valid email address.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Optional Fields Section -->
+                            <div class="col-md-6">
+                                <h5 class="text-primary mb-3"><i class="fas fa-info-circle text-primary me-2"></i>Additional Information</h5>
+                                
+                                <!-- Course -->
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="course" class="form-label">Course</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-graduation-cap"></i></span>
+                                            <select name="course" id="course" class="form-select" required>
+                                                <option value="" selected disabled>Select course</option>
+                                                <option value="BS in INFORMATION TECHNOLOGY">BS in Information Technology</option>
+                                                <option value="BS in COMPUTER SCIENCE">BS in Computer Science</option>
+                                                <option value="BSBA-Financial Management">BSBA - Financial Management</option>
+                                                <option value="BSBA-MARKETING">BSBA - Marketing</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Contact Number -->
+                                <div class="mb-3">
+                                    <label for="contact" class="form-label">Contact Number</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                                        <input type="tel" name="contact" id="contact" class="form-control" 
+                                               placeholder="09123456789">
+                                    </div>
+                                </div>
+
+                                <!-- Guardian Name -->
+                                <div class="mb-3">
+                                    <label for="guardian_name" class="form-label">Guardian Name</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user-shield"></i></span>
+                                        <input type="text" name="guardian_name" id="guardian_name" class="form-control" 
+                                               placeholder="Parent or guardian's full name">
+                                    </div>
+                                </div>
+
+                                <!-- Address -->
+                                <div class="mb-3">
+                                    <label for="address" class="form-label">Address</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-home"></i></span>
+                                        <input type="text" name="address" id="address" class="form-control" 
+                                               placeholder="Complete residential address">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-end mt-4 pt-3 border-top">
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="fas fa-save me-2"></i>Save Student Record
+                            </button>
+                        </div>
+                    </form>
                 </div>
                 
-                <div class="mb-4">
-                    <h6 class="mb-3">CSV File Requirements:</h6>
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item d-flex align-items-center">
-                            <i class="fas fa-check-circle text-success me-2"></i>
-                            File must be in CSV format (comma-separated values)
-                        </li>
-                        <li class="list-group-item d-flex align-items-center">
-                            <i class="fas fa-check-circle text-success me-2"></i>
-                            Required columns: student_id, name, email
-                        </li>
-                        <li class="list-group-item d-flex align-items-center">
-                            <i class="fas fa-check-circle text-success me-2"></i>
-                            Optional columns: course, contact, guardian_name, address
-                        </li>
-                        <li class="list-group-item d-flex align-items-center">
-                            <i class="fas fa-check-circle text-success me-2"></i>
-                            First row should contain column headers
-                        </li>
-                    </ul>
+                <!-- Bulk Import Tab -->
+                <div class="tab-pane fade" id="bulk" role="tabpanel" aria-labelledby="bulk-tab">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i> Import multiple students at once using Excel or CSV files from the registrar.
+                            </div>
+                            
+                            <!-- FIXED: Changed action to correct route -->
+                            <form id="bulkImportForm" method="POST" action="/admin/bulk_import_students" enctype="multipart/form-data">
+                                <div class="mb-4">
+                                    <label for="importFile" class="form-label">Select File to Import</label>
+                                    <!-- FIXED: Changed name from 'file' to match backend expectation -->
+                                    <input class="form-control" type="file" id="importFile" name="file" 
+                                           accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" required>
+                                    <div class="invalid-feedback">
+                                        Please select a valid Excel or CSV file.
+                                    </div>
+                                    <small class="text-muted">Accepted formats: .csv, .xlsx, .xls</small>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <a href="#" class="btn btn-outline-secondary" onclick="downloadTemplate()">
+                                        <i class="fas fa-download me-2"></i>Download Template
+                                    </a>
+                                    <button type="submit" class="btn btn-primary" id="importButton">
+                                        <i class="fas fa-upload me-2"></i>Upload and Import
+                                    </button>
+                                </div>
+                            </form>
+                            
+                            <div class="mt-4" id="importResults" style="display: none;">
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0">Import Results</h6>
+                                    </div>
+                                    <div class="card-body" id="importResultsContent">
+                                        <!-- Results will be displayed here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-4">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">File Requirements</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="small mb-3">Your Excel/CSV file should include these columns:</p>
+                                    <ul class="list-group list-group-flush small">
+                                        <li class="list-group-item d-flex align-items-center">
+                                            <span class="badge bg-primary me-2">Required</span>
+                                            <strong>student_id</strong> - 11-digit USN
+                                        </li>
+                                        <li class="list-group-item d-flex align-items-center">
+                                            <span class="badge bg-success me-2">Option 1</span>
+                                            <strong>name</strong> - Full name (will be parsed)
+                                        </li>
+                                        <li class="list-group-item d-flex align-items-center">
+                                            <span class="badge bg-success me-2">Option 2</span>
+                                            <strong>first_name, middle_name, last_name</strong> - Separate columns
+                                        </li>
+                                        <li class="list-group-item d-flex align-items-center">
+                                            <span class="badge bg-secondary me-2">Optional</span>
+                                            <strong>email, course, contact, guardian_name, address</strong>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                
-                <form id="bulkImportForm" method="POST" action="/admin/bulk_import_students" enctype="multipart/form-data">
-                    <div class="mb-3">
-                        <label for="csvFile" class="form-label">Select CSV File</label>
-                        <input class="form-control" type="file" id="csvFile" name="csv_file" accept=".csv" required>
-                    </div>
-                    
-                    <div class="d-flex justify-content-end">
-                        <button type="button" class="btn btn-outline-secondary me-2" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-upload me-2"></i>Upload and Import
-                        </button>
-                    </div>
-                </form>
             </div>
         </div>
     </div>
@@ -187,7 +255,7 @@
 
 <!-- Import Help Modal -->
 <div class="modal fade" id="importHelpModal" tabindex="-1" aria-labelledby="importHelpModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="importHelpModalLabel"><i class="fas fa-question-circle me-2"></i>Import Help</h5>
@@ -197,19 +265,43 @@
                 <h6 class="mb-3">Student Import Guidelines</h6>
                 <p>This form allows you to add new students to the system either individually or in bulk.</p>
                 
-                <h6 class="mt-4 mb-3">Required Fields:</h6>
-                <ul>
-                    <li><strong>Student ID (USN):</strong> 11-digit unique student number</li>
-                    <li><strong>Full Name:</strong> Last name, First name Middle initial format</li>
-                    <li><strong>Email:</strong> Must be a valid email address</li>
-                </ul>
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">Manual Entry</h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="small">You can enter student information manually with two options:</p>
+                                <ul class="small">
+                                    <li><strong>Single Name Field:</strong> Enter the full name and it will be automatically parsed into first, middle, and last name components.</li>
+                                    <li><strong>Separate Name Fields:</strong> Toggle the switch to enter first, middle, and last names separately.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">Bulk Import</h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="small">For importing multiple students:</p>
+                                <ul class="small">
+                                    <li>Use Excel (.xlsx, .xls) or CSV (.csv) files</li>
+                                    <li>Download the template for the correct format</li>
+                                    <li>The system supports both full name in a single column or separate name columns</li>
+                                    <li>First row should contain column headers</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 
-                <h6 class="mt-4 mb-3">Tips:</h6>
-                <ul>
-                    <li>For bulk imports, use the CSV template provided</li>
-                    <li>Student IDs must be unique - duplicates will be rejected</li>
-                    <li>Emails must be unique - duplicates will be rejected</li>
-                </ul>
+                <div class="alert alert-info mt-4">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Name Parsing:</strong> When using a single name field, the system will automatically parse Filipino names into first, middle, and last name components.
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Got it!</button>
@@ -240,6 +332,33 @@
     })
 })();
 
+// Toggle between full name and separate name fields
+document.getElementById('separateNameFields').addEventListener('change', function() {
+    const fullNameField = document.getElementById('fullNameField');
+    const fullNameHelp = document.getElementById('fullNameHelp');
+    const separateFields = document.getElementById('separateNameFields-container');
+    
+    if (this.checked) {
+        fullNameField.classList.add('d-none');
+        fullNameHelp.classList.add('d-none');
+        separateFields.classList.remove('d-none');
+        
+        // Make separate fields required
+        document.getElementById('first_name').setAttribute('required', '');
+        document.getElementById('last_name').setAttribute('required', '');
+        document.getElementById('name').removeAttribute('required');
+    } else {
+        fullNameField.classList.remove('d-none');
+        fullNameHelp.classList.remove('d-none');
+        separateFields.classList.add('d-none');
+        
+        // Make full name required
+        document.getElementById('name').setAttribute('required', '');
+        document.getElementById('first_name').removeAttribute('required');
+        document.getElementById('last_name').removeAttribute('required');
+    }
+});
+
 // Show loading state on form submission
 document.querySelector('form').addEventListener('submit', function() {
     const submitBtn = this.querySelector('button[type="submit"]');
@@ -247,24 +366,120 @@ document.querySelector('form').addEventListener('submit', function() {
     submitBtn.disabled = true;
 });
 
-// CSV file validation for bulk import
+// Handle bulk import form submission with AJAX
 document.getElementById('bulkImportForm').addEventListener('submit', function(e) {
-    const fileInput = document.getElementById('csvFile');
+    e.preventDefault();
+    
+    const fileInput = document.getElementById('importFile');
     const file = fileInput.files[0];
     
     if (!file) {
-        e.preventDefault();
         fileInput.classList.add('is-invalid');
         return;
     }
     
-    if (!file.name.endsWith('.csv')) {
-        e.preventDefault();
+    // Check file extension
+    const validExtensions = ['.csv', '.xlsx', '.xls'];
+    const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+    
+    if (!validExtensions.includes(fileExtension)) {
         fileInput.classList.add('is-invalid');
-        document.querySelector('#bulkImportForm .invalid-feedback').textContent = 'Please select a CSV file';
         return;
     }
+    
+    // Show loading state
+    const importButton = document.getElementById('importButton');
+    const originalButtonText = importButton.innerHTML;
+    importButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Importing...';
+    importButton.disabled = true;
+    
+    // Create FormData and submit
+    const formData = new FormData(this);
+    
+    fetch(this.action, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Show results
+        const resultsDiv = document.getElementById('importResults');
+        const resultsContent = document.getElementById('importResultsContent');
+        
+        resultsDiv.style.display = 'block';
+        
+        if (data.success) {
+            resultsContent.innerHTML = `
+                <div class="alert alert-success mb-3">
+                    <i class="fas fa-check-circle me-2"></i>Import completed successfully!
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Total records:</span>
+                    <strong>${data.total}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Successfully imported:</span>
+                    <strong class="text-success">${data.imported}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Errors:</span>
+                    <strong class="text-danger">${data.errors}</strong>
+                </div>
+            `;
+            
+            // Show error details if any
+            if (data.errors > 0 && data.error_details) {
+                let errorList = '<div class="mt-3"><h6>Error Details:</h6><ul class="list-group list-group-flush small">';
+                data.error_details.forEach(error => {
+                    errorList += `<li class="list-group-item text-danger">${error}</li>`;
+                });
+                errorList += '</ul></div>';
+                resultsContent.innerHTML += errorList;
+            }
+        } else {
+            resultsContent.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>Import failed: ${data.error}
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        const resultsDiv = document.getElementById('importResults');
+        const resultsContent = document.getElementById('importResultsContent');
+        
+        resultsDiv.style.display = 'block';
+        resultsContent.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle me-2"></i>An error occurred during import. Please try again.
+            </div>
+        `;
+    })
+    .finally(() => {
+        // Restore button state
+        importButton.innerHTML = originalButtonText;
+        importButton.disabled = false;
+    });
 });
+
+// Download template function
+function downloadTemplate() {
+    // Create a simple CSV template
+    const csvContent = `student_id,name,first_name,middle_name,last_name,email,course,contact,guardian_name,address
+21000602400,Juan dela Cruz,Juan,,dela Cruz,juan.delacruz@aclcbutuan.edu.ph,BS in INFORMATION TECHNOLOGY,09123456789,Maria dela Cruz,Butuan City
+21000602401,Maria Santos,Maria,Grace,Santos,maria.santos@aclcbutuan.edu.ph,BS in COMPUTER SCIENCE,09987654321,Jose Santos,Butuan City`;
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'student_import_template.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
 </script>
 
 <style>
@@ -281,6 +496,26 @@ document.getElementById('bulkImportForm').addEventListener('submit', function(e)
     .input-group-text {
         min-width: 40px;
         justify-content: center;
+    }
+    
+    /* Tab styling */
+    .nav-tabs .nav-link {
+        color: var(--dark-color);
+        font-weight: 500;
+    }
+    
+    .nav-tabs .nav-link.active {
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+    
+    /* Badge styling */
+    .badge.bg-primary {
+        background-color: var(--primary-color) !important;
+    }
+    
+    .badge.bg-success {
+        background-color: var(--success-color) !important;
     }
     
     /* Responsive adjustments */
