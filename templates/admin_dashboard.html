@@ -4,113 +4,284 @@
 
 {% block content %}
 <!-- Page Header -->
-<div class="page-header d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 class="fw-bold">
-            <i class="fas fa-tachometer-alt me-2 text-primary"></i> Admin Dashboard
-            <span class="admin-badge">Admin View</span>
-        </h2>
-        <p class="text-muted">Manage and monitor student ID applications</p>
-    </div>
-</div>
-
-<!-- Status Cards Row -->
-<div class="row g-4 mb-4">
-    <!-- Total Applications -->
-    <div class="col-md-3 col-sm-6">
-        <div class="card status-card h-100">
-            <div class="card-body text-center p-4">
-                <div class="status-icon text-primary mb-3">
-                    <i class="fas fa-users fa-3x"></i>
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="fw-bold mb-1">
+                        <i class="bi bi-speedometer2 me-2 text-primary"></i> Admin Dashboard
+                        <span class="badge bg-primary ms-2 admin-badge">Admin</span>
+                    </h2>
+                    <p class="text-muted">Overview of student ID application system</p>
                 </div>
-                <div class="status-count" id="total-students">{{ total_students }}</div>
-                <div class="status-label">Total Students</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Pending Applications -->
-    <div class="col-md-3 col-sm-6">
-        <div class="card status-card pending h-100">
-            <div class="card-body text-center p-4">
-                <div class="status-icon text-warning mb-3">
-                    <i class="fas fa-hourglass-half fa-3x"></i>
-                </div>
-                <div class="status-count" id="pending-count">{{ pending }}</div>
-                <div class="status-label">Pending</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Processing Applications -->
-    <div class="col-md-3 col-sm-6">
-        <div class="card status-card processing h-100">
-            <div class="card-body text-center p-4">
-                <div class="status-icon text-info mb-3">
-                    <i class="fas fa-cogs fa-3x"></i>
-                </div>
-                <div class="status-count" id="processing-count">{{ processing }}</div>
-                <div class="status-label">Processing</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Completed Applications -->
-    <div class="col-md-3 col-sm-6">
-        <div class="card status-card done h-100">
-            <div class="card-body text-center p-4">
-                <div class="status-icon text-success mb-3">
-                    <i class="fas fa-check-circle fa-3x"></i>
-                </div>
-                <div class="status-count" id="done-count">{{ done }}</div>
-                <div class="status-label">Completed</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Charts & Recent Applications -->
-<div class="row">
-    <!-- Application Status Chart -->
-    <div class="col-lg-6 mb-4">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-bold">
-                    <i class="fas fa-chart-pie me-2 text-primary"></i> Application Status
-                </h5>
-            </div>
-            <div class="card-body d-flex align-items-center justify-content-center p-4">
-                <div style="position: relative; height: 280px; width: 100%;">
-                    <canvas id="applicationStatusChart"></canvas>
+                <div class="d-flex gap-2">
+                    <button id="refresh-data" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Refresh Data
+                    </button>
+                    <a href="{{ url_for('admin_applications') }}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-list-ul me-1"></i> Manage Applications
+                    </a>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Recent Applications -->
-    <div class="col-lg-6 mb-4">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-bold">
-                    <i class="fas fa-clipboard-list me-2 text-primary"></i> Recent Applications
-                </h5>
-                <a href="{{ url_for('admin_applications') }}" class="btn btn-sm btn-primary">View All</a>
+
+    <!-- Status Cards -->
+    <div class="row g-4 mb-4">
+        <!-- Total Applications -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card status-card h-100 border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="status-icon-wrapper bg-primary-subtle rounded-3 p-3 me-3">
+                            <i class="bi bi-people-fill fs-3 text-primary"></i>
+                        </div>
+                        <div>
+                            <h3 class="status-count mb-0" id="total-students">{{ total_students }}</h3>
+                            <p class="status-label mb-0 text-muted">Total Students</p>
+                        </div>
+                    </div>
+                    <div class="progress mt-3" style="height: 6px;">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: 100%"></div>
+                    </div>
+                </div>
             </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0 modern-table">
-                        <thead>
-                            <tr>
-                                <th class="ps-4">Student ID</th>
-                                <th>Name</th>
-                                <th>Status</th>
-                                <th class="text-end pe-4">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="recent-applications">
-                            <!-- Will be populated with real data -->
-                        </tbody>
-                    </table>
+        </div>
+
+        <!-- Pending Applications -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card status-card h-100 border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="status-icon-wrapper bg-warning-subtle rounded-3 p-3 me-3">
+                            <i class="bi bi-hourglass-split fs-3 text-warning"></i>
+                        </div>
+                        <div>
+                            <h3 class="status-count mb-0" id="pending-count">{{ pending }}</h3>
+                            <p class="status-label mb-0 text-muted">Pending</p>
+                        </div>
+                    </div>
+                    <div class="progress mt-3" style="height: 6px;">
+                        <div class="progress-bar bg-warning" role="progressbar" 
+                             style="width: {{ (pending / total_students * 100) if total_students > 0 else 0 }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Processing Applications -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card status-card h-100 border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="status-icon-wrapper bg-info-subtle rounded-3 p-3 me-3">
+                            <i class="bi bi-gear-fill fs-3 text-info"></i>
+                        </div>
+                        <div>
+                            <h3 class="status-count mb-0" id="processing-count">{{ processing }}</h3>
+                            <p class="status-label mb-0 text-muted">Processing</p>
+                        </div>
+                    </div>
+                    <div class="progress mt-3" style="height: 6px;">
+                        <div class="progress-bar bg-info" role="progressbar" 
+                             style="width: {{ (processing / total_students * 100) if total_students > 0 else 0 }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completed Applications -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card status-card h-100 border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="status-icon-wrapper bg-success-subtle rounded-3 p-3 me-3">
+                            <i class="bi bi-check-circle-fill fs-3 text-success"></i>
+                        </div>
+                        <div>
+                            <h3 class="status-count mb-0" id="completed-count">{{ done + receive }}</h3>
+                            <p class="status-label mb-0 text-muted">Completed</p>
+                        </div>
+                    </div>
+                    <div class="progress mt-3" style="height: 6px;">
+                        <div class="progress-bar bg-success" role="progressbar" 
+                             style="width: {{ ((done + receive) / total_students * 100) if total_students > 0 else 0 }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts & Analytics -->
+    <div class="row g-4 mb-4">
+        <!-- Application Status Chart -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent border-0 pt-4 pb-0">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-pie-chart-fill me-2 text-primary"></i> Application Status
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height: 260px;">
+                        <canvas id="applicationStatusChart"></canvas>
+                    </div>
+                    <div class="chart-legend mt-3 d-flex justify-content-center flex-wrap gap-3">
+                        <div class="d-flex align-items-center">
+                            <span class="legend-indicator bg-warning me-2"></span>
+                            <span>Pending ({{ pending }})</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="legend-indicator bg-info me-2"></span>
+                            <span>Processing ({{ processing }})</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="legend-indicator bg-success me-2"></span>
+                            <span>Done ({{ done }})</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="legend-indicator bg-primary me-2"></span>
+                            <span>Received ({{ receive }})</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Weekly Applications Analytics -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-graph-up me-2 text-primary"></i> Applications Analytics
+                    </h5>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="analyticsRangeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            This Week
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="analyticsRangeDropdown">
+                            <li><a class="dropdown-item analytics-range" href="#" data-period="day">Today</a></li>
+                            <li><a class="dropdown-item analytics-range" href="#" data-period="week">This Week</a></li>
+                            <li><a class="dropdown-item analytics-range" href="#" data-period="month">This Month</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height: 260px;">
+                        <canvas id="analyticsChart"></canvas>
+                    </div>
+                    <div class="mt-3 text-center">
+                        <small class="text-muted" id="analytics-description">
+                            Showing application trends for the current period
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Applications & Quick Stats -->
+    <div class="row g-4">
+        <!-- Recent Applications -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-clipboard-data me-2 text-primary"></i> Recent Applications
+                    </h5>
+                    <a href="{{ url_for('admin_applications') }}" class="btn btn-sm btn-outline-primary">
+                        View All
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4">Student ID</th>
+                                    <th>Name</th>
+                                    <th>Course</th>
+                                    <th>Status</th>
+                                    <th class="text-end pe-4">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-applications">
+                                <!-- Will be populated with real data -->
+                                <tr>
+                                    <td colspan="5" class="text-center py-4">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="mt-2 mb-0 text-muted">Loading recent applications...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions & Stats -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent border-0 pt-4 pb-0">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-lightning-charge-fill me-2 text-primary"></i> Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <a href="{{ url_for('admin_applications') }}" class="list-group-item list-group-item-action border-0 py-3 px-0">
+                            <div class="d-flex align-items-center">
+                                <div class="action-icon-wrapper bg-primary-subtle rounded-3 p-3 me-3">
+                                    <i class="bi bi-people-fill text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Manage Applications</h6>
+                                    <p class="text-muted small mb-0">{{ pending }} pending applications</p>
+                                </div>
+                                <i class="bi bi-chevron-right ms-auto"></i>
+                            </div>
+                        </a>
+                        <a href="{{ url_for('student_id_history') }}" class="list-group-item list-group-item-action border-0 py-3 px-0">
+                            <div class="d-flex align-items-center">
+                                <div class="action-icon-wrapper bg-info-subtle rounded-3 p-3 me-3">
+                                    <i class="bi bi-clock-history text-info"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">ID History</h6>
+                                    <p class="text-muted small mb-0">{{ receive }} IDs received</p>
+                                </div>
+                                <i class="bi bi-chevron-right ms-auto"></i>
+                            </div>
+                        </a>
+                        <a href="{{ url_for('admin_lost_id_requests') }}" class="list-group-item list-group-item-action border-0 py-3 px-0">
+                            <div class="d-flex align-items-center">
+                                <div class="action-icon-wrapper bg-warning-subtle rounded-3 p-3 me-3">
+                                    <i class="bi bi-exclamation-triangle text-warning"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Lost ID Requests</h6>
+                                    <p class="text-muted small mb-0" id="lost-id-count">Loading...</p>
+                                </div>
+                                <i class="bi bi-chevron-right ms-auto"></i>
+                            </div>
+                        </a>
+                        <a href="{{ url_for('admin_support_messages') }}" class="list-group-item list-group-item-action border-0 py-3 px-0">
+                            <div class="d-flex align-items-center">
+                                <div class="action-icon-wrapper bg-success-subtle rounded-3 p-3 me-3">
+                                    <i class="bi bi-chat-dots text-success"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Support Messages</h6>
+                                    <p class="text-muted small mb-0" id="support-count">Loading...</p>
+                                </div>
+                                <i class="bi bi-chevron-right ms-auto"></i>
+                            </div>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -120,10 +291,10 @@
 <!-- Student Details Modal -->
 <div class="modal fade" id="studentDetailsModal" tabindex="-1" aria-labelledby="studentDetailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
+        <div class="modal-content border-0 shadow">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="studentDetailsModalLabel">
-                    <i class="fas fa-user me-2"></i> Student Details
+                    <i class="bi bi-person-badge me-2"></i> Student Details
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -132,12 +303,12 @@
                     <div class="col-md-4 mb-4 mb-md-0">
                         <div class="text-center">
                             <div class="position-relative mb-3 mx-auto" style="width: 150px; height: 150px;">
-                                <img src="/placeholder.svg" class="img-preview rounded-circle object-fit-cover w-100 h-100 border shadow-sm" id="modal-profile-picture" alt="Student Profile">
+                                <img src="/static/placeholder.jpg" class="img-preview rounded-circle object-fit-cover w-100 h-100 border shadow-sm" id="modal-profile-picture" alt="Student Profile">
                             </div>
                         </div>
                         <div class="mt-4 text-center">
                             <div class="position-relative mb-3 mx-auto" style="max-width: 200px;">
-                                <img src="/placeholder.svg" class="img-preview img-fluid rounded shadow-sm" id="modal-signature" alt="Student Signature">
+                                <img src="/static/placeholder.jpg" class="img-preview img-fluid rounded shadow-sm" id="modal-signature" alt="Student Signature">
                             </div>
                         </div>
                     </div>
@@ -188,36 +359,6 @@
                         </div>
                     </div>
                 </div>
-                
-                <div class="mt-4">
-                    <h6 class="mb-3 fw-bold text-primary">Application Status Timeline</h6>
-                    <div class="status-timeline">
-                        <div class="timeline-item" id="timeline-pending">
-                            <div class="timeline-content">
-                                <div class="timeline-title">Application Submitted</div>
-                                <div class="timeline-date" id="timeline-pending-date">-</div>
-                            </div>
-                        </div>
-                        <div class="timeline-item" id="timeline-processing">
-                            <div class="timeline-content">
-                                <div class="timeline-title">Processing</div>
-                                <div class="timeline-date" id="timeline-processing-date">-</div>
-                            </div>
-                        </div>
-                        <div class="timeline-item" id="timeline-done">
-                            <div class="timeline-content">
-                                <div class="timeline-title">Ready for Pickup</div>
-                                <div class="timeline-date" id="timeline-done-date">-</div>
-                            </div>
-                        </div>
-                        <div class="timeline-item" id="timeline-receive">
-                            <div class="timeline-content">
-                                <div class="timeline-title">ID Received</div>
-                                <div class="timeline-date" id="timeline-receive-date">-</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
@@ -237,6 +378,9 @@
     </div>
 </div>
 
+<!-- Toast Container -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -244,102 +388,71 @@
     /* Status Cards */
     .status-card {
         transition: all 0.3s ease;
-        height: 100%;
-        border-left: 4px solid transparent;
-        border-radius: 12px;
         overflow: hidden;
     }
 
-    .status-card.pending {
-        border-left-color: var(--warning-color);
+    .status-card:hover {
+        transform: translateY(-5px);
     }
 
-    .status-card.processing {
-        border-left-color: var(--info-color);
+    .status-icon-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 60px;
+        height: 60px;
     }
 
-    .status-card.done {
-        border-left-color: var(--success-color);
-    }
-
-    .status-card.receive {
-        border-left-color: var(--primary-color);
-    }
-
-    .status-card .status-icon {
-        margin-bottom: 15px;
-        opacity: 0.9;
-    }
-
-    .status-card .status-count {
-        font-size: 2.5rem;
+    .status-count {
+        font-size: 2rem;
         font-weight: 700;
-        margin-bottom: 5px;
-        line-height: 1;
+        line-height: 1.2;
     }
 
-    .status-card .status-label {
+    .status-label {
         font-size: 0.9rem;
-        color: var(--secondary-color);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        font-weight: 600;
+        font-weight: 500;
+    }
+
+    /* Action Icons */
+    .action-icon-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
     }
 
     /* Status Badges */
     .badge-pending {
-        background-color: var(--warning-color);
-        color: #fff;
+        background-color: var(--bs-warning);
     }
 
     .badge-processing {
-        background-color: var(--info-color);
-        color: #fff;
+        background-color: var(--bs-info);
     }
 
     .badge-done {
-        background-color: var(--success-color);
-        color: white;
+        background-color: var(--bs-success);
     }
 
     .badge-receive {
-        background-color: var(--primary-color);
-        color: white;
+        background-color: var(--bs-primary);
     }
 
-    /* Action Buttons */
-    .action-btn {
-        width: 36px;
-        height: 36px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
+    /* Chart Legend */
+    .legend-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
         border-radius: 50%;
-        margin-right: 5px;
-        transition: all 0.2s;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    }
-
-    .action-btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
-    }
-
-    .action-btn-view {
-        background-color: rgba(37, 99, 235, 0.1);
-        color: var(--primary-color);
-    }
-
-    .action-btn-view:hover {
-        background-color: var(--primary-color);
-        color: white;
     }
 
     /* Student Details */
     .student-detail-row {
         margin-bottom: 15px;
         padding-bottom: 15px;
-        border-bottom: 1px solid var(--border-color);
+        border-bottom: 1px solid #e9ecef;
     }
 
     .student-detail-row:last-child {
@@ -348,7 +461,7 @@
 
     .detail-label {
         font-weight: 600;
-        color: var(--secondary-color);
+        color: #6c757d;
     }
 
     /* Image Preview */
@@ -359,93 +472,248 @@
     .img-preview:hover {
         transform: scale(1.05);
     }
+
+    /* Admin Badge */
+    .admin-badge {
+        font-size: 0.7rem;
+        padding: 0.35em 0.65em;
+        vertical-align: middle;
+    }
+
+    /* Table Styling */
+    .table > :not(caption) > * > * {
+        padding: 1rem;
+    }
+
+    /* Quick Actions */
+    .list-group-item-action:hover {
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+
+    /* Loading Animation */
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+
+    .loading {
+        animation: pulse 1.5s ease-in-out infinite;
+    }
 </style>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        let statusChart, analyticsChart;
+        let currentPeriod = 'week';
+
         // Initialize Application Status Chart with real data
-        const statusCtx = document.getElementById('applicationStatusChart').getContext('2d');
-        const statusChart = new Chart(statusCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Pending', 'Processing', 'Done', 'Received'],
-                datasets: [{
-                    data: [
-                        {{ pending }}, 
-                        {{ processing }}, 
-                        {{ done }}, 
-                        {{ receive }}
-                    ],
-                    backgroundColor: [
-                        '#f59e0b', // warning
-                        '#06b6d4', // info
-                        '#10b981', // success
-                        '#2563eb'  // primary
-                    ],
-                    borderWidth: 0,
-                    borderRadius: 5,
-                    hoverOffset: 10
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 20,
-                            font: {
-                                size: 12,
-                                weight: 'bold'
-                            },
+        function initializeStatusChart() {
+            const statusCtx = document.getElementById('applicationStatusChart').getContext('2d');
+            statusChart = new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pending', 'Processing', 'Done', 'Received'],
+                    datasets: [{
+                        data: [
+                            {{ pending }}, 
+                            {{ processing }}, 
+                            {{ done }}, 
+                            {{ receive }}
+                        ],
+                        backgroundColor: [
+                            '#ffc107', // warning
+                            '#0dcaf0', // info
+                            '#198754', // success
+                            '#0d6efd'  // primary
+                        ],
+                        borderWidth: 0,
+                        borderRadius: 5,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            titleColor: '#1e293b',
+                            bodyColor: '#1e293b',
+                            borderColor: '#e2e8f0',
+                            borderWidth: 1,
+                            padding: 15,
+                            cornerRadius: 8,
+                            displayColors: true,
+                            boxPadding: 10,
                             usePointStyle: true,
-                            pointStyle: 'circle'
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                        titleColor: '#1e293b',
-                        bodyColor: '#1e293b',
-                        borderColor: '#e2e8f0',
-                        borderWidth: 1,
-                        padding: 15,
-                        cornerRadius: 8,
-                        displayColors: true,
-                        boxPadding: 10,
-                        usePointStyle: true,
-                        callbacks: {
-                            label: function(context) {
-                                const label = context.label || '';
-                                const value = context.raw || 0;
-                                const total = context.dataset.data.reduce((acc, val) => acc + val, 0);
-                                const percentage = Math.round((value / total) * 100);
-                                return `${label}: ${value} (${percentage}%)`;
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((acc, val) => acc + val, 0);
+                                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
                             }
                         }
+                    },
+                    animation: {
+                        animateScale: true,
+                        animateRotate: true,
+                        duration: 2000,
+                        easing: 'easeOutQuart'
                     }
-                },
-                cutout: '70%',
-                animation: {
-                    animateScale: true,
-                    animateRotate: true,
-                    duration: 2000,
-                    easing: 'easeOutQuart'
                 }
+            });
+        }
+
+        // Initialize Analytics Chart
+        function initializeAnalyticsChart() {
+            const analyticsCtx = document.getElementById('analyticsChart').getContext('2d');
+            analyticsChart = new Chart(analyticsCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'New Applications',
+                            data: [],
+                            borderColor: '#0d6efd',
+                            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: '#0d6efd',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 5
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                drawBorder: false,
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                stepSize: 1
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            titleColor: '#1e293b',
+                            bodyColor: '#1e293b',
+                            borderColor: '#e2e8f0',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            padding: 12
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
+
+        // Load analytics data from your API
+        function loadAnalyticsData(period) {
+            fetch(`/api/analytics/${period}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        let labels = [];
+                        
+                        switch(period) {
+                            case 'day':
+                                labels = ['6 AM', '7 AM', '8 AM', '9 AM', '10 AM', '11 AM', '12 PM', 
+                                         '1 PM', '2 PM', '3 PM', '4 PM', '5 PM', '6 PM', '7 PM'];
+                                document.getElementById('analytics-description').textContent = 
+                                    'Showing hourly application submissions for today (6 AM - 7 PM)';
+                                break;
+                            case 'week':
+                                labels = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                                document.getElementById('analytics-description').textContent = 
+                                    'Showing daily application submissions for this week';
+                                break;
+                            case 'month':
+                                labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+                                document.getElementById('analytics-description').textContent = 
+                                    'Showing weekly application submissions for this month';
+                                break;
+                        }
+                        
+                        analyticsChart.data.labels = labels;
+                        analyticsChart.data.datasets[0].data = data.values;
+                        analyticsChart.update('active');
+                    } else {
+                        console.error('Failed to load analytics data:', data.error);
+                        // Use fallback data
+                        loadFallbackAnalyticsData(period);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading analytics data:', error);
+                    loadFallbackAnalyticsData(period);
+                });
+        }
+
+        // Fallback analytics data
+        function loadFallbackAnalyticsData(period) {
+            let labels = [];
+            let data = [];
+            
+            switch(period) {
+                case 'day':
+                    labels = ['6 AM', '7 AM', '8 AM', '9 AM', '10 AM', '11 AM', '12 PM', 
+                             '1 PM', '2 PM', '3 PM', '4 PM', '5 PM', '6 PM', '7 PM'];
+                    data = [0, 1, 2, 3, 2, 1, 4, 3, 2, 1, 2, 1, 0, 0];
+                    break;
+                case 'week':
+                    labels = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                    data = [5, 8, 6, 9, 7, 3, 2];
+                    break;
+                case 'month':
+                    labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+                    data = [15, 22, 18, 25];
+                    break;
             }
-        });
+            
+            analyticsChart.data.labels = labels;
+            analyticsChart.data.datasets[0].data = data;
+            analyticsChart.update('active');
+        }
 
-        // Load recent applications
-        loadRecentApplications();
-
-        // Function to load recent applications
+        // Load recent applications from your database
         function loadRecentApplications() {
             fetch('/get_all_students')
                 .then(response => response.json())
                 .then(data => {
-                    // Sort by most recent first (assuming there's a date field)
-                    // and take only the first 5
-                    const recentApplications = data.slice(0, 5);
+                    // Sort by most recent first and take only the first 5
+                    const recentApplications = data
+                        .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+                        .slice(0, 5);
                     
                     const recentApplicationsHtml = recentApplications.map(student => {
                         let badgeClass = '';
@@ -471,21 +739,36 @@
                                 badgeClass = 'bg-secondary';
                         }
                         
+                        // Use the get_full_name helper or fallback to name field
+                        const studentName = student.first_name && student.last_name ? 
+                            `${student.first_name} ${student.middle_name ? student.middle_name + ' ' : ''}${student.last_name}` :
+                            (student.name || 'N/A');
+                        
                         return `
                             <tr>
                                 <td class="ps-4">${student.student_id}</td>
-                                <td>${student.name}</td>
+                                <td>${studentName}</td>
+                                <td>${student.course || 'N/A'}</td>
                                 <td><span class="badge ${badgeClass}">${statusText}</span></td>
                                 <td class="text-end pe-4">
-                                    <a href="#" class="action-btn action-btn-view view-student" title="View Details" data-id="${student.student_id}">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
+                                    <button class="btn btn-sm btn-outline-primary view-student" title="View Details" data-id="${student.student_id}">
+                                        <i class="bi bi-eye me-1"></i> View
+                                    </button>
                                 </td>
                             </tr>
                         `;
                     }).join('');
                     
-                    document.getElementById('recent-applications').innerHTML = recentApplicationsHtml;
+                    document.getElementById('recent-applications').innerHTML = recentApplicationsHtml || `
+                        <tr>
+                            <td colspan="5" class="text-center py-4">
+                                <div class="text-muted">
+                                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                    <p class="mb-0">No applications found</p>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
                     
                     // Add event listeners to the view buttons
                     document.querySelectorAll('.view-student').forEach(button => {
@@ -500,9 +783,41 @@
                     console.error('Error loading recent applications:', error);
                     document.getElementById('recent-applications').innerHTML = `
                         <tr>
-                            <td colspan="4" class="text-center">Error loading data. Please try again.</td>
+                            <td colspan="5" class="text-center py-4">
+                                <div class="text-danger">
+                                    <i class="bi bi-exclamation-triangle fs-1 d-block mb-2"></i>
+                                    <p class="mb-0">Error loading data. Please try again.</p>
+                                </div>
+                            </td>
                         </tr>
                     `;
+                });
+        }
+
+        // Load additional counts
+        function loadAdditionalCounts() {
+            // Load lost ID requests count
+            fetch('/admin/get_new_lost_id_count')
+                .then(response => response.json())
+                .then(data => {
+                    const count = data.new_count || 0;
+                    document.getElementById('lost-id-count').textContent = 
+                        count > 0 ? `${count} new requests` : 'No new requests';
+                })
+                .catch(error => {
+                    document.getElementById('lost-id-count').textContent = 'Error loading';
+                });
+
+            // Load support messages count
+            fetch('/admin/get_unread_count')
+                .then(response => response.json())
+                .then(data => {
+                    const count = data.unread_count || 0;
+                    document.getElementById('support-count').textContent = 
+                        count > 0 ? `${count} unread messages` : 'No unread messages';
+                })
+                .catch(error => {
+                    document.getElementById('support-count').textContent = 'Error loading';
                 });
         }
 
@@ -513,7 +828,13 @@
                 .then(student => {
                     // Populate modal with student data
                     document.getElementById('modal-student-id').textContent = student.student_id;
-                    document.getElementById('modal-name').textContent = student.name || 'N/A';
+                    
+                    // Use the full name helper or construct from parts
+                    const studentName = student.first_name && student.last_name ? 
+                        `${student.first_name} ${student.middle_name ? student.middle_name + ' ' : ''}${student.last_name}` :
+                        (student.name || 'N/A');
+                    
+                    document.getElementById('modal-name').textContent = studentName;
                     document.getElementById('modal-course').textContent = student.course || 'N/A';
                     document.getElementById('modal-contact').textContent = student.contact || 'N/A';
                     document.getElementById('modal-guardian').textContent = student.guardian_name || 'N/A';
@@ -562,62 +883,16 @@
                     
                     statusElement.textContent = statusText;
                     
-                    // Update timeline based on status
-                    updateTimeline(student.application_status);
-                    
                     // Show the modal
                     const modal = new bootstrap.Modal(document.getElementById('studentDetailsModal'));
                     modal.show();
                 })
                 .catch(error => {
                     console.error('Error fetching student details:', error);
-                    alert('Error loading student details. Please try again.');
+                    showToast('Error', 'Failed to load student details. Please try again.', 'error');
                 });
         }
-        
-        // Function to update timeline based on status
-        function updateTimeline(status) {
-            const timelineItems = document.querySelectorAll('.timeline-item');
-            timelineItems.forEach(item => item.classList.remove('active', 'completed'));
-            
-            const now = new Date().toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-            
-            switch(status) {
-                case 'pending':
-                    document.getElementById('timeline-pending').classList.add('active');
-                    document.getElementById('timeline-pending-date').textContent = now;
-                    break;
-                case 'processing':
-                    document.getElementById('timeline-pending').classList.add('completed');
-                    document.getElementById('timeline-processing').classList.add('active');
-                    document.getElementById('timeline-pending-date').textContent = now;
-                    document.getElementById('timeline-processing-date').textContent = now;
-                    break;
-                case 'done':
-                    document.getElementById('timeline-pending').classList.add('completed');
-                    document.getElementById('timeline-processing').classList.add('completed');
-                    document.getElementById('timeline-done').classList.add('active');
-                    document.getElementById('timeline-pending-date').textContent = now;
-                    document.getElementById('timeline-processing-date').textContent = now;
-                    document.getElementById('timeline-done-date').textContent = now;
-                    break;
-                case 'receive':
-                    document.getElementById('timeline-pending').classList.add('completed');
-                    document.getElementById('timeline-processing').classList.add('completed');
-                    document.getElementById('timeline-done').classList.add('completed');
-                    document.getElementById('timeline-receive').classList.add('active');
-                    document.getElementById('timeline-pending-date').textContent = now;
-                    document.getElementById('timeline-processing-date').textContent = now;
-                    document.getElementById('timeline-done-date').textContent = now;
-                    document.getElementById('timeline-receive-date').textContent = now;
-                    break;
-            }
-        }
-        
+
         // Handle status update
         document.querySelectorAll('.status-update').forEach(item => {
             item.addEventListener('click', function(e) {
@@ -631,7 +906,10 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ status: newStatus }),
+                    body: JSON.stringify({ 
+                        status: newStatus,
+                        updateHistory: true
+                    }),
                 })
                 .then(response => response.json())
                 .then(data => {
@@ -659,30 +937,51 @@
                         
                         statusElement.textContent = statusText;
                         
-                        // Update the timeline
-                        updateTimeline(newStatus);
-                        
-                        // Refresh recent applications
+                        // Refresh data
+                        refreshDashboardData();
                         loadRecentApplications();
                         
-                        // Refresh the chart data
-                        refreshDashboardData();
-                        
-                        // Show success message with modern toast
-                        showToast(`Status updated successfully to ${statusText}`, 'success');
+                        // Show success message
+                        showToast('Success', `Status updated successfully to ${statusText}`, 'success');
                     } else {
-                        showToast('Error updating status: ' + (data.error || 'Unknown error'), 'error');
+                        showToast('Error', 'Error updating status: ' + (data.error || 'Unknown error'), 'error');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    showToast('Error updating status. Please try again.', 'error');
+                    showToast('Error', 'Error updating status. Please try again.', 'error');
                 });
             });
         });
-        
+
+        // Analytics range dropdown
+        document.querySelectorAll('.analytics-range').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const period = this.getAttribute('data-period');
+                currentPeriod = period;
+                
+                let buttonText = '';
+                switch(period) {
+                    case 'day':
+                        buttonText = 'Today';
+                        break;
+                    case 'week':
+                        buttonText = 'This Week';
+                        break;
+                    case 'month':
+                        buttonText = 'This Month';
+                        break;
+                }
+                
+                document.getElementById('analyticsRangeDropdown').textContent = buttonText;
+                loadAnalyticsData(period);
+            });
+        });
+
         // Refresh dashboard data
         function refreshDashboardData() {
+            // Update status counts
             fetch('/admin_dashboard')
                 .then(response => response.text())
                 .then(html => {
@@ -690,29 +989,32 @@
                     const doc = parser.parseFromString(html, 'text/html');
                     
                     // Update counts
-                    document.getElementById('total-students').textContent = doc.getElementById('total-students').textContent;
-                    document.getElementById('pending-count').textContent = doc.getElementById('pending-count').textContent;
-                    document.getElementById('processing-count').textContent = doc.getElementById('processing-count').textContent;
-                    document.getElementById('done-count').textContent = doc.getElementById('done-count').textContent;
+                    const totalStudents = doc.querySelector('#total-students')?.textContent || '0';
+                    const pending = doc.querySelector('#pending-count')?.textContent || '0';
+                    const processing = doc.querySelector('#processing-count')?.textContent || '0';
+                    const completed = doc.querySelector('#completed-count')?.textContent || '0';
+                    
+                    document.getElementById('total-students').textContent = totalStudents;
+                    document.getElementById('pending-count').textContent = pending;
+                    document.getElementById('processing-count').textContent = processing;
+                    document.getElementById('completed-count').textContent = completed;
                     
                     // Update chart data
-                    const pending = parseInt(doc.getElementById('pending-count').textContent);
-                    const processing = parseInt(doc.getElementById('processing-count').textContent);
-                    const done = parseInt(doc.getElementById('done-count').textContent);
-                    const receive = parseInt(doc.getElementById('receive-count') ? doc.getElementById('receive-count').textContent : 0);
+                    const pendingNum = parseInt(pending);
+                    const processingNum = parseInt(processing);
+                    const doneNum = parseInt(doc.querySelector('[data-done]')?.getAttribute('data-done') || '0');
+                    const receiveNum = parseInt(doc.querySelector('[data-receive]')?.getAttribute('data-receive') || '0');
                     
-                    statusChart.data.datasets[0].data = [pending, processing, done, receive];
-                    statusChart.update();
-                    
-                    // Show success toast
-                    showToast('Dashboard data refreshed successfully', 'success');
+                    if (statusChart) {
+                        statusChart.data.datasets[0].data = [pendingNum, processingNum, doneNum, receiveNum];
+                        statusChart.update();
+                    }
                 })
                 .catch(error => {
                     console.error('Error refreshing dashboard data:', error);
-                    showToast('Error refreshing dashboard data', 'error');
                 });
         }
-        
+
         // Refresh button click handler
         document.getElementById('refresh-data').addEventListener('click', function() {
             // Add spinner to button
@@ -720,25 +1022,70 @@
             this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Refreshing...';
             this.disabled = true;
             
-            // Refresh data
+            // Refresh all data
             refreshDashboardData();
             loadRecentApplications();
+            loadAdditionalCounts();
+            loadAnalyticsData(currentPeriod);
             
             // Restore button after 1 second
             setTimeout(() => {
                 this.innerHTML = originalContent;
                 this.disabled = false;
+                showToast('Success', 'Dashboard data refreshed successfully', 'success');
             }, 1000);
         });
-        
-        // Handle table view button clicks
-        document.querySelectorAll('.view-student').forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                const studentId = this.getAttribute('data-id');
-                viewStudentDetails(studentId);
+
+        // Helper function to show toast
+        function showToast(title, message, type = 'success') {
+            const toastContainer = document.querySelector('.toast-container');
+            const toastId = 'toast-' + Date.now();
+            
+            let iconClass;
+            switch(type) {
+                case 'success':
+                    iconClass = 'bi-check-circle-fill text-success';
+                    break;
+                case 'error':
+                    iconClass = 'bi-exclamation-circle-fill text-danger';
+                    break;
+                case 'warning':
+                    iconClass = 'bi-exclamation-triangle-fill text-warning';
+                    break;
+                default:
+                    iconClass = 'bi-info-circle-fill text-primary';
+            }
+            
+            const toastHTML = `
+                <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-header">
+                        <i class="bi ${iconClass} me-2"></i>
+                        <strong class="me-auto">${title}</strong>
+                        <small>Just now</small>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                </div>
+            `;
+            
+            toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, { autohide: true, delay: 3000 });
+            toast.show();
+            
+            toastElement.addEventListener('hidden.bs.toast', function () {
+                toastElement.remove();
             });
-        });
+        }
+
+        // Initialize everything
+        initializeStatusChart();
+        initializeAnalyticsChart();
+        loadRecentApplications();
+        loadAdditionalCounts();
+        loadAnalyticsData(currentPeriod);
     });
 </script>
 {% endblock %}

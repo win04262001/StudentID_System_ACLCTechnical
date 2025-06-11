@@ -6,42 +6,65 @@
     <title>{% block title %}Student ID System{% endblock %}</title>
     
     <!-- Bootstrap & jQuery -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo01.png') }}">
 
     <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
     
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
         :root {
+            /* Primary Colors - Using original blue shades */
             --primary-color: #2563eb;
             --primary-dark: #1d4ed8;
             --primary-light: #3b82f6;
+            
+            /* Secondary Colors */
             --secondary-color: #64748b;
+            
+            /* Semantic Colors */
             --success-color: #10b981;
             --warning-color: #f59e0b;
             --danger-color: #ef4444;
             --info-color: #06b6d4;
+            
+            /* Neutral Colors */
             --dark-color: #1e293b;
             --light-color: #f8fafc;
             --border-color: #e2e8f0;
-            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            
+            /* Background Colors */
+            --bg-light: #f1f5f9;
+            --bg-dark: #0f172a;
+            
+            /* Shadows */
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            
+            /* Sizing */
+            --sidebar-width: 250px;
+            --sidebar-collapsed-width: 70px;
+            
+            /* Transitions */
             --transition-speed: 0.3s;
         }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-            background-color: #f1f5f9;
-            color: #334155;
+            background-color: var(--bg-light);
+            color: var(--dark-color);
             transition: background-color var(--transition-speed) ease;
             overflow-x: hidden;
             line-height: 1.6;
@@ -53,14 +76,14 @@
             top: 0;
             left: 0;
             height: 100vh;
-            width: 250px;
+            width: var(--sidebar-width);
             background-color: white;
             color: var(--dark-color);
             padding-top: 20px;
             transition: transform var(--transition-speed) ease-in-out, width var(--transition-speed) ease-in-out;
             z-index: 1050;
             border-right: 1px solid var(--border-color);
-            box-shadow: var(--card-shadow);
+            box-shadow: var(--shadow-md);
             overflow-y: auto;
         }
 
@@ -72,6 +95,19 @@
             color: var(--primary-color);
             border-bottom: 1px solid var(--border-color);
             margin-bottom: 15px;
+        }
+
+        .nav-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .nav-section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--secondary-color);
+            padding: 0 1.5rem 0.5rem;
         }
 
         .sidebar a {
@@ -105,7 +141,7 @@
 
         /* Collapsed Sidebar */
         .sidebar.collapsed {
-            width: 70px;
+            width: var(--sidebar-collapsed-width);
         }
 
         .sidebar.collapsed a {
@@ -117,6 +153,7 @@
             height: 45px;
         }
 
+        .sidebar.collapsed .nav-section-title,
         .sidebar.collapsed a span,
         .sidebar.collapsed .logo {
             display: none;
@@ -128,21 +165,21 @@
 
         /* Main Content */
         .content {
-            margin-left: 250px;
+            margin-left: var(--sidebar-width);
             padding: 20px;
             transition: margin-left var(--transition-speed) ease-in-out;
             min-height: 100vh;
         }
 
         .content.expanded {
-            margin-left: 70px;
+            margin-left: var(--sidebar-collapsed-width);
         }
 
         /* Sidebar Toggle Button */
         .menu-toggle {
             position: fixed;
             top: 15px;
-            left: 260px;
+            left: calc(var(--sidebar-width) + 10px);
             background: var(--primary-color);
             color: white;
             padding: 10px;
@@ -156,7 +193,7 @@
             cursor: pointer;
             transition: all var(--transition-speed) ease-in-out;
             z-index: 1100;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            box-shadow: var(--shadow-md);
         }
 
         .menu-toggle:hover {
@@ -169,185 +206,28 @@
         }
 
         .menu-toggle.expanded {
-            left: 80px;
+            left: calc(var(--sidebar-collapsed-width) + 10px);
         }
 
-        /* Responsive Design */
-        @media (max-width: 992px) {
-            .sidebar {
-                width: 70px;
-            }
-            .sidebar a {
-                justify-content: center;
-                padding: 12px;
-                border-radius: 50%;
-                margin: 10px auto;
-                width: 45px;
-                height: 45px;
-            }
-            .sidebar a span,
-            .sidebar .logo {
-                display: none;
-            }
-            .sidebar a i {
-                margin-right: 0;
-            }
-            .content {
-                margin-left: 70px;
-            }
-            .menu-toggle {
-                left: 80px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-                width: 250px;
-            }
-            .sidebar.mobile-open {
-                transform: translateX(0);
-            }
-            .sidebar.mobile-open a {
-                justify-content: flex-start;
-                padding: 12px 20px;
-                border-radius: 0 30px 30px 0;
-                margin: 2px 0;
-                width: auto;
-                height: auto;
-            }
-            .sidebar.mobile-open a span,
-            .sidebar.mobile-open .logo {
-                display: block;
-            }
-            .sidebar.mobile-open a i {
-                margin-right: 10px;
-            }
-            .content {
-                margin-left: 0;
-                padding: 15px;
-            }
-            .menu-toggle {
-                left: 15px;
-            }
-            .menu-toggle.mobile-open {
-                left: 260px;
-            }
-        }
-
-        /* Alert Messages */
-        .alert {
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 20px;
-            border: none;
-            box-shadow: var(--card-shadow);
-            animation: fadeIn 0.5s ease-out forwards;
-        }
-
-        .alert-danger {
-            background-color: #fee2e2;
-            color: #b91c1c;
-        }
-
-        .alert-success {
-            background-color: #d1fae5;
-            color: #065f46;
-        }
-
-        .alert .btn-close {
-            opacity: 0.7;
-        }
-
-        .alert .btn-close:hover {
-            opacity: 1;
-        }
-
-        /* Dark Mode Styling */
-        body.dark-mode {
-            background-color: #0f172a;
-            color: #e2e8f0;
-        }
-
-        body.dark-mode .sidebar {
-            background-color: #1e293b;
-            border-right-color: #334155;
-        }
-
-        body.dark-mode .card {
-            background-color: #1e293b;
-            color: #e2e8f0;
-            border-color: #334155;
-        }
-
-        body.dark-mode .table {
-            color: #e2e8f0;
-        }
-
-        body.dark-mode .modal-content {
-            background-color: #1e293b;
-            color: #e2e8f0;
-        }
-
-        body.dark-mode .form-control,
-        body.dark-mode .form-select {
-            background-color: #334155;
-            color: #e2e8f0;
-            border-color: #475569;
-        }
-
-        body.dark-mode .nav-tabs .nav-link {
-            color: #e2e8f0;
-        }
-
-        body.dark-mode .nav-tabs .nav-link.active {
-            background-color: #334155;
-            color: white;
-            border-color: #475569;
-        }
-
-        body.dark-mode .btn-outline-secondary {
-            color: #e2e8f0;
-            border-color: #64748b;
-        }
-
-        body.dark-mode .btn-outline-secondary:hover {
-            background-color: #475569;
-            color: white;
-        }
-
-        body.dark-mode .dropdown-menu {
-            background-color: #334155;
-            border-color: #475569;
-        }
-
-        body.dark-mode .dropdown-item {
-            color: #e2e8f0;
-        }
-
-        body.dark-mode .dropdown-item:hover {
-            background-color: #475569;
-        }
-
-        /* Card Styling */
+        /* Cards */
         .card {
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: var(--card-shadow);
+            box-shadow: var(--shadow);
             transition: all var(--transition-speed) ease;
-            border: none;
+            border: 1px solid var(--border-color);
             background-color: white;
         }
 
         .card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-lg);
         }
 
         .card-header {
             font-weight: 600;
             border-radius: 12px 12px 0 0 !important;
-            border-bottom: none;
+            border-bottom: 1px solid var(--border-color);
             background-color: transparent;
             padding: 1.25rem 1.5rem;
         }
@@ -364,7 +244,7 @@
             font-weight: 600;
             border-radius: 30px;
             font-size: 0.8rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-sm);
         }
 
         .status-badge i {
@@ -391,81 +271,32 @@
             color: #4338ca;
         }
 
-        /* Timeline Styling */
-        .status-timeline {
-            position: relative;
-            padding-left: 30px;
-            margin-top: 20px;
-        }
-
-        .status-timeline::before {
-            content: '';
-            position: absolute;
-            left: 10px;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background-color: rgba(100, 116, 139, 0.2);
-        }
-
-        .timeline-item {
-            position: relative;
-            padding-bottom: 25px;
-        }
-
-        .timeline-item:last-child {
-            padding-bottom: 0;
-        }
-
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -30px;
-            top: 0;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background-color: #f8fafc;
-            border: 2px solid #e2e8f0;
-            z-index: 1;
-            transition: all var(--transition-speed);
-        }
-
-        .timeline-item.active::before {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
-        }
-
-        .timeline-item.completed::before {
-            background-color: var(--success-color);
-            border-color: var(--success-color);
-            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
-        }
-
-        .timeline-content {
+        /* Alert Messages */
+        .alert {
+            border-radius: 10px;
             padding: 15px;
-            background-color: #f8fafc;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-            transition: all var(--transition-speed);
-        }
-        
-        .timeline-item.active .timeline-content,
-        .timeline-item.completed .timeline-content {
-            background-color: white;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            border: none;
+            box-shadow: var(--shadow);
+            animation: fadeIn 0.5s ease-out forwards;
         }
 
-        .timeline-title {
-            font-weight: 600;
-            margin-bottom: 5px;
-            color: #334155;
+        .alert-danger {
+            background-color: #fee2e2;
+            color: #b91c1c;
         }
 
-        .timeline-date {
-            font-size: 0.85rem;
-            color: #64748b;
+        .alert-success {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .alert .btn-close {
+            opacity: 0.7;
+        }
+
+        .alert .btn-close:hover {
+            opacity: 1;
         }
 
         /* Table Styling */
@@ -500,114 +331,12 @@
         .modern-table tbody tr:hover {
             background-color: rgba(0, 0, 0, 0.03);
             transform: scale(1.01);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            box-shadow: var(--shadow-sm);
         }
         
         .modern-table td {
             padding: 15px;
             vertical-align: middle;
-        }
-
-        /* Toast Notifications */
-        .toast-container {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 1100;
-        }
-
-        .toast {
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-            border: none;
-        }
-
-        /* Animations */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .fade-in {
-            animation: fadeIn 0.5s ease-out forwards;
-        }
-
-        /* Empty State */
-        .empty-state {
-            padding: 3rem 0;
-            text-align: center;
-        }
-
-        .empty-state i {
-            font-size: 3rem;
-            opacity: 0.2;
-            margin-bottom: 1rem;
-        }
-
-        /* Dark Mode Toggle */
-        .dark-mode-toggle {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #1e293b;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 45px;
-            height: 45px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-            transition: all var(--transition-speed);
-        }
-
-        .dark-mode-toggle:hover {
-            transform: scale(1.1);
-        }
-
-        body.dark-mode .dark-mode-toggle {
-            background: #f8fafc;
-            color: #1e293b;
-        }
-
-        /* Admin Badge */
-        .admin-badge {
-            background-color: var(--danger-color);
-            color: white;
-            font-size: 0.8rem;
-            padding: 4px 12px;
-            border-radius: 20px;
-            margin-left: 10px;
-            font-weight: 500;
-            display: inline-block;
-            box-shadow: 0 2px 5px rgba(239, 68, 68, 0.3);
-        }
-
-        /* Notification Badge */
-        .notification-badge {
-            font-size: 0.7rem;
-            padding: 0.25rem 0.5rem;
-            border-radius: 50%;
-            animation: pulse 1.5s infinite;
-        }
-        
-        @keyframes pulse {
-            0% {
-                transform: scale(1);
-                opacity: 1;
-            }
-            50% {
-                transform: scale(1.1);
-                opacity: 0.9;
-            }
-            100% {
-                transform: scale(1);
-                opacity: 1;
-            }
         }
 
         /* Buttons */
@@ -667,46 +396,242 @@
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
         }
 
-        /* Mobile optimizations */
-        @media (max-width: 576px) {
-            .card-body {
-                padding: 1rem;
+        /* Toast Notifications - FIXED POSITIONING */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px; /* Changed from center to right */
+            z-index: 1100;
+            max-width: 350px; /* Limit width */
+            width: auto; /* Allow natural width */
+        }
+
+        .toast {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            border: none;
+            margin-bottom: 10px;
+            background-color: white; /* Ensure white background in light mode */
+        }
+
+        .toast-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.75rem 1rem;
+        }
+
+        .toast-body {
+            padding: 1rem;
+            color: var(--dark-color); /* Ensure readable text */
+        }
+
+        /* Dark Mode Toggle */
+        .dark-mode-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #1e293b;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: var(--shadow-lg);
+            transition: all var(--transition-speed);
+        }
+
+        .dark-mode-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        /* Dark Mode Styling - IMPROVED CONTRAST */
+        body.dark-mode {
+            background-color: #111827; /* Darker background */
+            color: #e5e7eb; /* Lighter text for better contrast */
+        }
+
+        body.dark-mode .sidebar {
+            background-color: #1f2937; /* Darker sidebar */
+            border-right-color: #374151;
+        }
+
+        body.dark-mode .card {
+            background-color: #1f2937; /* Darker card background */
+            color: #e5e7eb;
+            border-color: #374151;
+        }
+
+        body.dark-mode .card-header {
+            background-color: #111827;
+            border-bottom-color: #374151;
+            color: #e5e7eb;
+        }
+
+        body.dark-mode .table {
+            color: #e5e7eb;
+        }
+
+        body.dark-mode .modal-content {
+            background-color: #1f2937;
+            color: #e5e7eb;
+        }
+
+        body.dark-mode .form-control,
+        body.dark-mode .form-select {
+            background-color: #374151;
+            color: #e5e7eb;
+            border-color: #4b5563;
+        }
+
+        body.dark-mode .nav-tabs .nav-link {
+            color: #e5e7eb;
+        }
+
+        body.dark-mode .nav-tabs .nav-link.active {
+            background-color: #374151;
+            color: white;
+            border-color: #4b5563;
+        }
+
+        body.dark-mode .btn-outline-secondary {
+            color: #e5e7eb;
+            border-color: #6b7280;
+        }
+
+        body.dark-mode .btn-outline-secondary:hover {
+            background-color: #4b5563;
+            color: white;
+        }
+
+        body.dark-mode .dropdown-menu {
+            background-color: #1f2937;
+            border-color: #374151;
+        }
+
+        body.dark-mode .dropdown-item {
+            color: #e5e7eb;
+        }
+
+        body.dark-mode .dropdown-item:hover {
+            background-color: #374151;
+        }
+
+        body.dark-mode .dark-mode-toggle {
+            background: #e5e7eb;
+            color: #1f2937;
+        }
+
+        /* Toast in Dark Mode - FIXED */
+        body.dark-mode .toast {
+            background-color: #1f2937;
+            border-color: #374151;
+        }
+
+        body.dark-mode .toast-header {
+            background-color: #111827;
+            border-bottom-color: #374151;
+            color: #e5e7eb;
+        }
+
+        body.dark-mode .toast-body {
+            color: #e5e7eb;
+        }
+
+        body.dark-mode .btn-close {
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .sidebar {
+                width: var(--sidebar-collapsed-width);
             }
-            
-            .btn {
-                padding: 0.375rem 0.75rem;
+            .sidebar a {
+                justify-content: center;
+                padding: 12px;
+                border-radius: 50%;
+                margin: 10px auto;
+                width: 45px;
+                height: 45px;
             }
-            
-            .container-fluid, .container {
-                padding-left: 10px;
-                padding-right: 10px;
+            .sidebar .nav-section-title,
+            .sidebar a span,
+            .sidebar .logo {
+                display: none;
             }
-            
-            .dark-mode-toggle {
-                bottom: 10px;
-                right: 10px;
-                width: 40px;
-                height: 40px;
+            .sidebar a i {
+                margin-right: 0;
             }
-            
-            .toast-container {
-                bottom: 10px;
-                right: 10px;
-                max-width: calc(100% - 20px);
+            .content {
+                margin-left: var(--sidebar-collapsed-width);
             }
-            
-            .modern-table {
-                display: block;
-                width: 100%;
-                overflow-x: auto;
-            }
-            
-            .modern-table td, .modern-table th {
-                white-space: nowrap;
+            .menu-toggle {
+                left: calc(var(--sidebar-collapsed-width) + 10px);
             }
         }
 
-        /* Overlay for mobile when sidebar is open */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: var(--sidebar-width);
+            }
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            .sidebar.mobile-open .nav-section-title,
+            .sidebar.mobile-open a span,
+            .sidebar.mobile-open .logo {
+                display: block;
+            }
+            .sidebar.mobile-open a {
+                justify-content: flex-start;
+                padding: 12px 20px;
+                border-radius: 0 30px 30px 0;
+                margin: 2px 0;
+                width: auto;
+                height: auto;
+            }
+            .sidebar.mobile-open a i {
+                margin-right: 10px;
+            }
+            .content {
+                margin-left: 0;
+                padding: 15px;
+            }
+            .menu-toggle {
+                left: 15px;
+            }
+            .menu-toggle.mobile-open {
+                left: calc(var(--sidebar-width) + 10px);
+            }
+            .toast-container {
+                bottom: 70px; /* Move up to avoid overlap with dark mode toggle */
+                right: 10px;
+                max-width: calc(100% - 20px);
+            }
+            .dark-mode-toggle {
+                bottom: 20px;
+                right: 20px;
+            }
+        }
+
+        /* Sidebar Overlay for Mobile */
         .sidebar-overlay {
             display: none;
             position: fixed;
@@ -722,6 +647,29 @@
         .sidebar-overlay.active {
             display: block;
         }
+
+        /* Accessibility Improvements */
+        .btn:focus, 
+        .form-control:focus, 
+        .form-select:focus,
+        .nav-link:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        /* Print Styles */
+        @media print {
+            .sidebar, 
+            .menu-toggle, 
+            .dark-mode-toggle, 
+            .toast-container {
+                display: none !important;
+            }
+            .content {
+                margin-left: 0 !important;
+                padding: 0 !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -736,52 +684,67 @@
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="logo">
-            <img src="{{ url_for('static', filename='logo01.png') }}" alt="ASIS Logo" style="height: 50px;">ASIS
-          </div>
-                  
+            <img src="{{ url_for('static', filename='logo03.png') }}" alt="ASIS Logo" style="height: 100px;">
+        </div>
+        
         {% if 'user_id' in session %}
             {% if session['user_role'] == 'admin' %}
-                <a href="{{ url_for('admin_dashboard') }}" {% if request.endpoint == 'admin_dashboard' %}class="active"{% endif %}>
-                    <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
-                </a>
-                <a href="{{ url_for('admin_applications') }}" {% if request.endpoint == 'admin_applications' %}class="active"{% endif %}>
-                    <i class="fas fa-clipboard-list"></i> <span>Applications</span>
-                </a>
-                <a href="{{ url_for('admin_support_messages') }}" {% if request.endpoint == 'admin_support_messages' %}class="active"{% endif %}>
-                    <i class="fas fa-headset"></i> <span>Support Messages</span>
-                    <span class="badge bg-danger ms-auto notification-badge" id="unreadMessageCount" style="display: none;"></span>
-                </a>
-                <a href="{{ url_for('student_id_history') }}" {% if request.endpoint == 'student_id_history' %}class="active"{% endif %}>
-                    <i class="fas fa-history"></i> <span>ID History</span>
-                </a>
-                <a href="{{ url_for('admin_manage_users') }}" {% if request.endpoint == 'admin_manage_users' %}class="active"{% endif %}>
-                    <i class="fas fa-users-cog"></i> <span>Manage Users</span>
-                </a>
-                <a href="{{ url_for('sample_layout') }}" {% if request.endpoint == 'sample_layout' %}class="active"{% endif %}>
-                    <i class="fas fa-id-card"></i> <span>Create ID</span>
-                </a>
-                <a href="{{ url_for('train_validator') }}" {% if request.endpoint == 'train_validator' %}class="active"{% endif %}>
-                    <i class="fas fa-robot"></i> <span>Validator</span>
-                </a>
-                <a href="{{ url_for('admin_import_students') }}" {% if request.endpoint == 'admin_import_students' %}class="active"{% endif %}>
-                    <i class="fas fa-user-plus"></i> <span>Import Students</span>
-                </a>
+                <div class="nav-section">
+                    <div class="nav-section-title">Administration</div>
+                    <a href="{{ url_for('admin_dashboard') }}" {% if request.endpoint == 'admin_dashboard' %}class="active"{% endif %}>
+                        <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
+                    </a>
+                    <a href="{{ url_for('admin_applications') }}" {% if request.endpoint == 'admin_applications' %}class="active"{% endif %}>
+                        <i class="fas fa-clipboard-list"></i> <span>Applications</span>
+                    </a>
+                    <a href="{{ url_for('admin_support_messages') }}" {% if request.endpoint == 'admin_support_messages' %}class="active"{% endif %}>
+                        <i class="fas fa-headset"></i> <span>Student Support</span>
+                        <span class="badge bg-danger ms-auto notification-badge" id="unreadMessageCount" style="display: none;"></span>
+                    </a>
+                    <a href="{{ url_for('student_id_history') }}" {% if request.endpoint == 'student_id_history' %}class="active"{% endif %}>
+                        <i class="fas fa-history"></i> <span>Applications History</span>
+                    </a>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-section-title">Tools</div>
+                    <a href="{{ url_for('sample_layout') }}" {% if request.endpoint == 'sample_layout' %}class="active"{% endif %}>
+                        <i class="fas fa-id-card"></i> <span>ID Generator</span>
+                    </a>
+                    <a href="{{ url_for('admin_import_students') }}" {% if request.endpoint == 'admin_import_students' %}class="active"{% endif %}>
+                        <i class="fas fa-user-plus"></i> <span>Import Students</span>
+                    </a>
+                    <a href="{{ url_for('admin_manage_users') }}" {% if request.endpoint == 'admin_manage_users' %}class="active"{% endif %}>
+                        <i class="fas fa-users-cog"></i> <span>Manage Users</span>
+                    </a>
+                    <a href="{{ url_for('train_validator') }}" {% if request.endpoint == 'train_validator' %}class="active"{% endif %}>
+                        <i class="fas fa-robot"></i> <span>Validator</span>
+                    </a>
+                </div>
             {% elif session['user_role'] == 'student' %}
-                <a href="{{ url_for('student_dashboard') }}" {% if request.endpoint == 'student_dashboard' %}class="active"{% endif %}>
-                    <i class="fas fa-user"></i> <span>Dashboard</span>
-                </a>
-
-                <a href="{{ url_for('student_support_messages') }}" {% if request.endpoint == 'student_support_messages' %}class="active"{% endif %}>
-                    <i class="fas fa-envelope"></i> <span>Support Messages</span>
-                </a>
+                <div class="nav-section">
+                    <div class="nav-section-title">Student Portal</div>
+                    <a href="{{ url_for('student_dashboard') }}" {% if request.endpoint == 'student_dashboard' %}class="active"{% endif %}>
+                        <i class="fas fa-user"></i> <span>Dashboard</span>
+                    </a>
+                    <a href="{{ url_for('student_support_messages') }}" {% if request.endpoint == 'student_support_messages' %}class="active"{% endif %}>
+                        <i class="fas fa-envelope"></i> <span>Support Messages</span>
+                    </a>
+                </div>
             {% endif %}
-            <a href="{{ url_for('logout') }}" class="text-danger">
-                <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
-            </a>
+            <div class="nav-section">
+                <div class="nav-section-title">Account</div>
+                <a href="{{ url_for('logout') }}" class="text-danger">
+                    <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+                </a>
+            </div>
         {% else %}
-            <a href="{{ url_for('home') }}" {% if request.endpoint == 'home' %}class="active"{% endif %}>
-                <i class="fas fa-home"></i> <span>Home</span>
-            </a>
+            <div class="nav-section">
+                <div class="nav-section-title">Navigation</div>
+                <a href="{{ url_for('home') }}" {% if request.endpoint == 'home' %}class="active"{% endif %}>
+                    <i class="fas fa-home"></i> <span>Home</span>
+                </a>
+            </div>
         {% endif %}
     </div>
 
@@ -806,11 +769,11 @@
         <i class="fas fa-moon"></i>
     </button>
 
-    <!-- Toast Container -->
-    <div class="toast-container"></div>
+    <!-- Toast Container - FIXED POSITIONING -->
+    <div class="toast-container" id="toastContainer"></div>
 
     <!-- Bootstrap Script -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- Custom Scripts -->
     <script>
@@ -819,6 +782,8 @@
         const content = document.getElementById("main-content");
         const menuToggle = document.getElementById("menuToggle");
         const overlay = document.getElementById("sidebarOverlay");
+        const darkModeToggle = document.getElementById("darkModeToggle");
+        const toastContainer = document.getElementById("toastContainer");
         const isMobile = window.innerWidth <= 768;
 
         // Sidebar Toggle Function
@@ -834,12 +799,91 @@
             }
         }
 
+        // Dark Mode Toggle Function
+        function toggleDarkMode() {
+            document.body.classList.toggle("dark-mode");
+            
+            if (document.body.classList.contains("dark-mode")) {
+                localStorage.setItem("darkMode", "enabled");
+                darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            } else {
+                localStorage.setItem("darkMode", "disabled");
+                darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            }
+        }
+
+        // Toast Notification Function - IMPROVED
+        function showToast(message, type = 'info', duration = 3000) {
+            const toastId = 'toast-' + Date.now();
+            
+            // Set icon and background based on type
+            let icon, bgClass, textClass;
+            switch(type) {
+                case 'success':
+                    icon = 'fas fa-check-circle';
+                    bgClass = 'bg-success';
+                    textClass = 'text-white';
+                    break;
+                case 'error':
+                    icon = 'fas fa-exclamation-circle';
+                    bgClass = 'bg-danger';
+                    textClass = 'text-white';
+                    break;
+                case 'warning':
+                    icon = 'fas fa-exclamation-triangle';
+                    bgClass = 'bg-warning';
+                    textClass = 'text-dark';
+                    break;
+                default:
+                    icon = 'fas fa-info-circle';
+                    bgClass = 'bg-primary';
+                    textClass = 'text-white';
+            }
+            
+            // Create toast element
+            const toastHtml = `
+                <div id="${toastId}" class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-header ${bgClass} ${textClass}">
+                        <i class="${icon} me-2"></i>
+                        <strong class="me-auto">Notification</strong>
+                        <small>Just now</small>
+                        <button type="button" class="btn-close ${textClass === 'text-white' ? 'btn-close-white' : ''}" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                </div>
+            `;
+            
+            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+            
+            // Remove toast after duration
+            const toastElement = document.getElementById(toastId);
+            setTimeout(() => {
+                if (toastElement) {
+                    toastElement.classList.remove('show');
+                    setTimeout(() => {
+                        if (toastElement.parentNode) {
+                            toastElement.remove();
+                        }
+                    }, 300);
+                }
+            }, duration);
+        }
+
         // Event Listeners
         menuToggle.addEventListener("click", toggleSidebar);
         overlay.addEventListener("click", toggleSidebar);
+        darkModeToggle.addEventListener("click", toggleDarkMode);
 
         // Initialize sidebar state on page load
         document.addEventListener("DOMContentLoaded", function() {
+            // Check for saved dark mode preference
+            if (localStorage.getItem("darkMode") === "enabled") {
+                document.body.classList.add("dark-mode");
+                darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            }
+            
             // Check for unread messages if user is admin
             {% if session.get('user_role') == 'admin' %}
                 fetchUnreadMessageCount();
@@ -852,7 +896,7 @@
                 const newIsMobile = window.innerWidth <= 768;
                 
                 // If screen size category changed, reset sidebar state
-                if (newIsMobile !== isMobile) {
+                if (newIsMobile !== window.isMobile) {
                     // Remove all toggle classes
                     sidebar.classList.remove("collapsed", "mobile-open");
                     menuToggle.classList.remove("expanded", "mobile-open");
@@ -910,85 +954,8 @@
                 .catch(error => console.error('Error fetching unread count:', error));
         }
 
-        // Dark Mode Toggle
-        const darkModeToggle = document.getElementById('darkModeToggle');
-        const body = document.body;
-        
-        // Check for saved dark mode preference
-        if (localStorage.getItem('darkMode') === 'enabled') {
-            body.classList.add('dark-mode');
-            darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-        }
-        
-        darkModeToggle.addEventListener('click', () => {
-            body.classList.toggle('dark-mode');
-            
-            if (body.classList.contains('dark-mode')) {
-                localStorage.setItem('darkMode', 'enabled');
-                darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-            } else {
-                localStorage.setItem('darkMode', 'disabled');
-                darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
-            }
-        });
-
-        // Toast Notification Function
-        function showToast(message, type = 'info') {
-            // Create toast container if it doesn't exist
-            let toastContainer = document.querySelector('.toast-container');
-            
-            // Set icon and background based on type
-            let icon, bgClass;
-            switch(type) {
-                case 'success':
-                    icon = 'fas fa-check-circle';
-                    bgClass = 'bg-success';
-                    break;
-                case 'error':
-                    icon = 'fas fa-exclamation-circle';
-                    bgClass = 'bg-danger';
-                    break;
-                case 'warning':
-                    icon = 'fas fa-exclamation-triangle';
-                    bgClass = 'bg-warning';
-                    break;
-                default:
-                    icon = 'fas fa-info-circle';
-                    bgClass = 'bg-primary';
-            }
-            
-            // Create toast element
-            const toastId = 'toast-' + Date.now();
-            const toastHtml = `
-                <div id="${toastId}" class="toast border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
-                    <div class="toast-header ${bgClass} text-white">
-                        <i class="${icon} me-2"></i>
-                        <strong class="me-auto">Notification</strong>
-                        <small>Just now</small>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
-                    </div>
-                    <div class="toast-body">
-                        ${message}
-                    </div>
-                </div>
-            `;
-            
-            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-            
-            // Initialize and show toast
-            const toastElement = document.getElementById(toastId);
-            const toast = new bootstrap.Toast(toastElement, {
-                autohide: true,
-                delay: 3000
-            });
-            
-            toast.show();
-            
-            // Remove toast after it's hidden
-            toastElement.addEventListener('hidden.bs.toast', function() {
-                toastElement.remove();
-            });
-        }
+        // Make showToast available globally
+        window.showToast = showToast;
     </script>
 </body>
 </html>

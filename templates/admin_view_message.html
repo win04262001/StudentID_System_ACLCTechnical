@@ -1,462 +1,892 @@
 {% extends "base.html" %}
 
-{% block title %}Support Chat - Admin Dashboard{% endblock %}
+{% block title %}Support Chat - Admin{% endblock %}
 
 {% block head %}
 {{ super() }}
-<!-- Add Socket.IO client library -->
 <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-  <div class="row">
-    <!-- Sidebar with message info -->
-    <div class="col-lg-3 mb-4">
-      <div class="card border-0 shadow-sm h-100">
-        <div class="card-header bg-primary text-white">
-          <h5 class="card-title mb-0">
-            <i class="fas fa-info-circle me-2"></i> Conversation Info
-          </h5>
+<div class="messenger-container">
+  <!-- Left Sidebar -->
+  <div class="messenger-sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">
+        <i class="fas fa-headset me-2"></i>
+        Support Chats
+      </div>
+      <div class="sidebar-actions">
+        <button class="btn-icon" title="Settings">
+          <i class="fas fa-cog"></i>
+        </button>
+      </div>
+    </div>
+    
+    <div class="search-container">
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Search conversations...">
+      </div>
+    </div>
+    
+    <div class="conversations-list">
+      <!-- Active conversation -->
+      <div class="conversation-item active">
+        <div class="conversation-avatar">
+          {% if message.profile_picture %}
+            <img src="{{ url_for('static', filename='uploads/' + message.profile_picture) }}" 
+                 alt="{{ message.student_name }}" class="avatar-image">
+          {% else %}
+            <div class="avatar-circle bg-light">
+              <i class="fas fa-user text-primary"></i>
+            </div>
+          {% endif %}
+          <div class="status-indicator {{ 'online' if message.status != 'resolved' else 'offline' }}"></div>
         </div>
-        <div class="card-body">
-          <div class="mb-3">
-            <label class="form-label text-muted">Status</label>
-            <div>
-              {% if message.status == 'pending' %}
-                <span class="badge bg-warning text-dark px-3 py-2">Pending</span>
-              {% elif message.status == 'in_progress' %}
-                <span class="badge bg-info px-3 py-2">In Progress</span>
-              {% elif message.status == 'resolved' %}
-                <span class="badge bg-success px-3 py-2">Resolved</span>
-              {% endif %}
+        <div class="conversation-content">
+          <div class="conversation-header">
+            <span class="conversation-name">{{ message.student_name }}</span>
+            <span class="conversation-time">{{ message.updated_at.strftime('%H:%M') if message.updated_at else message.created_at.strftime('%H:%M') }}</span>
+          </div>
+          <div class="conversation-preview">{{ message.subject }}</div>
+        </div>
+        <div class="conversation-status">
+          {% if message.status == 'pending' %}
+            <div class="status-badge pending"></div>
+          {% elif message.status == 'in_progress' %}
+            <div class="status-badge in-progress"></div>
+          {% elif message.status == 'resolved' %}
+            <div class="status-badge resolved"></div>
+          {% endif %}
+        </div>
+      </div>
+      
+      <!-- Back to messages link -->
+      <div class="conversation-item" onclick="window.location.href='{{ url_for('admin_support_messages') }}'">
+        <div class="conversation-avatar">
+          <div class="avatar-circle bg-secondary">
+            <i class="fas fa-arrow-left text-white"></i>
+          </div>
+        </div>
+        <div class="conversation-content">
+          <div class="conversation-header">
+            <span class="conversation-name">All Messages</span>
+          </div>
+          <div class="conversation-preview">Back to support dashboard</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Chat Area -->
+  <div class="messenger-main">
+    <!-- Chat Header -->
+    <div class="chat-header">
+      <div class="chat-header-info">
+        <div class="chat-avatar">
+          {% if message.profile_picture %}
+            <img src="{{ url_for('static', filename='uploads/' + message.profile_picture) }}" 
+                 alt="{{ message.student_name }}" class="avatar-image">
+          {% else %}
+            <div class="avatar-circle bg-light">
+              <i class="fas fa-user text-primary"></i>
+            </div>
+          {% endif %}
+          <div class="status-indicator {{ 'online' if message.status != 'resolved' else 'offline' }}"></div>
+        </div>
+        <div class="chat-details">
+          <h5 class="chat-name">{{ message.student_name }}</h5>
+          <span class="chat-status">{{ message.student_id }} • {{ message.subject }}</span>
+        </div>
+      </div>
+      <div class="chat-actions">
+        <div class="status-selector">
+          <select class="form-select form-select-sm" id="statusSelect" onchange="updateStatus(this.value)">
+            <option value="pending" {% if message.status == 'pending' %}selected{% endif %}>Pending</option>
+            <option value="in_progress" {% if message.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+            <option value="resolved" {% if message.status == 'resolved' %}selected{% endif %}>Resolved</option>
+          </select>
+        </div>
+        <button class="btn-icon" title="Student Info">
+          <i class="fas fa-info-circle"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Messages Area -->
+    <div class="messages-container" id="messagesContainer">
+      <div class="messages-content">
+        <!-- Date Divider -->
+        <div class="date-divider">
+          <span>{{ message.created_at.strftime('%B %d, %Y') }}</span>
+        </div>
+
+        <!-- Student's Initial Message -->
+        <div class="message-group incoming">
+          <div class="message-avatar">
+            {% if message.profile_picture %}
+              <img src="{{ url_for('static', filename='uploads/' + message.profile_picture) }}" 
+                   alt="{{ message.student_name }}" class="avatar-image-small">
+            {% else %}
+              <div class="avatar-circle bg-light">
+                <i class="fas fa-user text-primary"></i>
+              </div>
+            {% endif %}
+          </div>
+          <div class="message-content">
+            <div class="message-item">
+              <div class="message-bubble">
+                <div class="message-text">{{ message.message }}</div>
+                <div class="message-time">{{ message.created_at.strftime('%H:%M') }}</div>
+              </div>
             </div>
           </div>
-          <div class="mb-3">
-            <label class="form-label text-muted">Student</label>
-            <div class="fw-bold">{{ message.student_name }}</div>
+        </div>
+
+        <!-- Message History -->
+        {% if history %}
+          {% set current_date = message.created_at.strftime('%Y-%m-%d') %}
+          {% for item in history %}
+            {% if item.created_at.strftime('%Y-%m-%d') != current_date %}
+              <div class="date-divider">
+                <span>{{ item.created_at.strftime('%B %d, %Y') }}</span>
+              </div>
+              {% set current_date = item.created_at.strftime('%Y-%m-%d') %}
+            {% endif %}
+            
+            <div class="message-group {{ 'outgoing' if item.responder_role == 'admin' else 'incoming' }}">
+              {% if item.responder_role != 'admin' %}
+                <div class="message-avatar">
+                  {% if message.profile_picture %}
+                    <img src="{{ url_for('static', filename='uploads/' + message.profile_picture) }}" 
+                         alt="{{ message.student_name }}" class="avatar-image-small">
+                  {% else %}
+                    <div class="avatar-circle bg-light">
+                      <i class="fas fa-user text-primary"></i>
+                    </div>
+                  {% endif %}
+                </div>
+              {% endif %}
+              <div class="message-content">
+                <div class="message-item">
+                  <div class="message-bubble">
+                    <div class="message-text">{{ item.response }}</div>
+                    <div class="message-time">{{ item.created_at.strftime('%H:%M') }}</div>
+                  </div>
+                </div>
+              </div>
+              {% if item.responder_role == 'admin' %}
+                <div class="message-status">
+                  <i class="fas fa-check-double seen"></i>
+                </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        {% endif %}
+
+        <!-- Typing Indicator -->
+        <div class="typing-indicator" id="typingIndicator" style="display: none;">
+          <div class="message-avatar">
+            {% if message.profile_picture %}
+              <img src="{{ url_for('static', filename='uploads/' + message.profile_picture) }}" 
+                   alt="{{ message.student_name }}" class="avatar-image-small">
+            {% else %}
+              <div class="avatar-circle bg-light">
+                <i class="fas fa-user text-primary"></i>
+              </div>
+            {% endif %}
           </div>
-          <div class="mb-3">
-            <label class="form-label text-muted">Student ID</label>
-            <div>{{ message.student_id }}</div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label text-muted">Subject</label>
-            <div class="fw-bold">{{ message.subject }}</div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label text-muted">Date Opened</label>
-            <div>{{ message.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label text-muted">Last Activity</label>
-            <div>{{ message.updated_at.strftime('%Y-%m-%d %H:%M') if message.updated_at else 'Not updated yet' }}</div>
-          </div>
-          
-          <div class="d-grid gap-2 mt-4">
-            <a href="{{ url_for('admin_support_messages') }}" class="btn btn-outline-secondary">
-              <i class="fas fa-arrow-left me-2"></i> Back to Messages
-            </a>
+          <div class="typing-bubble">
+            <div class="typing-dots">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Chat area -->
-    <div class="col-lg-9 mb-4">
-      <div class="card border-0 shadow-sm h-100">
-        <div class="card-header bg-primary text-white">
-          <div class="d-flex align-items-center">
-            <div class="avatar-circle bg-white text-primary me-2">
-              <i class="fas fa-user"></i>
-            </div>
-            <div>
-              <h5 class="card-title mb-0">{{ message.student_name }}</h5>
-              <small class="text-white-50">{{ message.student_id }}</small>
-            </div>
+    <!-- Message Input -->
+    <div class="message-input-container">
+      <form id="messageForm" action="{{ url_for('admin_respond_message', message_id=message.id) }}" method="POST">
+        <div class="input-wrapper">
+          <button type="button" class="btn-attachment" title="Attach File">
+            <i class="fas fa-paperclip"></i>
+          </button>
+          <div class="input-field">
+            <textarea id="messageInput" name="response" placeholder="Type a message..." rows="1" required></textarea>
           </div>
+          <button type="button" class="btn-emoji" title="Add Emoji">
+            <i class="fas fa-smile"></i>
+          </button>
+          <button type="submit" class="btn-send" title="Send Message">
+            <i class="fas fa-paper-plane"></i>
+          </button>
         </div>
-        
-        <div class="card-body p-0 d-flex flex-column h-100">
-          <!-- Chat messages area -->
-          <div class="chat-messages p-3" id="chatMessages">
-            <!-- Initial message -->
-            <div class="message-date-divider">
-              <span>{{ message.created_at.strftime('%B %d, %Y') }}</span>
-            </div>
-            
-            <!-- Student's original message -->
-            <div class="message-container incoming">
-              <div class="message-avatar">
-                <div class="avatar-circle bg-light text-primary">
-                  <i class="fas fa-user"></i>
-                </div>
-              </div>
-              <div class="message-content-wrapper">
-                <div class="message-bubble">
-                  <div class="message-header">
-                    <span class="message-sender">{{ message.student_name }}</span>
-                    <span class="message-time">{{ message.created_at.strftime('%H:%M') }}</span>
-                  </div>
-                  <div class="message-content">
-                    {{ message.message }}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Message history -->
-            {% if history %}
-              {% set current_date = message.created_at.strftime('%Y-%m-%d') %}
-              {% for item in history %}
-                {% if item.created_at.strftime('%Y-%m-%d') != current_date %}
-                  <div class="message-date-divider">
-                    <span>{{ item.created_at.strftime('%B %d, %Y') }}</span>
-                  </div>
-                  {% set current_date = item.created_at.strftime('%Y-%m-%d') %}
-                {% endif %}
-                
-                <div class="message-container {{ 'outgoing' if item.responder_role == 'admin' else 'incoming' }}">
-                  <div class="message-avatar">
-                    <div class="avatar-circle {{ 'bg-primary text-white' if item.responder_role == 'admin' else 'bg-light text-primary' }}">
-                      <i class="{{ 'fas fa-headset' if item.responder_role == 'admin' else 'fas fa-user' }}"></i>
-                    </div>
-                  </div>
-                  <div class="message-content-wrapper">
-                    <div class="message-bubble">
-                      <div class="message-header">
-                        <span class="message-sender">{{ item.responder_name }}</span>
-                        <span class="message-time">{{ item.created_at.strftime('%H:%M') }}</span>
-                      </div>
-                      <div class="message-content">
-                        {{ item.response }}
-                      </div>
-                    </div>
-                    {% if item.responder_role == 'admin' %}
-                      <div class="message-status">
-                        <i class="fas fa-check-double"></i>
-                      </div>
-                    {% endif %}
-                  </div>
-                </div>
-              {% endfor %}
-            {% endif %}
-            
-            <!-- Typing indicator (hidden by default) -->
-            <div class="typing-indicator" id="typingIndicator" style="display: none;">
-              <div class="message-avatar">
-                <div class="avatar-circle bg-light text-primary">
-                  <i class="fas fa-user"></i>
-                </div>
-              </div>
-              <div class="typing-bubble">
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Message input area -->
-          <div class="chat-input-container mt-auto p-3 border-top">
-            <form id="messageForm" action="{{ url_for('admin_respond_message', message_id=message.id) }}" method="POST">
-              <div class="input-group">
-                <select class="form-select flex-grow-0 w-auto" id="statusSelect" name="status">
-                  <option value="in_progress" {% if message.status == 'in_progress' %}selected{% endif %}>In Progress</option>
-                  <option value="resolved" {% if message.status == 'resolved' %}selected{% endif %}>Resolved</option>
-                </select>
-                <textarea class="form-control" id="responseMessage" name="response" placeholder="Type your message..." rows="1" required></textarea>
-                <button type="submit" class="btn btn-primary">
-                  <i class="fas fa-paper-plane"></i>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
+        <input type="hidden" name="status" id="hiddenStatus" value="{{ message.status }}">
+      </form>
     </div>
   </div>
 </div>
 
 <style>
-  /* Chat styling */
-  .chat-messages {
-    height: 500px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+/* Messenger Container */
+.messenger-container {
+  display: flex;
+  height: calc(100vh - 120px);
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Sidebar */
+.messenger-sidebar {
+  width: 320px;
+  background: white;
+  border-right: 1px solid #e4e6ea;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e4e6ea;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sidebar-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #050505;
+}
+
+.sidebar-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: #f0f2f5;
+  color: #65676b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-icon:hover {
+  background: #e4e6ea;
+}
+
+.search-container {
+  padding: 8px 16px;
+}
+
+.search-box {
+  position: relative;
+  background: #f0f2f5;
+  border-radius: 20px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search-box i {
+  color: #65676b;
+  font-size: 14px;
+}
+
+.search-box input {
+  border: none;
+  background: none;
+  outline: none;
+  flex: 1;
+  font-size: 15px;
+  color: #050505;
+}
+
+.search-box input::placeholder {
+  color: #65676b;
+}
+
+.conversations-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.conversation-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  position: relative;
+}
+
+.conversation-item:hover {
+  background: #f0f2f5;
+}
+
+.conversation-item.active {
+  background: #e7f3ff;
+}
+
+.conversation-avatar {
+  position: relative;
+  margin-right: 12px;
+}
+
+.avatar-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.status-indicator {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+.status-indicator.online {
+  background: #42b883;
+}
+
+.status-indicator.offline {
+  background: #95a5a6;
+}
+
+.conversation-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.conversation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.conversation-name {
+  font-weight: 600;
+  color: #050505;
+  font-size: 15px;
+}
+
+.conversation-time {
+  font-size: 13px;
+  color: #65676b;
+}
+
+.conversation-preview {
+  color: #65676b;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.conversation-status {
+  margin-left: 8px;
+}
+
+.status-badge {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.status-badge.pending {
+  background: #f59e0b;
+}
+
+.status-badge.in-progress {
+  background: #3b82f6;
+}
+
+.status-badge.resolved {
+  background: #10b981;
+}
+
+/* Main Chat Area */
+.messenger-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: white;
+}
+
+.chat-header {
+  padding: 12px 20px;
+  border-bottom: 1px solid #e4e6ea;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+}
+
+.chat-header-info {
+  display: flex;
+  align-items: center;
+}
+
+.chat-avatar {
+  position: relative;
+  margin-right: 12px;
+}
+
+.chat-avatar .avatar-circle {
+  width: 40px;
+  height: 40px;
+  font-size: 16px;
+}
+
+.chat-details h5 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #050505;
+}
+
+.chat-status {
+  font-size: 13px;
+  color: #65676b;
+}
+
+.chat-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.status-selector .form-select {
+  border: 1px solid #e4e6ea;
+  border-radius: 8px;
+  font-size: 13px;
+  padding: 4px 8px;
+}
+
+/* Messages */
+.messages-container {
+  flex: 1;
+  overflow-y: auto;
+  background: #f8f9fa;
+}
+
+.messages-content {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.date-divider {
+  text-align: center;
+  margin: 16px 0;
+}
+
+.date-divider span {
+  background: white;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  color: #65676b;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.message-group {
+  display: flex;
+  margin-bottom: 8px;
+  align-items: flex-end;
+}
+
+.message-group.incoming {
+  justify-content: flex-start;
+}
+
+.message-group.outgoing {
+  justify-content: flex-end;
+}
+
+.message-avatar {
+  margin-right: 8px;
+  margin-bottom: 4px;
+}
+
+.message-avatar .avatar-circle {
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+}
+
+.message-content {
+  display: flex;
+  flex-direction: column;
+  max-width: 70%;
+}
+
+.message-item {
+  margin-bottom: 2px;
+}
+
+.message-bubble {
+  padding: 8px 12px;
+  border-radius: 18px;
+  position: relative;
+  word-wrap: break-word;
+}
+
+.incoming .message-bubble {
+  background: #e4e6ea;
+  color: #050505;
+  border-bottom-left-radius: 4px;
+}
+
+.outgoing .message-bubble {
+  background: #0084ff;
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.message-text {
+  font-size: 15px;
+  line-height: 1.3;
+}
+
+.message-time {
+  font-size: 11px;
+  margin-top: 4px;
+  opacity: 0.7;
+}
+
+.message-status {
+  margin-left: 8px;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: #0084ff;
+}
+
+/* Typing Indicator */
+.typing-indicator {
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 8px;
+}
+
+.typing-bubble {
+  background: #e4e6ea;
+  border-radius: 18px;
+  border-bottom-left-radius: 4px;
+  padding: 12px 16px;
+  margin-left: 8px;
+}
+
+.typing-dots {
+  display: flex;
+  gap: 3px;
+}
+
+.typing-dots span {
+  width: 6px;
+  height: 6px;
+  background: #65676b;
+  border-radius: 50%;
+  animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-dots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.typing-dots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes typing {
+  0%, 80%, 100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Message Input */
+.message-input-container {
+  padding: 12px 20px;
+  background: white;
+  border-top: 1px solid #e4e6ea;
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  background: #f0f2f5;
+  border-radius: 20px;
+  padding: 6px 8px;
+}
+
+.btn-attachment {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: #65676b;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.input-field {
+  flex: 1;
+  padding: 6px 12px;
+}
+
+.input-field textarea {
+  width: 100%;
+  border: none;
+  background: none;
+  outline: none;
+  resize: none;
+  font-size: 15px;
+  color: #050505;
+  max-height: 100px;
+  line-height: 1.3;
+}
+
+.input-field textarea::placeholder {
+  color: #65676b;
+}
+
+.btn-emoji, .btn-send {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  color: #0084ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.btn-emoji:hover, .btn-send:hover {
+  background: rgba(0, 132, 255, 0.1);
+}
+
+/* Avatar Images */
+.avatar-image {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e4e6ea;
+  background: #f0f2f5;
+}
+
+.avatar-image-small {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #e4e6ea;
+  background: #f0f2f5;
+}
+
+.chat-avatar .avatar-image {
+  width: 40px;
+  height: 40px;
+  border: 2px solid #e4e6ea;
+}
+
+/* Fallback styling for missing images */
+.avatar-image:not([src]), .avatar-image[src="/placeholder.svg"] {
+  display: none;
+}
+
+/* Loading state for images */
+.avatar-image {
+  transition: opacity 0.3s ease;
+}
+
+.avatar-image:not([src]) + .avatar-circle {
+  display: flex;
+}
+
+/* Hover effects */
+.conversation-item:hover .avatar-image {
+  border-color: #0084ff;
+}
+
+/* Online status positioning for images */
+.conversation-avatar, .chat-avatar {
+  position: relative;
+}
+
+.status-indicator {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid white;
+  z-index: 1;
+}
+
+.chat-avatar .status-indicator {
+  width: 12px;
+  height: 12px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .messenger-container {
+    height: calc(100vh - 80px);
   }
   
-  .message-date-divider {
-    text-align: center;
-    margin: 15px 0;
-    position: relative;
+  .messenger-sidebar {
+    width: 280px;
   }
   
-  .message-date-divider span {
-    background-color: #f8f9fa;
-    padding: 5px 15px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    color: #6c757d;
-    position: relative;
-    z-index: 1;
-  }
-  
-  .message-date-divider:before {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background-color: #dee2e6;
-    z-index: 0;
-  }
-  
-  .message-container {
-    display: flex;
-    width: 100%;
-    margin-bottom: 10px;
-  }
-  
-  .message-container.incoming {
-    justify-content: flex-start;
-  }
-  
-  .message-container.outgoing {
-    justify-content: flex-end;
-  }
-  
-  .message-avatar {
-    margin-right: 8px;
-    flex-shrink: 0;
-  }
-  
-  .message-content-wrapper {
-    display: flex;
-    flex-direction: column;
-    max-width: 70%;
-  }
-  
-  .outgoing .message-content-wrapper {
-    align-items: flex-end;
-  }
-  
-  .message-bubble {
-    padding: 10px 15px;
-    border-radius: 18px;
-    position: relative;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-  }
-  
-  .incoming .message-bubble {
-    background-color: #f0f2f5;
-    border-bottom-left-radius: 4px;
-  }
-  
-  .outgoing .message-bubble {
-    background-color: #0d6efd;
-    color: white;
-    border-bottom-right-radius: 4px;
-  }
-  
-  .message-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 5px;
-    font-size: 0.8rem;
-  }
-  
-  .incoming .message-header {
-    color: #65676b;
-  }
-  
-  .outgoing .message-header {
-    color: rgba(255,255,255,0.7);
-  }
-  
-  .message-sender {
-    font-weight: 600;
-  }
-  
-  .message-time {
-    font-size: 0.7rem;
-    margin-left: 8px;
-  }
-  
-  .message-content {
-    word-wrap: break-word;
-    white-space: pre-wrap;
-  }
-  
-  .message-status {
-    font-size: 0.7rem;
-    color: #65676b;
-    margin-top: 2px;
-    margin-right: 4px;
+  .conversation-item {
+    padding: 12px 16px;
   }
   
   .avatar-circle {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    width: 48px !important;
+    height: 48px !important;
+    font-size: 18px !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .messenger-sidebar {
+    display: none;
   }
   
-  /* Typing indicator */
-  .typing-indicator {
-    display: flex;
-    align-items: flex-end;
-    margin-bottom: 10px;
+  .messenger-container {
+    height: calc(100vh - 60px);
   }
-  
-  .typing-bubble {
-    padding: 12px 16px;
-    background-color: #f0f2f5;
-    border-radius: 18px;
-    border-bottom-left-radius: 4px;
-    margin-left: 8px;
-    display: flex;
-    align-items: center;
-  }
-  
-  .typing-bubble span {
-    height: 8px;
-    width: 8px;
-    float: left;
-    margin: 0 1px;
-    background-color: #9E9EA1;
-    display: block;
-    border-radius: 50%;
-    opacity: 0.4;
-  }
-  
-  .typing-bubble span:nth-of-type(1) {
-    animation: 1s blink infinite 0.3333s;
-  }
-  
-  .typing-bubble span:nth-of-type(2) {
-    animation: 1s blink infinite 0.6666s;
-  }
-  
-  .typing-bubble span:nth-of-type(3) {
-    animation: 1s blink infinite 0.9999s;
-  }
-  
-  @keyframes blink {
-    50% {
-      opacity: 1;
-    }
-  }
-  
-  /* Chat input */
-  .chat-input-container {
-    background-color: #f8f9fa;
-  }
-  
-  #responseMessage {
-    resize: none;
-    min-height: 38px;
-    max-height: 120px;
-  }
+}
 </style>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // Auto-scroll to bottom of chat
-    const chatMessages = document.getElementById('chatMessages');
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+document.addEventListener('DOMContentLoaded', function() {
+  const messagesContainer = document.getElementById('messagesContainer');
+  const messageInput = document.getElementById('messageInput');
+  const messageForm = document.getElementById('messageForm');
+  const statusSelect = document.getElementById('statusSelect');
+  const hiddenStatus = document.getElementById('hiddenStatus');
+  
+  // Auto-scroll to bottom
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  
+  // Auto-resize textarea
+  function autoResize() {
+    messageInput.style.height = 'auto';
+    messageInput.style.height = messageInput.scrollHeight + 'px';
+  }
+  
+  messageInput.addEventListener('input', autoResize);
+  
+  // Update hidden status when select changes
+  statusSelect.addEventListener('change', function() {
+    hiddenStatus.value = this.value;
+  });
+  
+  // Handle form submission
+  messageForm.addEventListener('submit', function(e) {
+    e.preventDefault();
     
-    // Auto-resize textarea
-    const textarea = document.getElementById('responseMessage');
-    
-    function resizeTextarea() {
-      textarea.style.height = 'auto';
-      textarea.style.height = (textarea.scrollHeight) + 'px';
+    if (!messageInput.value.trim()) {
+      return;
     }
     
-    textarea.addEventListener('input', resizeTextarea);
+    const formData = new FormData(messageForm);
+    const submitBtn = messageForm.querySelector('.btn-send');
+    const originalContent = submitBtn.innerHTML;
     
-    // Form submission with AJAX
-    const messageForm = document.getElementById('messageForm');
-    const submitButton = messageForm.querySelector('button[type="submit"]');
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    submitBtn.disabled = true;
     
-    messageForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-      
-      if (!textarea.value.trim()) {
-        return;
+    fetch(messageForm.action, {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        messageInput.value = '';
+        autoResize();
+        location.reload();
+      } else {
+        alert('Error: ' + data.error);
       }
-      
-      const formData = new FormData(messageForm);
-      const submitBtnOriginal = submitButton.innerHTML;
-      
-      submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
-      submitButton.disabled = true;
-      
-      fetch(messageForm.action, {
-        method: 'POST',
-        body: formData
-      })
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('An error occurred while sending the message');
+    })
+    .finally(() => {
+      submitBtn.innerHTML = originalContent;
+      submitBtn.disabled = false;
+    });
+  });
+  
+  // Check for new messages
+  let lastCheck = Math.floor(Date.now() / 1000);
+  
+  function checkNewMessages() {
+    fetch(`/check_new_messages/{{ message.id }}/${lastCheck}`)
       .then(response => response.json())
       .then(data => {
-        if (data.success) {
-          // Clear the textarea
-          textarea.value = '';
-          textarea.style.height = 'auto';
-          
-          // Update status badge if changed
-          const statusBadge = document.querySelector('.badge');
-          if (data.status === 'resolved') {
-            statusBadge.className = 'badge bg-success px-3 py-2';
-            statusBadge.textContent = 'Resolved';
-          } else if (data.status === 'in_progress') {
-            statusBadge.className = 'badge bg-info px-3 py-2';
-            statusBadge.textContent = 'In Progress';
-          }
-          
-          // Reload the page to show new messages
+        if (data.has_new) {
           location.reload();
-        } else {
-          alert('Error: ' + data.error);
         }
+        lastCheck = data.current_timestamp;
       })
-      .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred while sending the message');
-      })
-      .finally(() => {
-        submitButton.innerHTML = submitBtnOriginal;
-        submitButton.disabled = false;
-      });
-    });
-    
-    // Check for new messages periodically
-    let lastCheckTimestamp = Math.floor(Date.now() / 1000);
-    
-    function checkForNewMessages() {
-      fetch(`/check_new_messages/{{ message.id }}/${lastCheckTimestamp}`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.has_new) {
-            location.reload();
-          }
-          lastCheckTimestamp = data.current_timestamp;
-        })
-        .catch(error => console.error('Error checking for new messages:', error));
-    }
-    
-    // Check every 10 seconds
-    setInterval(checkForNewMessages, 10000);
-    
-    // Focus the textarea when page loads
-    textarea.focus();
-  });
+      .catch(error => console.error('Error:', error));
+  }
+  
+  setInterval(checkNewMessages, 10000);
+  
+  // Focus input
+  messageInput.focus();
+});
+
+function updateStatus(status) {
+  // This function can be used for real-time status updates
+  console.log('Status updated to:', status);
+}
 </script>
 {% endblock %}

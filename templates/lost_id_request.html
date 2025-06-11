@@ -1,0 +1,421 @@
+{% extends "base.html" %}
+
+{% block title %}Lost ID Request - Student Portal{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold">
+                <i class="fas fa-id-card-alt me-2 text-primary"></i> Lost ID Request
+            </h2>
+            <p class="text-muted">Submit a request for ID replacement due to loss</p>
+        </div>
+        <div>
+            <a href="{{ url_for('student_dashboard') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Form Card -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-xl-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-file-upload me-2"></i> Lost ID Request Form
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Information Section -->
+                    <div class="alert alert-info border-0 mb-4">
+                        <div class="d-flex">
+                            <i class="fas fa-info-circle me-3 mt-1"></i>
+                            <div>
+                                <h6 class="alert-heading mb-2">Important Instructions</h6>
+                                <p class="mb-0">
+                                    Please upload a scanned copy of your <strong>Affidavit of Loss</strong>. 
+                                    Make sure you've completed the verification process with the <strong>OSAS office</strong> 
+                                    before submitting this request. TSD will review the document before reprinting your ID.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form -->
+                    <form id="lostIdForm" action="{{ url_for('submit_lost_id_request') }}" method="POST" enctype="multipart/form-data">
+                        <!-- Student Information (Auto-filled) -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">Student ID</label>
+                                <input type="text" class="form-control bg-light" value="{{ session.student_id }}" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">Student Name</label>
+                                <input type="text" class="form-control bg-light" value="{{ session.student_name }}" readonly>
+                            </div>
+                        </div>
+
+                        <!-- Reason or Notes -->
+                        <div class="mb-4">
+                            <label for="reason" class="form-label fw-medium">
+                                <i class="fas fa-edit me-2 text-primary"></i> Reason or Notes
+                                <span class="text-danger">*</span>
+                            </label>
+                            <textarea 
+                                class="form-control" 
+                                id="reason" 
+                                name="reason" 
+                                rows="4" 
+                                placeholder="Please describe how you lost your ID and any additional details..."
+                                required
+                            ></textarea>
+                            <div class="invalid-feedback">
+                                Please provide a reason for your lost ID request.
+                            </div>
+                        </div>
+
+                        <!-- File Upload -->
+                        <div class="mb-4">
+                            <label for="affidavit" class="form-label fw-medium">
+                                <i class="fas fa-file-pdf me-2 text-primary"></i> Upload Affidavit of Loss (PDF or Image)
+                                <span class="text-danger">*</span>
+                            </label>
+                            <div class="upload-area border-2 border-dashed rounded p-4 text-center position-relative">
+                                <input 
+                                    type="file" 
+                                    class="form-control position-absolute w-100 h-100 opacity-0" 
+                                    id="affidavit" 
+                                    name="affidavit" 
+                                    accept=".pdf,.jpg,.jpeg,.png,.gif"
+                                    required
+                                    style="cursor: pointer; z-index: 2;"
+                                >
+                                <div class="upload-content">
+                                    <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                    <h6 class="text-muted">Click to upload or drag and drop</h6>
+                                    <p class="text-muted small mb-0">
+                                        Supported formats: PDF, JPG, PNG, GIF (Max: 10MB)
+                                    </p>
+                                </div>
+                                <div class="file-preview d-none">
+                                    <i class="fas fa-file-alt fa-2x text-success mb-2"></i>
+                                    <p class="mb-0 fw-medium file-name"></p>
+                                    <small class="text-muted file-size"></small>
+                                </div>
+                            </div>
+                            <div class="invalid-feedback">
+                                Please upload your Affidavit of Loss document.
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                <i class="fas fa-paper-plane me-2"></i> Submit Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Disclaimer -->
+            <div class="mt-4">
+                <div class="alert alert-warning border-0">
+                    <div class="d-flex">
+                        <i class="fas fa-exclamation-triangle me-3 mt-1"></i>
+                        <div>
+                            <h6 class="alert-heading mb-2">Important Notice</h6>
+                            <p class="mb-0 small">
+                                <strong>TSD will only process this request after physical documents are verified by OSAS.</strong>
+                                Please ensure you have completed all required verification steps before submitting this form.
+                                Processing time may take 3-5 business days after document verification.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-success text-white border-0">
+                <h5 class="modal-title" id="successModalLabel">
+                    <i class="fas fa-check-circle me-2"></i> Request Submitted Successfully
+                </h5>
+            </div>
+            <div class="modal-body text-center p-4">
+                <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                <h5>Your Lost ID Request has been submitted!</h5>
+                <p class="text-muted mb-4">
+                    Request ID: <strong id="requestId"></strong><br>
+                    You will receive updates on your request status via email.
+                </p>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('student_dashboard') }}" class="btn btn-primary">
+                        <i class="fas fa-home me-2"></i> Return to Dashboard
+                    </a>
+                    <a href="{{ url_for('student_support_messages') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-comments me-2"></i> View My Requests
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .upload-area {
+        transition: all 0.3s ease;
+        background-color: #f8f9fa;
+        border-color: #dee2e6 !important;
+    }
+    
+    .upload-area:hover {
+        border-color: #0d6efd !important;
+        background-color: #e7f1ff;
+    }
+    
+    .upload-area.dragover {
+        border-color: #0d6efd !important;
+        background-color: #e7f1ff;
+        transform: scale(1.02);
+    }
+    
+    .upload-area.has-file {
+        border-color: #198754 !important;
+        background-color: #d1e7dd;
+    }
+    
+    .card {
+        transition: transform 0.2s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .form-control:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+        border: none;
+    }
+    
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #0b5ed7 0%, #0a58ca 100%);
+        transform: translateY(-1px);
+    }
+    
+    .alert {
+        border-radius: 0.5rem;
+    }
+    
+    .file-preview {
+        animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .invalid-feedback {
+        display: block;
+    }
+    
+    .form-control.is-invalid {
+        border-color: #dc3545;
+    }
+    
+    .form-control.is-valid {
+        border-color: #198754;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('lostIdForm');
+    const fileInput = document.getElementById('affidavit');
+    const uploadArea = document.querySelector('.upload-area');
+    const uploadContent = document.querySelector('.upload-content');
+    const filePreview = document.querySelector('.file-preview');
+    const fileName = document.querySelector('.file-name');
+    const fileSize = document.querySelector('.file-size');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // File upload handling
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            displayFilePreview(file);
+            validateFile(file);
+        }
+    });
+    
+    // Drag and drop functionality
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            displayFilePreview(files[0]);
+            validateFile(files[0]);
+        }
+    });
+    
+    function displayFilePreview(file) {
+        uploadContent.classList.add('d-none');
+        filePreview.classList.remove('d-none');
+        uploadArea.classList.add('has-file');
+        
+        fileName.textContent = file.name;
+        fileSize.textContent = formatFileSize(file.size);
+        
+        // Update icon based on file type
+        const icon = filePreview.querySelector('i');
+        if (file.type.includes('pdf')) {
+            icon.className = 'fas fa-file-pdf fa-2x text-danger mb-2';
+        } else if (file.type.includes('image')) {
+            icon.className = 'fas fa-file-image fa-2x text-primary mb-2';
+        } else {
+            icon.className = 'fas fa-file-alt fa-2x text-success mb-2';
+        }
+    }
+    
+    function validateFile(file) {
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        
+        if (file.size > maxSize) {
+            showFileError('File size must be less than 10MB');
+            return false;
+        }
+        
+        if (!allowedTypes.includes(file.type)) {
+            showFileError('Please upload a PDF or image file (JPG, PNG, GIF)');
+            return false;
+        }
+        
+        clearFileError();
+        return true;
+    }
+    
+    function showFileError(message) {
+        fileInput.classList.add('is-invalid');
+        const feedback = fileInput.parentNode.querySelector('.invalid-feedback');
+        feedback.textContent = message;
+    }
+    
+    function clearFileError() {
+        fileInput.classList.remove('is-invalid');
+        fileInput.classList.add('is-valid');
+    }
+    
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Validate form
+        if (!validateForm()) {
+            return;
+        }
+        
+        // Show loading state
+        const originalBtnText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Submitting...';
+        submitBtn.disabled = true;
+        
+        // Create FormData
+        const formData = new FormData(form);
+        
+        // Submit form
+        fetch(form.action, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success modal
+                document.getElementById('requestId').textContent = data.request_id;
+                const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+                successModal.show();
+            } else {
+                throw new Error(data.error || 'Submission failed');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error submitting request: ' + error.message);
+        })
+        .finally(() => {
+            // Reset button
+            submitBtn.innerHTML = originalBtnText;
+            submitBtn.disabled = false;
+        });
+    });
+    
+    function validateForm() {
+        let isValid = true;
+        
+        // Validate reason
+        const reason = document.getElementById('reason');
+        if (!reason.value.trim()) {
+            reason.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            reason.classList.remove('is-invalid');
+            reason.classList.add('is-valid');
+        }
+        
+        // Validate file
+        if (!fileInput.files.length) {
+            showFileError('Please upload your Affidavit of Loss document.');
+            isValid = false;
+        } else if (!validateFile(fileInput.files[0])) {
+            isValid = false;
+        }
+        
+        return isValid;
+    }
+    
+    // Real-time validation
+    document.getElementById('reason').addEventListener('input', function() {
+        if (this.value.trim()) {
+            this.classList.remove('is-invalid');
+            this.classList.add('is-valid');
+        }
+    });
+});
+</script>
+{% endblock %}

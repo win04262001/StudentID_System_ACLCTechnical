@@ -53,6 +53,10 @@ import shutil
 from werkzeug.wsgi import FileWrapper
 
 
+from collections import defaultdict
+import sqlite3
+
+
 #------------------------------------------------------------------------------------
 # Define Flask App
 # Purpose: Initialize the Flask application with configuration settings
@@ -1316,10 +1320,11 @@ def admin_dashboard():
     cursor.execute("SELECT COUNT(*) as receive FROM students WHERE application_status = 'receive'")
     receive = cursor.fetchone()["receive"]
 
+    cursor.close()
     conn.close()
 
     # Debugging Output
-    print(f"DEBUG - Pending: {pending}, Processing: {processing}, Done: {done}, receive: {receive}")
+    print(f"DEBUG - Total: {total_students}, Pending: {pending}, Processing: {processing}, Done: {done}, Receive: {receive}")
 
     return render_template(
         "admin_dashboard.html",
@@ -1343,7 +1348,481 @@ def admin_applications():
     conn.close()
     return render_template("admin_applications.html", applications=applications)
 
+# Admin routes for Lost ID requests
 
+@app.route('/admin/lost_id_requests')
+@login_required("admin")
+def admin_lost_id_requests():
+    """Display all lost ID requests for admin review"""
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    # Get all lost ID requests with student information
+    cursor.execute("""
+        SELECT lr.*, u.name as student_name, s.course, s.email, s.contact
+        FROM lost_id_requests lr
+        JOIN users u ON lr.student_id = u.student_id
+        JOIN students s ON lr.student_id = s.student_id
+        ORDER BY 
+            CASE 
+                WHEN lr.status = 'pending' THEN 1
+                WHEN lr.status = 'verified' THEN 2
+                WHEN lr.status = 'approved' THEN 3
+                WHEN lr.status = 'rejected' THEN 4
+            END,
+            lr.created_at DESC
+    """)
+    requests = cursor.fetchall()
+    
+    # Get count of new requests
+    cursor.execute("SELECT COUNT(*) as new_count FROM lost_id_requests WHERE status = 'pending'")
+    new_count = cursor.fetchone()['new_count']
+    
+    cursor.close()
+    conn.close()
+    
+    return render_template("admin_lost_id_requests.html", requests=requests, new_count=new_count)
+
+@app.route('/admin/view_lost_id_request/<int:request_id>')
+@login_required("admin")
+def admin_view_lost_id_request(request_id):
+    """View details of a specific lost ID request"""
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    # Get request details with student information
+    cursor.execute("""
+        SELECT lr.*, u.name as student_name, s.course, s.email, s.contact
+        FROM lost_id_requests lr
+        JOIN users u ON lr.student_id = u.student_id
+        JOIN students s ON lr.student_id = s.student_id
+        WHERE lr.id = %s
+    """, (request_id,))
+    request = cursor.fetchone()
+    
+    if not request:
+        cursor.close()
+        conn.close()
+        flash("Request not found", "danger")
+        return redirect(url_for('admin_lost_id_requests'))
+    
+    cursor.close()
+    conn.close()
+    
+    return render_template("admin_view_lost_id_request.html", request=request)
+
+@app.route('/admin/update_lost_id_notes/<int:request_id>', methods=['POST'])
+@login_required("admin")
+def update_lost_id_notes(request_id):
+    """Update admin notes for a lost ID request"""
+    try:
+        data = request.json
+        notes = data.get('notes')
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            UPDATE lost_id_requests 
+            SET admin_notes = %s, updated_at = NOW()
+            WHERE id = %s
+        """, (notes, request_id))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+@app.route('/admin/update_lost_id_osas/<int:request_id>', methods=['POST'])
+@login_required("admin")
+def update_lost_id_osas(request_id):
+    """Update OSAS verification status for a lost ID request"""
+    try:
+        data = request.json
+        verified = data.get('verified')
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            UPDATE lost_id_requests 
+            SET osas_verified = %s, updated_at = NOW()
+            WHERE id = %s
+        """, (verified, request_id))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+@app.route('/admin/update_lost_id_status/<int:request_id>', methods=['POST'])
+@login_required("admin")
+def update_lost_id_status(request_id):
+    """Update status for a lost ID request"""
+    try:
+        data = request.json
+        status = data.get('status')
+        
+        if status not in ['pending', 'verified', 'approved', 'rejected']:
+            return jsonify({"success": False, "error": "Invalid status"})
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            UPDATE lost_id_requests 
+            SET status = %s, updated_at = NOW()
+            WHERE id = %s
+        """, (status, request_id))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+@app.route('/admin/approve_lost_id/<int:request_id>', methods=['POST'])
+@login_required("admin")
+def approve_lost_id(request_id):
+    """Approve a lost ID request and initiate ID reprinting process"""
+    try:
+        admin_id = session.get('student_id') or f"ADMIN_{session.get('user_id')}"
+        admin_name = session.get('user_name', 'Admin')
+        
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Get request details
+        cursor.execute("""
+            SELECT lr.*, u.name as student_name, s.email
+            FROM lost_id_requests lr
+            JOIN users u ON lr.student_id = u.student_id
+            JOIN students s ON lr.student_id = s.student_id
+            WHERE lr.id = %s
+        """, (request_id,))
+        request_data = cursor.fetchone()
+        
+        if not request_data:
+            return jsonify({"success": False, "error": "Request not found"})
+        
+        # Check if OSAS verification is completed
+        if not request_data.get('osas_verified'):
+            return jsonify({"success": False, "error": "OSAS verification is required before approval"})
+        
+        # Update request status
+        cursor.execute("""
+            UPDATE lost_id_requests 
+            SET status = 'approved', 
+                processed_by = %s,
+                processed_at = NOW(),
+                updated_at = NOW()
+            WHERE id = %s
+        """, (admin_name, request_id))
+        
+        # Create a new student ID application with 'processing' status
+        cursor.execute("""
+            UPDATE students
+            SET application_status = 'processing'
+            WHERE student_id = %s
+        """, (request_data['student_id'],))
+        
+        # Send email notification to student
+        if request_data.get('email'):
+            try:
+                msg = Message(
+                    subject="Your Lost ID Request Has Been Approved",
+                    recipients=[request_data['email']],
+                    body=f"""Dear {request_data['student_name']},
+
+We are pleased to inform you that your request for a replacement student ID (Request #{request_id}) has been approved.
+
+Your new ID card is now being processed and will be ready for pickup soon. You will receive another notification when it is ready.
+
+Thank you for your patience.
+
+Best regards,
+Technical Support Department
+ACLC College
+"""
+                )
+                mail.send(msg)
+            except Exception as email_error:
+                print(f"Failed to send approval email: {email_error}")
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+@app.route('/admin/reject_lost_id/<int:request_id>', methods=['POST'])
+@login_required("admin")
+def reject_lost_id(request_id):
+    """Reject a lost ID request"""
+    try:
+        data = request.json
+        reason = data.get('reason')
+        
+        if not reason:
+            return jsonify({"success": False, "error": "Rejection reason is required"})
+        
+        admin_id = session.get('student_id') or f"ADMIN_{session.get('user_id')}"
+        admin_name = session.get('user_name', 'Admin')
+        
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Get request details
+        cursor.execute("""
+            SELECT lr.*, u.name as student_name, s.email
+            FROM lost_id_requests lr
+            JOIN users u ON lr.student_id = u.student_id
+            JOIN students s ON lr.student_id = s.student_id
+            WHERE lr.id = %s
+        """, (request_id,))
+        request_data = cursor.fetchone()
+        
+        if not request_data:
+            return jsonify({"success": False, "error": "Request not found"})
+        
+        # Update request status
+        cursor.execute("""
+            UPDATE lost_id_requests 
+            SET status = 'rejected', 
+                rejection_reason = %s,
+                processed_by = %s,
+                processed_at = NOW(),
+                updated_at = NOW()
+            WHERE id = %s
+        """, (reason, admin_name, request_id))
+        
+        # Send email notification to student
+        if request_data.get('email'):
+            try:
+                msg = Message(
+                    subject="Update on Your Lost ID Request",
+                    recipients=[request_data['email']],
+                    body=f"""Dear {request_data['student_name']},
+
+We regret to inform you that your request for a replacement student ID (Request #{request_id}) could not be approved at this time.
+
+Reason: {reason}
+
+If you have any questions or need further assistance, please contact the Technical Support Department.
+
+Best regards,
+Technical Support Department
+ACLC College
+"""
+                )
+                mail.send(msg)
+            except Exception as email_error:
+                print(f"Failed to send rejection email: {email_error}")
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+@app.route('/admin/email_student/<int:request_id>', methods=['POST'])
+@login_required("admin")
+def email_student(request_id):
+    """Send email to student regarding their lost ID request"""
+    try:
+        data = request.json
+        subject = data.get('subject')
+        body = data.get('body')
+        
+        if not subject or not body:
+            return jsonify({"success": False, "error": "Subject and body are required"})
+        
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Get student email
+        cursor.execute("""
+            SELECT s.email, u.name as student_name
+            FROM lost_id_requests lr
+            JOIN students s ON lr.student_id = s.student_id
+            JOIN users u ON lr.student_id = u.student_id
+            WHERE lr.id = %s
+        """, (request_id,))
+        student = cursor.fetchone()
+        
+        if not student or not student.get('email'):
+            return jsonify({"success": False, "error": "Student email not found"})
+        
+        # Send email
+        msg = Message(
+            subject=subject,
+            recipients=[student['email']],
+            body=body
+        )
+        mail.send(msg)
+        
+        # Log the email in the database
+        cursor.execute("""
+            INSERT INTO communication_logs 
+            (request_id, type, subject, message, sent_by, sent_at)
+            VALUES (%s, 'email', %s, %s, %s, NOW())
+        """, (request_id, subject, body, session.get('user_name', 'Admin')))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+@app.route('/download_affidavit/<int:file_id>')
+@login_required("admin")
+def download_affidavit(file_id):
+    """Download the affidavit file for a lost ID request"""
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    # Get file information
+    cursor.execute("SELECT affidavit_file FROM lost_id_requests WHERE id = %s", (file_id,))
+    result = cursor.fetchone()
+    
+    cursor.close()
+    conn.close()
+    
+    if not result or not result['affidavit_file']:
+        flash("File not found", "danger")
+        return redirect(url_for('admin_lost_id_requests'))
+    
+    file_path = os.path.join(app.config["UPLOAD_FOLDER"], result['affidavit_file'])
+    
+    if not os.path.exists(file_path):
+        flash("File not found on server", "danger")
+        return redirect(url_for('admin_lost_id_requests'))
+    
+    return send_file(file_path, as_attachment=True)
+
+@app.route('/admin/get_new_lost_id_count')
+@login_required("admin")
+def get_new_lost_id_count():
+    """Get count of new lost ID requests"""
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    cursor.execute("SELECT COUNT(*) as new_count FROM lost_id_requests WHERE status = 'pending'")
+    new_count = cursor.fetchone()['new_count']
+    
+    cursor.close()
+    conn.close()
+    
+    return jsonify({"new_count": new_count})
+
+
+@app.route('/api/analytics/<period>')
+@login_required("admin")
+def get_analytics_data(period):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        if period == 'day':
+            # Get hourly data for today
+            today = datetime.now().strftime('%Y-%m-%d')
+            
+            cursor.execute("""
+                SELECT HOUR(created_at) as hour, COUNT(*) as count
+                FROM students 
+                WHERE DATE(created_at) = %s
+                GROUP BY HOUR(created_at)
+                ORDER BY hour
+            """, (today,))
+            
+            results = cursor.fetchall()
+            
+            # Create hourly data (6 AM to 7 PM)
+            hourly_data = {row['hour']: row['count'] for row in results}
+            
+            # Format for chart (6 AM to 7 PM)
+            values = []
+            for hour in range(6, 20):  # 6 AM to 7 PM
+                values.append(hourly_data.get(hour, 0))
+            
+        elif period == 'week':
+            # Get daily data for this week
+            cursor.execute("""
+                SELECT DAYOFWEEK(created_at) as day_of_week, COUNT(*) as count
+                FROM students 
+                WHERE YEARWEEK(created_at, 1) = YEARWEEK(CURDATE(), 1)
+                GROUP BY DAYOFWEEK(created_at)
+                ORDER BY day_of_week
+            """)
+            
+            results = cursor.fetchall()
+            
+            # Create weekly data (Monday = 2, Sunday = 1 in MySQL DAYOFWEEK)
+            weekly_data = {row['day_of_week']: row['count'] for row in results}
+            
+            # Format for chart (Monday to Sunday)
+            # MySQL DAYOFWEEK: Sunday=1, Monday=2, ..., Saturday=7
+            values = []
+            for day in [2, 3, 4, 5, 6, 7, 1]:  # Monday to Sunday
+                values.append(weekly_data.get(day, 0))
+            
+        elif period == 'month':
+            # Get weekly data for this month
+            cursor.execute("""
+                SELECT 
+                    CASE 
+                        WHEN DAY(created_at) <= 7 THEN 1
+                        WHEN DAY(created_at) <= 14 THEN 2
+                        WHEN DAY(created_at) <= 21 THEN 3
+                        ELSE 4
+                    END as week_num,
+                    COUNT(*) as count
+                FROM students 
+                WHERE YEAR(created_at) = YEAR(CURDATE()) 
+                AND MONTH(created_at) = MONTH(CURDATE())
+                GROUP BY week_num
+                ORDER BY week_num
+            """)
+            
+            results = cursor.fetchall()
+            
+            # Create monthly data
+            monthly_data = {row['week_num']: row['count'] for row in results}
+            
+            # Format for chart (4 weeks)
+            values = []
+            for week in range(1, 5):
+                values.append(monthly_data.get(week, 0))
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'values': values,
+            'period': period
+        })
+        
+    except Exception as e:
+        print(f"Error getting analytics data: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 #----------------------------------------------------------------------------------------------------------------------------------
 
@@ -3455,6 +3934,177 @@ def student_dashboard():
     return render_template("student_dashboard.html", student=student)
 
 print("✅ Updated Flask routes for name handling completed!")
+
+
+# Add these routes to your existing app.py file
+
+# Student routes for Lost ID requests
+
+@app.route('/lost_id_request')
+@login_required("student")
+def lost_id_request():
+    """Display the lost ID request form"""
+    student_id = session.get('student_id')
+    
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    # Get student information
+    cursor.execute("""
+        SELECT s.*, u.name as student_name
+        FROM students s
+        JOIN users u ON s.student_id = u.student_id
+        WHERE s.student_id = %s
+    """, (student_id,))
+    student = cursor.fetchone()
+    
+    # Check if student has any pending lost ID requests
+    cursor.execute("""
+        SELECT id, status, created_at
+        FROM lost_id_requests
+        WHERE student_id = %s AND status IN ('pending', 'verified')
+        ORDER BY created_at DESC
+        LIMIT 1
+    """, (student_id,))
+    pending_request = cursor.fetchone()
+    
+    cursor.close()
+    conn.close()
+    
+    return render_template("lost_id_request.html", student=student, pending_request=pending_request)
+
+@app.route('/submit_lost_id_request', methods=['POST'])
+@login_required("student")
+def submit_lost_id_request():
+    """Process lost ID request submission"""
+    try:
+        student_id = session.get('student_id')
+        reason = request.form.get('reason')
+        affidavit = request.files.get('affidavit')
+        
+        # Validation
+        if not reason or not reason.strip():
+            return jsonify({'success': False, 'error': 'Reason is required'})
+        
+        if not affidavit or affidavit.filename == '':
+            return jsonify({'success': False, 'error': 'Affidavit document is required'})
+        
+        # Check if student already has a pending request
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        cursor.execute("""
+            SELECT id FROM lost_id_requests
+            WHERE student_id = %s AND status IN ('pending', 'verified')
+        """, (student_id,))
+        existing_request = cursor.fetchone()
+        
+        if existing_request:
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': 'You already have a pending lost ID request'})
+        
+        # Validate file
+        allowed_extensions = {'pdf', 'jpg', 'jpeg', 'png'}
+        file_ext = affidavit.filename.rsplit('.', 1)[1].lower() if '.' in affidavit.filename else ''
+        
+        if file_ext not in allowed_extensions:
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': 'Invalid file type. Please upload PDF or image files only.'})
+        
+        # Check file size
+        affidavit.seek(0, 2)
+        file_size = affidavit.tell()
+        affidavit.seek(0)
+        
+        if file_size > 10 * 1024 * 1024:  # 10MB
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': 'File size must be less than 10MB'})
+        
+        # Save file
+        filename = secure_filename(f"{student_id}_affidavit_{int(time.time())}.{file_ext}")
+        file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        affidavit.save(file_path)
+        
+        # Insert request into database
+        cursor.execute("""
+            INSERT INTO lost_id_requests (student_id, reason, affidavit_file, status, created_at)
+            VALUES (%s, %s, %s, 'pending', NOW())
+        """, (student_id, reason, filename))
+        
+        request_id = cursor.lastrowid
+        
+        # Get student information for email
+        cursor.execute("""
+            SELECT s.email, u.name as student_name
+            FROM students s
+            JOIN users u ON s.student_id = u.student_id
+            WHERE s.student_id = %s
+        """, (student_id,))
+        student = cursor.fetchone()
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        # Send confirmation email
+        if student and student.get('email'):
+            try:
+                msg = Message(
+                    subject=f"Lost ID Request Submitted - Request #{request_id}",
+                    recipients=[student['email']],
+                    body=f"""Dear {student['student_name']},
+
+Your Lost ID Request has been successfully submitted.
+
+Request ID: {request_id}
+Submitted: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+Your request will be reviewed by TSD after OSAS verifies your submitted documents. You will receive updates on the status of your request via email.
+
+Please keep your Request ID for reference.
+
+Thank you,
+Technical Support Department
+ACLC College"""
+                )
+                mail.send(msg)
+            except Exception as email_error:
+                print(f"Failed to send confirmation email: {email_error}")
+        
+        return jsonify({
+            'success': True,
+            'request_id': f"LID-{request_id:06d}",
+            'message': 'Lost ID request submitted successfully'
+        })
+        
+    except Exception as e:
+        print(f"Error submitting lost ID request: {str(e)}")
+        return jsonify({'success': False, 'error': 'An error occurred while submitting your request'})
+
+@app.route('/my_lost_id_requests')
+@login_required("student")
+def my_lost_id_requests():
+    """Display student's lost ID requests"""
+    student_id = session.get('student_id')
+    
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    # Get all lost ID requests for this student
+    cursor.execute("""
+        SELECT * FROM lost_id_requests
+        WHERE student_id = %s
+        ORDER BY created_at DESC
+    """, (student_id,))
+    requests = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    return render_template("my_lost_id_requests.html", requests=requests)
 
 
 

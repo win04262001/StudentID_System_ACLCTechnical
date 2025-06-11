@@ -111,22 +111,32 @@
                                         </button>
                                     </div>
                     
-                                    <!-- Thickness Slider -->
+                                    <!-- Enhanced Thickness Controls -->
                                     <div class="mt-3">
                                         <label for="thicknessSlider" class="form-label" style="color: #004080;">
-                                            <i class="bi bi-pencil"></i> Thickness: <span id="thicknessValue">100%</span>
+                                            <i class="bi bi-pencil"></i> Signature Thickness: <span id="thicknessValue">3</span>px
                                         </label>
-                                        <input type="range" id="thicknessSlider" class="form-range" min="10" max="200" value="100">
+                                        <input type="range" id="thicknessSlider" class="form-range" min="1" max="8" value="3" step="0.5">
+                                        <small class="text-muted">Adjust how thick your signature lines appear</small>
+                                    </div>
+                                    
+                                    <!-- Ink Intensity Control -->
+                                    <div class="mt-3">
+                                        <label for="intensitySlider" class="form-label" style="color: #004080;">
+                                            <i class="bi bi-droplet-fill"></i> Ink Intensity: <span id="intensityValue">100</span>%
+                                        </label>
+                                        <input type="range" id="intensitySlider" class="form-range" min="70" max="130" value="100">
+                                        <small class="text-muted">Control how dark/bold your signature appears</small>
                                     </div>
                                 </div>
                             </div>
                             <input type="hidden" name="signature" id="signatureInput">
                             <div id="signature_status">
-                                <small id="signature_loading" class="text-primary d-none">🔄 Checking...</small>
+                                <small id="signature_loading" class="text-primary d-none">🔄 Processing...</small>
                                 <small id="signature_error" class="text-danger d-none"></small>
                                 <small id="signature_success" class="text-success d-none"></small>
                             </div>
-                            <small class="text-muted">Sign in the white box above</small>
+                            <small class="text-muted">Sign in the white box above and adjust settings as needed</small>
                         </div>
                     
                         <!-- Submit Button -->
@@ -152,6 +162,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const saveSignatureBtn = document.getElementById('saveSignatureBtn');
     const thicknessSlider = document.getElementById('thicknessSlider');
     const thicknessValue = document.getElementById('thicknessValue');
+    const intensitySlider = document.getElementById('intensitySlider');
+    const intensityValue = document.getElementById('intensityValue');
     const signatureInput = document.getElementById('signatureInput');
     const submitButton = document.getElementById('submit_button');
     const courseSelect = document.getElementById('course');
@@ -162,7 +174,8 @@ document.addEventListener("DOMContentLoaded", function () {
     let isDrawing = false;
     let strokes = []; // Store all strokes (each stroke is an array of points)
     let currentStroke = []; // Store points for the current stroke
-    let currentThickness = 2; // Default thickness
+    let currentThickness = 3; // Default thickness
+    let currentIntensity = 100; // Default intensity
 
     // Set initial canvas size
     function setCanvasSize() {
@@ -181,15 +194,25 @@ document.addEventListener("DOMContentLoaded", function () {
     // Resize canvas when window size changes
     window.addEventListener('resize', setCanvasSize);
 
-    // Set initial thickness
+    // Set initial thickness and intensity
     thicknessSlider.addEventListener('input', () => {
-        const thicknessPercent = parseInt(thicknessSlider.value);
-        thicknessValue.textContent = `${thicknessPercent}%`;
-        currentThickness = (thicknessPercent / 100) * 2; // Adjust base thickness (2px)
+        const thickness = parseFloat(thicknessSlider.value);
+        thicknessValue.textContent = thickness;
+        currentThickness = thickness;
         redrawSignature(); // Redraw the signature with the new thickness
         
         // Save thickness to localStorage
-        localStorage.setItem('thicknessValue', thicknessPercent);
+        localStorage.setItem('signatureThickness', thickness);
+    });
+    
+    intensitySlider.addEventListener('input', () => {
+        const intensity = parseInt(intensitySlider.value);
+        intensityValue.textContent = intensity;
+        currentIntensity = intensity;
+        redrawSignature(); // Redraw the signature with the new intensity
+        
+        // Save intensity to localStorage
+        localStorage.setItem('signatureIntensity', intensity);
     });
 
     // Handle mouse events
@@ -207,35 +230,35 @@ document.addEventListener("DOMContentLoaded", function () {
     saveSignatureBtn.addEventListener('click', saveSignature);
 
     // Save form data to localStorage when inputs change
-    courseSelect.addEventListener('change', saveFormData);
-    contactInput.addEventListener('input', saveFormData);
-    guardianInput.addEventListener('input', saveFormData);
-    addressInput.addEventListener('input', saveFormData);
+    if (courseSelect) courseSelect.addEventListener('change', saveFormData);
+    if (contactInput) contactInput.addEventListener('input', saveFormData);
+    if (guardianInput) guardianInput.addEventListener('input', saveFormData);
+    if (addressInput) addressInput.addEventListener('input', saveFormData);
 
     // Function to save form data to localStorage
     function saveFormData() {
-        localStorage.setItem('course', courseSelect.value);
-        localStorage.setItem('contact', contactInput.value);
-        localStorage.setItem('guardian', guardianInput.value);
-        localStorage.setItem('address', addressInput.value);
+        if (courseSelect) localStorage.setItem('course', courseSelect.value);
+        if (contactInput) localStorage.setItem('contact', contactInput.value);
+        if (guardianInput) localStorage.setItem('guardian', guardianInput.value);
+        if (addressInput) localStorage.setItem('address', addressInput.value);
     }
 
     // Load saved form data from localStorage
     function loadFormData() {
         // Load form fields
-        if (localStorage.getItem('course')) {
+        if (localStorage.getItem('course') && courseSelect) {
             courseSelect.value = localStorage.getItem('course');
         }
         
-        if (localStorage.getItem('contact')) {
+        if (localStorage.getItem('contact') && contactInput) {
             contactInput.value = localStorage.getItem('contact');
         }
         
-        if (localStorage.getItem('guardian')) {
+        if (localStorage.getItem('guardian') && guardianInput) {
             guardianInput.value = localStorage.getItem('guardian');
         }
         
-        if (localStorage.getItem('address')) {
+        if (localStorage.getItem('address') && addressInput) {
             addressInput.value = localStorage.getItem('address');
         }
         
@@ -245,12 +268,19 @@ document.addEventListener("DOMContentLoaded", function () {
             loadSignatureFromData(localStorage.getItem('signatureData'));
         }
         
-        // Load thickness value if available
-        if (localStorage.getItem('thicknessValue')) {
-            const savedThickness = localStorage.getItem('thicknessValue');
+        // Load thickness and intensity values if available
+        if (localStorage.getItem('signatureThickness')) {
+            const savedThickness = parseFloat(localStorage.getItem('signatureThickness'));
             thicknessSlider.value = savedThickness;
-            thicknessValue.textContent = `${savedThickness}%`;
-            currentThickness = (parseInt(savedThickness) / 100) * 2;
+            thicknessValue.textContent = savedThickness;
+            currentThickness = savedThickness;
+        }
+        
+        if (localStorage.getItem('signatureIntensity')) {
+            const savedIntensity = parseInt(localStorage.getItem('signatureIntensity'));
+            intensitySlider.value = savedIntensity;
+            intensityValue.textContent = savedIntensity;
+            currentIntensity = savedIntensity;
         }
         
         // Load strokes if available
@@ -366,6 +396,8 @@ document.addEventListener("DOMContentLoaded", function () {
         localStorage.removeItem('signatureData');
         localStorage.removeItem('signatureStrokes');
         localStorage.removeItem('signatureValidated');
+        localStorage.removeItem('signatureThickness');
+        localStorage.removeItem('signatureIntensity');
         
         // Clear success message
         document.getElementById('signature_success').classList.add('d-none');
@@ -373,6 +405,11 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function saveSignature() {
+        if (strokes.length === 0) {
+            alert('Please draw your signature first.');
+            return;
+        }
+
         // Copy the canvas content to a temporary canvas
         const tempCanvas = document.createElement('canvas');
         const tempCtx = tempCanvas.getContext('2d');
@@ -401,10 +438,12 @@ document.addEventListener("DOMContentLoaded", function () {
         const signatureData = tempCanvas.toDataURL('image/png');
         signatureInput.value = signatureData;
         
-        // Save signature data to localStorage
+        // Save signature data and settings to localStorage
         localStorage.setItem('signatureData', signatureData);
+        localStorage.setItem('signatureThickness', currentThickness);
+        localStorage.setItem('signatureIntensity', currentIntensity);
         
-        // Process the signature on the server
+        // Process the signature on the server with current settings
         processSignature(signatureData);
     }
 
@@ -414,13 +453,18 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById('signature_error').classList.add('d-none');
         document.getElementById('signature_success').classList.add('d-none');
         
-        // Send signature data to server for processing
+        // Send signature data to server for processing with thickness and intensity
         fetch('/process_signature', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ signature: signatureData }),
+            body: JSON.stringify({ 
+                signature: signatureData,
+                thickness: currentThickness,
+                intensity: currentIntensity,
+                contrast: 120 // Default contrast
+            }),
         })
         .then(response => response.json())
         .then(data => {
@@ -430,7 +474,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (data.success) {
                 // Show success message
                 const successMsg = document.getElementById('signature_success');
-                successMsg.textContent = '✅ Signature processed successfully!';
+                successMsg.textContent = '✅ Signature processed and saved successfully!';
                 successMsg.classList.remove('d-none');
                 
                 // Enable submit button
@@ -470,13 +514,19 @@ document.addEventListener("DOMContentLoaded", function () {
         // Clear the canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+        // Calculate ink color based on intensity
+        const intensityFactor = currentIntensity / 100;
+        const grayValue = Math.round(255 * (1 - intensityFactor * 0.8)); // 0.8 max darkness
+        const strokeColor = `rgb(${grayValue}, ${grayValue}, ${grayValue})`;
+
         // Redraw all strokes
         strokes.forEach(stroke => {
             if (stroke.length > 1) {
                 const smoothedPoints = smoothPoints(stroke, 3); // Smooth the points
                 ctx.lineWidth = currentThickness;
                 ctx.lineCap = 'round';
-                ctx.strokeStyle = '#000';
+                ctx.lineJoin = 'round';
+                ctx.strokeStyle = strokeColor;
                 ctx.beginPath();
                 ctx.moveTo(smoothedPoints[0].x, smoothedPoints[0].y);
                 for (let i = 1; i < smoothedPoints.length; i++) {
@@ -487,18 +537,19 @@ document.addEventListener("DOMContentLoaded", function () {
                 // Draw a dot for single-point strokes
                 const point = stroke[0];
                 ctx.beginPath();
-                ctx.arc(point.x, point.y, currentThickness / 2, 0, Math.PI * 2); // Draw a dot
-                ctx.fillStyle = '#000';
+                ctx.arc(point.x, point.y, currentThickness / 2, 0, Math.PI * 2);
+                ctx.fillStyle = strokeColor;
                 ctx.fill();
             }
         });
 
         // Redraw the current stroke (if drawing)
         if (isDrawing && currentStroke.length > 0) {
-            const smoothedPoints = smoothPoints(currentStroke, 3); // Smooth the points
+            const smoothedPoints = smoothPoints(currentStroke, 3);
             ctx.lineWidth = currentThickness;
             ctx.lineCap = 'round';
-            ctx.strokeStyle = '#000';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = strokeColor;
             ctx.beginPath();
             ctx.moveTo(smoothedPoints[0].x, smoothedPoints[0].y);
             for (let i = 1; i < smoothedPoints.length; i++) {

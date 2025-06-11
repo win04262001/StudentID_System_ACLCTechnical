@@ -149,11 +149,10 @@
     <nav class="bg-white shadow-sm py-4 sticky top-0 z-50">
         <div class="container mx-auto px-4 flex justify-between items-center">
             <div class="flex items-center space-x-2">
-                <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                    <i class="fas fa-id-card text-white"></i>
-                </div>
-                <span class="font-bold text-xl text-blue-600">ACLC ID System</span>
-            </div>
+
+        <div class="logo">
+            <img src="{{ url_for('static', filename='logo03.png') }}" alt="ASIS Logo" style="height: 60px;">
+        </div>            </div>
             <div class="hidden md:flex space-x-6">
                 <a href="#" class="text-blue-600 font-medium">Home</a>
                 <a href="#faq" class="text-gray-600 hover:text-blue-600 transition">FAQ</a>
@@ -286,13 +285,13 @@
                 <div class="mb-6 border-b border-gray-200 pb-6">
                     <h3 class="font-bold text-gray-800 mb-2">How long does it take to get my ID?</h3>
                     <p class="text-gray-600">
-                        Processing typically after you submit your application we process it and monitor your status on your dashboard.
+                        Once you submit your application, it will be processed, and you can monitor its status through your dashboard.
                     </p>
                 </div>
                 <div class="mb-6 border-b border-gray-200 pb-6">
                     <h3 class="font-bold text-gray-800 mb-2">What documents do I need to submit?</h3>
                     <p class="text-gray-600">
-                        You'll just need submit your application we can process on time.
+                        You only need to submit a profile photo with a white background and a clear view of your face, along with your e-signature. Once submitted, we will process your application on time.
                     </p>
                 </div>
                 <div class="mb-6 border-b border-gray-200 pb-6">
@@ -304,7 +303,7 @@
                 <div class="mb-6">
                     <h3 class="font-bold text-gray-800 mb-2">What if I lose my ID?</h3>
                     <p class="text-gray-600">
-                        You can request a replacement ID through the same system for a small fee.
+                        We have a process in place for lost IDs. You just need to visit the OSAS department to begin the procedure.
                     </p>
                 </div>
             </div>
@@ -343,7 +342,6 @@
                     <h3 class="font-bold text-lg mb-4">Quick Links</h3>
                     <ul class="space-y-2">
                         <li><a href="#" class="text-gray-400 hover:text-white transition">Home</a></li>
-                        <li><a href="#features" class="text-gray-400 hover:text-white transition">Features</a></li>
                         <li><a href="#faq" class="text-gray-400 hover:text-white transition">FAQ</a></li>
                         <li><a href="/login" class="text-gray-400 hover:text-white transition">Login</a></li>
                     </ul>

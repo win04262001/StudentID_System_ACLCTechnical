@@ -6,11 +6,27 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poetsen+One&family=Viga&display=swap" rel="stylesheet">
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.jpg') }}">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poetsen+One&family=Viga&display=swap" rel="stylesheet">
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.jpg') }}">
   <title>ID Card Generator</title>
+  <style>
+    .resizable-signature img {
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
+      filter: contrast(1.1) brightness(0.95);
+    }
+
+    #signature-preview-front {
+      min-height: 40px;
+      object-fit: contain;
+    }
+
+    .signature-line-front {
+      border-top: 1px solid #000;
+    }
+  </style>
   <a href="{{ url_for('admin_applications') }}" class="btn btn-secondary btn-lg">
     Back
   </a>
@@ -79,9 +95,6 @@
           </div>
         </div>
 
-
-
-        
         <!-- Signature Container -->
         <div class="section signature-container">
           <div class="signature-box">
@@ -153,58 +166,17 @@
 
       <div class="d-flex gap-2">
         <button class="btn btn-primary" onclick="downloadBack()">
-          <i class="bi bi-download me-2"></i>Download Front
+          <i class="bi bi-download me-2"></i>Download Back
         </button>
         
         <button class="btn btn-outline-primary" onclick="printBack()">
-          <i class="bi bi-printer me-2"></i>Print Front
+          <i class="bi bi-printer me-2"></i>Print Back
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Signature Tool Modal -->
-  <div class="modal fade" id="signatureToolModal" tabindex="-1" aria-labelledby="signatureToolModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content bg-dark text-white">
-        <div class="modal-header">
-          <h5 class="modal-title">✍️ Signature Tool</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <!-- Before and After Sections -->
-          <div class="row">
-            <div class="col-md-6">
-              <h6>Before</h6>
-              <canvas id="beforeCanvas" class="border img-fluid bg-white"></canvas>
-            </div>
-            <div class="col-md-6">
-              <h6>After</h6>
-              <canvas id="afterCanvas" class="border img-fluid bg-white"></canvas>
-            </div>
-          </div>
-
-          <!-- Thickness Slider -->
-          <div class="mt-3">
-            <label for="thicknessSlider">Thickness: <span id="thicknessValue">1</span>px</label>
-            <input type="range" id="thicknessSlider" min="1" max="10" value="1">
-          </div>
-          
-          <!-- Background Opacity Slider -->
-          <div class="mt-3">
-            <label for="bgOpacitySlider">Background Opacity: <span id="bgOpacityValue">0</span>%</label>
-            <input type="range" id="bgOpacitySlider" min="0" max="100" value="0">
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary" onclick="applySignatureChanges()">Apply Changes</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
   <script>
     // Function to load data from localStorage
     function loadDataToIdLayout() {
@@ -223,7 +195,6 @@
       if (studentID) {
         document.getElementById("studentNumberInput").value = studentID;
       } else if (localStorage.getItem("studentNumber")) {
-        // Also check for studentNumber as a fallback
         document.getElementById("studentNumberInput").value = localStorage.getItem("studentNumber");
       }
       if (signatureImage) {
@@ -244,15 +215,7 @@
         document.getElementById("studentNumberInput").value = studentNumber;
       }
 
-      console.log("Loading data from localStorage:", {
-        profilePicture: localStorage.getItem("profilePicture"),
-        studentID: localStorage.getItem("studentID"),
-        studentNumber: localStorage.getItem("studentNumber"),
-        signatureImage: localStorage.getItem("signatureImage"),
-        barcodeImage: localStorage.getItem("barcodeImage"),
-        studentName: localStorage.getItem("studentName"),
-        studentCourse: localStorage.getItem("studentCourse")
-      });
+      console.log("✅ Data loaded from localStorage - signature settings preserved");
     }
 
     // Load emergency contact details
@@ -269,118 +232,6 @@
     if (address) {
       document.getElementById("emergencyAddress").value = address;
     }
-
-    // Function to open the signature tool modal
-    function openSignatureTool() {
-      const signatureImg = document.getElementById("signature-preview-front");
-      const beforeCanvas = document.getElementById("beforeCanvas");
-      const afterCanvas = document.getElementById("afterCanvas");
-
-      // Set canvas dimensions to match the signature image
-      beforeCanvas.width = signatureImg.width;
-      beforeCanvas.height = signatureImg.height;
-      afterCanvas.width = signatureImg.width;
-      afterCanvas.height = signatureImg.height;
-
-      // Draw the original signature on the "before" canvas
-      const beforeCtx = beforeCanvas.getContext("2d");
-      beforeCtx.clearRect(0, 0, beforeCanvas.width, beforeCanvas.height);
-      beforeCtx.fillStyle = "#ffffff";
-      beforeCtx.fillRect(0, 0, beforeCanvas.width, beforeCanvas.height);
-      
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = function() {
-        beforeCtx.drawImage(img, 0, 0, beforeCanvas.width, beforeCanvas.height);
-        
-        // Draw the signature on the "after" canvas with background removal
-        const afterCtx = afterCanvas.getContext("2d");
-        afterCtx.clearRect(0, 0, afterCanvas.width, afterCanvas.height);
-        afterCtx.fillStyle = "#ffffff";
-        afterCtx.fillRect(0, 0, afterCanvas.width, afterCanvas.height);
-        afterCtx.drawImage(img, 0, 0, afterCanvas.width, afterCanvas.height);
-        
-        // Process the "after" canvas
-        processSignature();
-      };
-      img.src = signatureImg.src;
-
-      // Show the modal
-      const signatureToolModal = new bootstrap.Modal(document.getElementById("signatureToolModal"));
-      signatureToolModal.show();
-    }
-    
-    // Function to process the signature based on slider values
-    function processSignature() {
-      const afterCanvas = document.getElementById("afterCanvas");
-      const afterCtx = afterCanvas.getContext("2d");
-      const beforeCanvas = document.getElementById("beforeCanvas");
-      const thickness = parseInt(document.getElementById("thicknessSlider").value);
-      const bgOpacity = parseInt(document.getElementById("bgOpacitySlider").value) / 100;
-      
-      // Clear the canvas
-      afterCtx.clearRect(0, 0, afterCanvas.width, afterCanvas.height);
-      
-      // Set background with opacity
-      afterCtx.fillStyle = `rgba(255, 255, 255, ${1 - bgOpacity})`;
-      afterCtx.fillRect(0, 0, afterCanvas.width, afterCanvas.height);
-      
-      // Get the image data from the before canvas
-      const beforeCtx = beforeCanvas.getContext("2d");
-      const imageData = beforeCtx.getImageData(0, 0, beforeCanvas.width, beforeCanvas.height);
-      const data = imageData.data;
-      
-      // Create a temporary canvas for processing
-      const tempCanvas = document.createElement("canvas");
-      tempCanvas.width = afterCanvas.width;
-      tempCanvas.height = afterCanvas.height;
-      const tempCtx = tempCanvas.getContext("2d");
-      
-      // Draw the original image to the temp canvas
-      tempCtx.drawImage(beforeCanvas, 0, 0);
-      
-      // Draw with thicker lines if needed
-      if (thickness > 1) {
-        afterCtx.lineWidth = thickness;
-        afterCtx.lineCap = "round";
-        afterCtx.lineJoin = "round";
-        afterCtx.strokeStyle = "#000000";
-      }
-      
-      // Draw the processed image
-      afterCtx.drawImage(tempCanvas, 0, 0);
-      
-      // Update thickness value display
-      document.getElementById("thicknessValue").textContent = thickness;
-      
-      // Update background opacity value display
-      document.getElementById("bgOpacityValue").textContent = bgOpacity * 100;
-    }
-    
-    // Add event listeners to sliders
-    document.getElementById("thicknessSlider").addEventListener("input", processSignature);
-    document.getElementById("bgOpacitySlider").addEventListener("input", processSignature);
-
-    // Function to apply changes to the signature
-    function applySignatureChanges() {
-      const afterCanvas = document.getElementById("afterCanvas");
-      const signatureImg = document.getElementById("signature-preview-front");
-      
-      // Update the signature image with the modified version
-      signatureImg.src = afterCanvas.toDataURL("image/png");
-      
-      // Save to localStorage
-      localStorage.setItem("signatureImage", signatureImg.src);
-      
-      // Close the modal
-      const signatureToolModal = bootstrap.Modal.getInstance(document.getElementById("signatureToolModal"));
-      signatureToolModal.hide();
-    }
-
-    // Add click event to the signature image
-    document.getElementById("signature-preview-front").addEventListener("click", openSignatureTool);
-    
-
     
     function downloadBack() {
       html2canvas(document.getElementById("back-id-card")).then(canvas => {
@@ -431,7 +282,7 @@
       }
    }
     
-    // Modify your download functions to call this first
+    // Download functions
     function downloadFront() {
       formatNameBeforeDownload();
       html2canvas(document.getElementById("front-id-card"), {
@@ -443,16 +294,7 @@
           link.click();
       });
    }
-
-      // Download functions
-      function downloadFront() {
-        html2canvas(document.getElementById("front-id-card")).then(canvas => {
-          const link = document.createElement("a");
-          link.download = "student_id_front.png";
-          link.href = canvas.toDataURL("image/png");
-          link.click();
-        });
-      }
+   
       
   </script>
 
@@ -460,4 +302,3 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-

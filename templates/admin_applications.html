@@ -7,7 +7,6 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="mb-0">📋 Manage Student Applications</h1>
             <div class="d-flex gap-2">
-
                 <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-house-fill me-1"></i> Back to Dashboard
                 </a>
@@ -30,50 +29,68 @@
         <div class="tab-content" id="mainTabsContent">
             <!-- Applications Tab -->
             <div class="tab-pane fade show active fade-in" id="applications" role="tabpanel" aria-labelledby="applications-tab">
+                <!-- Search and Filter Controls -->
                 <div class="row mb-4">
-                    <div class="col-md-6 mb-3 mb-md-0">
+                    <div class="col-12 mb-3">
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-search"></i></span>
                             <input type="text" id="searchInput" class="form-control" placeholder="Search by ID, name or course...">
                         </div>
                     </div>
-                    <div class="col-md-6 d-flex justify-content-md-end gap-2">
-                        <div class="dropdown">
-                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-funnel me-1"></i> Filter
-                                <span id="filterBadge" class="badge bg-primary d-none">0</span>
+                </div>
+
+                <!-- Status Filter Buttons -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                            <span class="fw-bold text-muted me-2">Filter by Status:</span>
+                            
+                            <button class="btn btn-outline-secondary btn-sm status-filter-btn active" data-status="all">
+                                <i class="bi bi-list-ul me-1"></i> All
+                                <span class="badge bg-secondary ms-1" id="countAll">0</span>
                             </button>
-                            <ul class="dropdown-menu" aria-labelledby="filterDropdown">
-                                <li class="px-3 py-2">
-                                    <h6 class="dropdown-header px-0">Filter by Status</h6>
-                                    <div class="form-check">
-                                        <input class="form-check-input status-filter" type="checkbox" value="pending" id="filterPending">
-                                        <label class="form-check-label" for="filterPending">Pending</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input status-filter" type="checkbox" value="processing" id="filterProcessing">
-                                        <label class="form-check-label" for="filterProcessing">Processing</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input status-filter" type="checkbox" value="done" id="filterDone">
-                                        <label class="form-check-label" for="filterDone">Done</label>
-                                    </div>
-                                    <div class="dropdown-divider"></div>
-                                    <button id="clearFilters" class="btn btn-sm btn-outline-secondary w-100">
-                                        <i class="bi bi-x me-1"></i> Clear Filters
+                            
+                            <button class="btn btn-outline-warning btn-sm status-filter-btn" data-status="pending">
+                                <i class="bi bi-clock me-1"></i> Pending
+                                <span class="badge bg-warning ms-1" id="countPending">0</span>
+                            </button>
+                            
+                            <button class="btn btn-outline-info btn-sm status-filter-btn" data-status="processing">
+                                <i class="bi bi-arrow-repeat me-1"></i> Processing
+                                <span class="badge bg-info ms-1" id="countProcessing">0</span>
+                            </button>
+                            
+                            <button class="btn btn-outline-success btn-sm status-filter-btn" data-status="done">
+                                <i class="bi bi-check-lg me-1"></i> Done
+                                <span class="badge bg-success ms-1" id="countDone">0</span>
+                            </button>
+
+                            <div class="ms-auto d-flex gap-2">
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-sort-down me-1"></i> Sort
                                     </button>
-                                </li>
-                            </ul>
+                                    <ul class="dropdown-menu" aria-labelledby="sortDropdown">
+                                        <li><button class="dropdown-item sort-option" data-field="student_id">Student ID</button></li>
+                                        <li><button class="dropdown-item sort-option" data-field="name">Name</button></li>
+                                        <li><button class="dropdown-item sort-option" data-field="course">Course</button></li>
+                                    </ul>
+                                </div>
+                                
+                                <button id="clearFilters" class="btn btn-outline-danger btn-sm">
+                                    <i class="bi bi-x-circle me-1"></i> Clear
+                                </button>
+                            </div>
                         </div>
-                        <div class="dropdown">
-                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-sort-down me-1"></i> Sort
-                            </button>
-                            <ul class="dropdown-menu" aria-labelledby="sortDropdown">
-                                <li><button class="dropdown-item sort-option" data-field="student_id">Student ID</button></li>
-                                <li><button class="dropdown-item sort-option" data-field="name">Name</button></li>
-                                <li><button class="dropdown-item sort-option" data-field="course">Course</button></li>
-                            </ul>
+                    </div>
+                </div>
+
+                <!-- Results Info -->
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted" id="resultsInfo">Showing 0 applications</span>
+                            <span class="text-muted" id="activeFilters"></span>
                         </div>
                     </div>
                 </div>
@@ -98,35 +115,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="applicationsTable">
-                                    {% for student in applications %}
-                                    {% if student.application_status != 'receive' %}
-                                    <tr>
-                                        <td class="fw-medium">{{ student.student_id }}</td>
-                                        <td>{{ student.name }}</td>
-                                        <td>{{ student.course }}</td>
-                                        <td>
-                                            <span class="status-badge 
-                                            {% if student.application_status == 'pending' %}status-pending
-                                            {% elif student.application_status == 'processing' %}status-processing
-                                            {% elif student.application_status == 'done' %}status-done
-                                            {% endif %}">
-                                            {% if student.application_status == 'pending' %}
-                                                <i class="bi bi-clock"></i> Pending
-                                            {% elif student.application_status == 'processing' %}
-                                                <i class="bi bi-arrow-repeat"></i> Processing
-                                            {% elif student.application_status == 'done' %}
-                                                <i class="bi bi-check-lg"></i> Done
-                                            {% endif %}
-                                            </span>
-                                        </td>
-                                        <td class="text-end">
-                                            <button class="btn btn-outline-secondary btn-sm view-student" onclick="loadStudentDetails('{{ student.student_id }}')">
-                                                <i class="bi bi-eye me-1"></i> View
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    {% endif %}
-                                    {% endfor %}
+                                    <!-- Table content will be populated by JavaScript -->
                                 </tbody>
                             </table>
                         </div>
@@ -141,8 +130,9 @@
                 </nav>
             </div>
             
-            <!-- Completed Tab -->
+            <!-- Completed Tab with Pagination -->
             <div class="tab-pane fade fade-in" id="completed" role="tabpanel" aria-labelledby="completed-tab">
+                <!-- Search and Controls for Completed -->
                 <div class="row mb-4">
                     <div class="col-md-6 mb-3 mb-md-0">
                         <div class="input-group">
@@ -150,10 +140,34 @@
                             <input type="text" id="searchCompletedInput" class="form-control" placeholder="Search completed applications...">
                         </div>
                     </div>
-                    <div class="col-md-6 d-flex justify-content-md-end">
-                        <a href="{{ url_for('student_id_history') }}" class="btn btn-outline-primary">
-                            <i class="bi bi-clock-history me-1"></i> View Full History
+                    <div class="col-md-6 d-flex justify-content-md-end gap-2">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="completedSortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-sort-down me-1"></i> Sort
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="completedSortDropdown">
+                                <li><button class="dropdown-item completed-sort-option" data-field="student_id">Student ID</button></li>
+                                <li><button class="dropdown-item completed-sort-option" data-field="name">Name</button></li>
+                                <li><button class="dropdown-item completed-sort-option" data-field="course">Course</button></li>
+                                <li><button class="dropdown-item completed-sort-option" data-field="received_date">Date Received</button></li>
+                            </ul>
+                        </div>
+                        <button id="clearCompletedFilters" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-x-circle me-1"></i> Clear
+                        </button>
+                        <a href="{{ url_for('student_id_history') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-clock-history me-1"></i> Full History
                         </a>
+                    </div>
+                </div>
+
+                <!-- Results Info for Completed -->
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted" id="completedResultsInfo">Loading completed applications...</span>
+                            <span class="text-muted" id="completedActiveFilters"></span>
+                        </div>
                     </div>
                 </div>
 
@@ -163,34 +177,35 @@
                             <table class="table table-hover mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Student ID</th>
-                                        <th>Name</th>
-                                        <th>Course</th>
-                                        <th>Received Date</th>
+                                        <th class="cursor-pointer" data-sort-completed="student_id">
+                                            Student ID <span class="completed-sort-indicator" data-field="student_id"></span>
+                                        </th>
+                                        <th class="cursor-pointer" data-sort-completed="name">
+                                            Name <span class="completed-sort-indicator" data-field="name"></span>
+                                        </th>
+                                        <th class="cursor-pointer" data-sort-completed="course">
+                                            Course <span class="completed-sort-indicator" data-field="course"></span>
+                                        </th>
+                                        <th class="cursor-pointer" data-sort-completed="received_date">
+                                            Received Date <span class="completed-sort-indicator" data-field="received_date"></span>
+                                        </th>
                                         <th class="text-end">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="completedTable">
-                                    {% for student in applications %}
-                                    {% if student.application_status == 'receive' %}
-                                    <tr>
-                                        <td class="fw-medium">{{ student.student_id }}</td>
-                                        <td>{{ student.name }}</td>
-                                        <td>{{ student.course }}</td>
-                                        <td>{{ student.received_date|default('Recently', true) }}</td>
-                                        <td class="text-end">
-                                            <button class="btn btn-outline-secondary btn-sm view-student" onclick="loadStudentDetails('{{ student.student_id }}')">
-                                                <i class="bi bi-eye me-1"></i> View
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    {% endif %}
-                                    {% endfor %}
+                                    <!-- Table content will be populated by JavaScript -->
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
+
+                <!-- Pagination for Completed -->
+                <nav aria-label="Completed applications pagination">
+                    <ul class="pagination justify-content-center" id="completedPagination">
+                        <!-- Pagination will be populated here -->
+                    </ul>
+                </nav>
             </div>
         </div>
 
@@ -221,34 +236,25 @@
                             </li>
                         </ul>
 
-                        <!-- Confirm Status Change Modal -->
-<!-- Confirmation Modal for DONE status -->
-<div class="modal fade" id="confirmStatusModal" tabindex="-1" aria-labelledby="confirmStatusModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-warning">
-        <div class="modal-header bg-warning text-dark">
-          <h5 class="modal-title" id="confirmStatusModalLabel">⚠️ Confirm Status Change</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          Are you sure you want to mark this application as <strong>DONE</strong>?<br>
-          This will notify the student that their ID is ready for pickup.
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-primary" id="confirmYesBtn">Yes, Confirm</button>
-        </div>
-      </div>
-    </div>
-  </div>
-  
-  <div id="modalLoader" class="d-none text-center">
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Processing...</span>
-    </div>
-    <p class="mt-2">Updating status...</p>
-  </div>
-  
+                        <!-- Confirmation Modal for DONE status -->
+                        <div class="modal fade" id="confirmStatusModal" tabindex="-1" aria-labelledby="confirmStatusModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-warning">
+                                    <div class="modal-header bg-warning text-dark">
+                                        <h5 class="modal-title" id="confirmStatusModalLabel">⚠️ Confirm Status Change</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        Are you sure you want to mark this application as <strong>DONE</strong>?<br>
+                                        This will notify the student that their ID is ready for pickup.
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="button" class="btn btn-primary" id="confirmYesBtn">Yes, Confirm</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         <div class="tab-content" id="studentTabsContent">
                             <!-- Details Tab -->
@@ -265,7 +271,7 @@
                                                     <div class="d-flex align-items-center gap-2">
                                                         <span id="studentID"></span>
                                                         <button class="btn btn-sm btn-outline-secondary set-local-storage" data-key="studentID" 
-                                                onclick="localStorage.setItem('studentNumber', document.getElementById('studentID').textContent); showToast('Item Saved', 'studentNumber has been saved to local storage.');">Set</button>
+                                                        onclick="localStorage.setItem('studentNumber', document.getElementById('studentID').textContent); showToast('Item Saved', 'studentNumber has been saved to local storage.');">Set</button>
                                                     </div>
                                                 </div>
                                                 <div class="d-flex justify-content-between align-items-center mb-2">
@@ -324,18 +330,10 @@
                                                 <div class="mb-3">
                                                     <label for="statusSelect" class="form-label">Current Status</label>
                                                     <select class="form-select" id="statusSelect">
-                                                        <option value="pending">
-                                                            <i class="bi bi-clock"></i> Pending
-                                                        </option>
-                                                        <option value="processing">
-                                                            <i class="bi bi-arrow-repeat"></i> Processing
-                                                        </option>
-                                                        <option value="done">
-                                                            <i class="bi bi-check-lg"></i> Done
-                                                        </option>
-                                                        <option value="receive">
-                                                            <i class="bi bi-emoji-smile"></i> Received
-                                                        </option>
+                                                        <option value="pending">Pending</option>
+                                                        <option value="processing">Processing</option>
+                                                        <option value="done">Done</option>
+                                                        <option value="receive">Received</option>
                                                     </select>
                                                 </div>
 
@@ -421,7 +419,7 @@
         </div>
 
         <!-- Toast Container -->
-        <div class="toast-container"></div>
+        <div class="toast-container position-fixed top-0 end-0 p-3"></div>
     </div>
 
     <!-- Bootstrap JS Bundle with Popper -->
@@ -432,69 +430,57 @@
         // Global variables
         let applications = [];
         let filteredApplications = [];
+        let completedApplications = [];
+        let filteredCompletedApplications = [];
         let selectedStudent = null;
         let currentPage = 1;
+        let completedCurrentPage = 1;
         let itemsPerPage = 10;
+        let completedItemsPerPage = 10;
         let sortField = "student_id";
         let sortDirection = "asc";
-        let statusFilter = [];
+        let completedSortField = "received_date";
+        let completedSortDirection = "desc";
+        let activeStatusFilter = "all";
         let searchQuery = "";
+        let completedSearchQuery = "";
 
         // DOM Elements
         const applicationsTable = document.getElementById('applicationsTable');
         const completedTable = document.getElementById('completedTable');
         const pagination = document.getElementById('pagination');
+        const completedPagination = document.getElementById('completedPagination');
         const searchInput = document.getElementById('searchInput');
         const searchCompletedInput = document.getElementById('searchCompletedInput');
         const clearFiltersBtn = document.getElementById('clearFilters');
-        const statusFilterCheckboxes = document.querySelectorAll('.status-filter');
+        const clearCompletedFiltersBtn = document.getElementById('clearCompletedFilters');
+        const statusFilterBtns = document.querySelectorAll('.status-filter-btn');
         const sortOptions = document.querySelectorAll('.sort-option');
+        const completedSortOptions = document.querySelectorAll('.completed-sort-option');
         const sortableHeaders = document.querySelectorAll('th[data-sort]');
-        const themeToggleBtn = document.getElementById('themeToggle');
+        const completedSortableHeaders = document.querySelectorAll('th[data-sort-completed]');
         const saveStatusBtn = document.getElementById('saveStatusBtn');
         const statusSelect = document.getElementById('statusSelect');
         const setLocalStorageBtns = document.querySelectorAll('.set-local-storage');
-        const filterBadge = document.getElementById('filterBadge');
+        const resultsInfo = document.getElementById('resultsInfo');
+        const activeFilters = document.getElementById('activeFilters');
+        const completedResultsInfo = document.getElementById('completedResultsInfo');
+        const completedActiveFilters = document.getElementById('completedActiveFilters');
         
         // Initialize Bootstrap components
         const studentModal = new bootstrap.Modal(document.getElementById('studentModal'));
-        const mainTabs = document.getElementById('mainTabs');
-        const applicationTab = document.getElementById('applications-tab');
 
         // Helper functions
         function getStatusBadge(status) {
-            let badgeClass = '';
-            let icon = '';
-            let text = '';
+            const statusConfig = {
+                'pending': { class: 'status-pending', icon: 'bi-clock', text: 'Pending' },
+                'processing': { class: 'status-processing', icon: 'bi-arrow-repeat', text: 'Processing' },
+                'done': { class: 'status-done', icon: 'bi-check-lg', text: 'Done' },
+                'receive': { class: 'status-receive', icon: 'bi-emoji-smile', text: 'Received' }
+            };
 
-            switch(status) {
-                case 'pending':
-                    badgeClass = 'status-pending';
-                    icon = '<i class="bi bi-clock"></i>';
-                    text = 'Pending';
-                    break;
-                case 'processing':
-                    badgeClass = 'status-processing';
-                    icon = '<i class="bi bi-arrow-repeat"></i>';
-                    text = 'Processing';
-                    break;
-                case 'done':
-                    badgeClass = 'status-done';
-                    icon = '<i class="bi bi-check-lg"></i>';
-                    text = 'Done';
-                    break;
-                case 'receive':
-                    badgeClass = 'status-receive';
-                    icon = '<i class="bi bi-emoji-smile"></i>';
-                    text = 'Received';
-                    break;
-                default:
-                    badgeClass = '';
-                    icon = '';
-                    text = status;
-            }
-
-            return `<span class="status-badge ${badgeClass}">${icon} ${text}</span>`;
+            const config = statusConfig[status] || { class: '', icon: '', text: status };
+            return `<span class="status-badge ${config.class}"><i class="bi ${config.icon}"></i> ${config.text}</span>`;
         }
 
         function showToast(title, message, type = 'success') {
@@ -519,22 +505,58 @@
             const toast = new bootstrap.Toast(toastElement, { autohide: true, delay: 3000 });
             toast.show();
             
-            // Remove toast from DOM after it's hidden
             toastElement.addEventListener('hidden.bs.toast', function () {
                 toastElement.remove();
             });
         }
 
+        function formatDate(dateString) {
+            if (!dateString) return 'Recently';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function updateStatusCounts() {
+            const counts = {
+                all: 0,
+                pending: 0,
+                processing: 0,
+                done: 0,
+                receive: 0
+            };
+
+            applications.forEach(app => {
+                if (app.application_status !== 'receive') {
+                    counts.all++;
+                    counts[app.application_status] = (counts[app.application_status] || 0) + 1;
+                }
+            });
+
+            // Update badge counts
+            document.getElementById('countAll').textContent = counts.all;
+            document.getElementById('countPending').textContent = counts.pending;
+            document.getElementById('countProcessing').textContent = counts.processing;
+            document.getElementById('countDone').textContent = counts.done;
+        }
+
         function updateStats() {
-            // Fetch stats from the server or calculate from applications array
             fetch('/get_all_students')
                 .then(response => response.json())
                 .then(data => {
                     applications = data;
-                    filteredApplications = applications.filter(app => app.application_status !== 'receive');
                     
-                    // Apply initial filtering and sorting
+                    // Separate completed applications
+                    completedApplications = data.filter(student => student.application_status === 'receive');
+                    
+                    updateStatusCounts();
                     filterAndSortApplications();
+                    filterAndSortCompletedApplications();
                 })
                 .catch(error => {
                     console.error('Error fetching students:', error);
@@ -543,7 +565,10 @@
         }
 
         function filterAndSortApplications() {
-            let result = filteredApplications;
+            let result = [...applications];
+            
+            // Filter out received applications for the main view
+            result = result.filter(student => student.application_status !== 'receive');
             
             // Apply search filter
             if (searchQuery) {
@@ -555,13 +580,12 @@
             }
             
             // Apply status filter
-            if (statusFilter.length > 0) {
-                result = result.filter(student => statusFilter.includes(student.application_status));
+            if (activeStatusFilter !== 'all') {
+                result = result.filter(student => student.application_status === activeStatusFilter);
             }
             
             // Apply sorting
             result.sort((a, b) => {
-                // Handle null values
                 const aValue = a[sortField] || '';
                 const bValue = b[sortField] || '';
                 
@@ -573,12 +597,170 @@
             });
             
             filteredApplications = result;
+            updateResultsInfo();
+            renderApplicationsTable();
             renderPagination();
+        }
+
+        function filterAndSortCompletedApplications() {
+            let result = [...completedApplications];
+            
+            // Apply search filter
+            if (completedSearchQuery) {
+                result = result.filter(student => 
+                    student.student_id.toLowerCase().includes(completedSearchQuery.toLowerCase()) ||
+                    (student.name && student.name.toLowerCase().includes(completedSearchQuery.toLowerCase())) ||
+                    (student.course && student.course.toLowerCase().includes(completedSearchQuery.toLowerCase()))
+                );
+            }
+            
+            // Apply sorting
+            result.sort((a, b) => {
+                let aValue = a[completedSortField] || '';
+                let bValue = b[completedSortField] || '';
+                
+                // Special handling for date sorting
+                if (completedSortField === 'received_date') {
+                    aValue = new Date(aValue || 0);
+                    bValue = new Date(bValue || 0);
+                }
+                
+                if (completedSortDirection === "asc") {
+                    return aValue > bValue ? 1 : -1;
+                } else {
+                    return aValue < bValue ? 1 : -1;
+                }
+            });
+            
+            filteredCompletedApplications = result;
+            updateCompletedResultsInfo();
+            renderCompletedTable();
+            renderCompletedPagination();
+        }
+
+        function updateResultsInfo() {
+            const total = filteredApplications.length;
+            const startIndex = (currentPage - 1) * itemsPerPage + 1;
+            const endIndex = Math.min(currentPage * itemsPerPage, total);
+            
+            if (total === 0) {
+                resultsInfo.textContent = 'No applications found';
+            } else {
+                resultsInfo.textContent = `Showing ${startIndex}-${endIndex} of ${total} applications`;
+            }
+
+            // Update active filters display
+            let filterText = '';
+            if (activeStatusFilter !== 'all') {
+                filterText += `Status: ${activeStatusFilter.charAt(0).toUpperCase() + activeStatusFilter.slice(1)}`;
+            }
+            if (searchQuery) {
+                filterText += (filterText ? ', ' : '') + `Search: "${searchQuery}"`;
+            }
+            
+            activeFilters.textContent = filterText ? `Active filters: ${filterText}` : '';
+        }
+
+        function updateCompletedResultsInfo() {
+            const total = filteredCompletedApplications.length;
+            const startIndex = (completedCurrentPage - 1) * completedItemsPerPage + 1;
+            const endIndex = Math.min(completedCurrentPage * completedItemsPerPage, total);
+            
+            if (total === 0) {
+                completedResultsInfo.textContent = 'No completed applications found';
+            } else {
+                completedResultsInfo.textContent = `Showing ${startIndex}-${endIndex} of ${total} completed applications`;
+            }
+
+            // Update active filters display
+            let filterText = '';
+            if (completedSearchQuery) {
+                filterText += `Search: "${completedSearchQuery}"`;
+            }
+            
+            completedActiveFilters.textContent = filterText ? `Active filters: ${filterText}` : '';
+        }
+
+        function renderApplicationsTable() {
+            applicationsTable.innerHTML = '';
+            
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const paginatedResults = filteredApplications.slice(startIndex, endIndex);
+            
+            if (paginatedResults.length === 0) {
+                applicationsTable.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center py-4">
+                            <div class="text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                <p class="mb-0">No applications found</p>
+                                ${activeStatusFilter !== 'all' || searchQuery ? '<small>Try adjusting your filters</small>' : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            paginatedResults.forEach(student => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="fw-medium">${student.student_id}</td>
+                    <td>${student.name || 'N/A'}</td>
+                    <td>${student.course || 'N/A'}</td>
+                    <td>${getStatusBadge(student.application_status)}</td>
+                    <td class="text-end">
+                        <button class="btn btn-outline-secondary btn-sm view-student" onclick="loadStudentDetails('${student.student_id}')">
+                            <i class="bi bi-eye me-1"></i> View
+                        </button>
+                    </td>
+                `;
+                applicationsTable.appendChild(row);
+            });
+        }
+
+        function renderCompletedTable() {
+            completedTable.innerHTML = '';
+            
+            const startIndex = (completedCurrentPage - 1) * completedItemsPerPage;
+            const endIndex = startIndex + completedItemsPerPage;
+            const paginatedResults = filteredCompletedApplications.slice(startIndex, endIndex);
+            
+            if (paginatedResults.length === 0) {
+                completedTable.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center py-4">
+                            <div class="text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                <p class="mb-0">No completed applications found</p>
+                                ${completedSearchQuery ? '<small>Try adjusting your search</small>' : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            paginatedResults.forEach(student => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="fw-medium">${student.student_id}</td>
+                    <td>${student.name || 'N/A'}</td>
+                    <td>${student.course || 'N/A'}</td>
+                    <td>${formatDate(student.received_date)}</td>
+                    <td class="text-end">
+                        <button class="btn btn-outline-secondary btn-sm view-student" onclick="loadStudentDetails('${student.student_id}')">
+                            <i class="bi bi-eye me-1"></i> View
+                        </button>
+                    </td>
+                `;
+                completedTable.appendChild(row);
+            });
         }
 
         function renderPagination() {
             const totalPages = Math.ceil(filteredApplications.length / itemsPerPage);
-            
             pagination.innerHTML = '';
             
             if (totalPages <= 1) {
@@ -589,53 +771,218 @@
             const prevLi = document.createElement('li');
             prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
             prevLi.innerHTML = `
-                <button class="page-link" aria-label="Previous">
+                <button class="page-link" ${currentPage === 1 ? 'disabled' : ''}>
                     <span aria-hidden="true">&laquo;</span>
                 </button>
             `;
+            if (currentPage > 1) {
+                prevLi.querySelector('button').addEventListener('click', () => {
+                    currentPage--;
+                    filterAndSortApplications();
+                });
+            }
             pagination.appendChild(prevLi);
             
             // Page numbers
-            for (let i = 1; i <= totalPages; i++) {
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+            
+            if (startPage > 1) {
+                const firstLi = document.createElement('li');
+                firstLi.className = 'page-item';
+                firstLi.innerHTML = '<button class="page-link">1</button>';
+                firstLi.querySelector('button').addEventListener('click', () => {
+                    currentPage = 1;
+                    filterAndSortApplications();
+                });
+                pagination.appendChild(firstLi);
+                
+                if (startPage > 2) {
+                    const ellipsisLi = document.createElement('li');
+                    ellipsisLi.className = 'page-item disabled';
+                    ellipsisLi.innerHTML = '<span class="page-link">...</span>';
+                    pagination.appendChild(ellipsisLi);
+                }
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
                 const pageLi = document.createElement('li');
                 pageLi.className = `page-item ${currentPage === i ? 'active' : ''}`;
                 pageLi.innerHTML = `<button class="page-link">${i}</button>`;
+                pageLi.querySelector('button').addEventListener('click', () => {
+                    currentPage = i;
+                    filterAndSortApplications();
+                });
                 pagination.appendChild(pageLi);
+            }
+            
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    const ellipsisLi = document.createElement('li');
+                    ellipsisLi.className = 'page-item disabled';
+                    ellipsisLi.innerHTML = '<span class="page-link">...</span>';
+                    pagination.appendChild(ellipsisLi);
+                }
+                
+                const lastLi = document.createElement('li');
+                lastLi.className = 'page-item';
+                lastLi.innerHTML = `<button class="page-link">${totalPages}</button>`;
+                lastLi.querySelector('button').addEventListener('click', () => {
+                    currentPage = totalPages;
+                    filterAndSortApplications();
+                });
+                pagination.appendChild(lastLi);
             }
             
             // Next button
             const nextLi = document.createElement('li');
             nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
             nextLi.innerHTML = `
-                <button class="page-link" aria-label="Next">
+                <button class="page-link" ${currentPage === totalPages ? 'disabled' : ''}>
                     <span aria-hidden="true">&raquo;</span>
                 </button>
             `;
-            pagination.appendChild(nextLi);
-            
-            // Add event listeners to pagination buttons
-            document.querySelectorAll('.page-link').forEach((button, index) => {
-                button.addEventListener('click', function() {
-                    if (index === 0) {
-                        // Previous button
-                        if (currentPage > 1) {
-                            currentPage--;
-                        }
-                    } else if (index === totalPages + 1) {
-                        // Next button
-                        if (currentPage < totalPages) {
-                            currentPage++;
-                        }
-                    } else {
-                        // Page number
-                        currentPage = index;
-                    }
+            if (currentPage < totalPages) {
+                nextLi.querySelector('button').addEventListener('click', () => {
+                    currentPage++;
+                    filterAndSortApplications();
                 });
+            }
+            pagination.appendChild(nextLi);
+        }
+
+        function renderCompletedPagination() {
+            const totalPages = Math.ceil(filteredCompletedApplications.length / completedItemsPerPage);
+            completedPagination.innerHTML = '';
+            
+            if (totalPages <= 1) {
+                return;
+            }
+            
+            // Previous button
+            const prevLi = document.createElement('li');
+            prevLi.className = `page-item ${completedCurrentPage === 1 ? 'disabled' : ''}`;
+            prevLi.innerHTML = `
+                <button class="page-link" ${completedCurrentPage === 1 ? 'disabled' : ''}>
+                    <span aria-hidden="true">&laquo;</span>
+                </button>
+            `;
+            if (completedCurrentPage > 1) {
+                prevLi.querySelector('button').addEventListener('click', () => {
+                    completedCurrentPage--;
+                    filterAndSortCompletedApplications();
+                });
+            }
+            completedPagination.appendChild(prevLi);
+            
+            // Page numbers
+            const startPage = Math.max(1, completedCurrentPage - 2);
+            const endPage = Math.min(totalPages, completedCurrentPage + 2);
+            
+            if (startPage > 1) {
+                const firstLi = document.createElement('li');
+                firstLi.className = 'page-item';
+                firstLi.innerHTML = '<button class="page-link">1</button>';
+                firstLi.querySelector('button').addEventListener('click', () => {
+                    completedCurrentPage = 1;
+                    filterAndSortCompletedApplications();
+                });
+                completedPagination.appendChild(firstLi);
+                
+                if (startPage > 2) {
+                    const ellipsisLi = document.createElement('li');
+                    ellipsisLi.className = 'page-item disabled';
+                    ellipsisLi.innerHTML = '<span class="page-link">...</span>';
+                    completedPagination.appendChild(ellipsisLi);
+                }
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const pageLi = document.createElement('li');
+                pageLi.className = `page-item ${completedCurrentPage === i ? 'active' : ''}`;
+                pageLi.innerHTML = `<button class="page-link">${i}</button>`;
+                pageLi.querySelector('button').addEventListener('click', () => {
+                    completedCurrentPage = i;
+                    filterAndSortCompletedApplications();
+                });
+                completedPagination.appendChild(pageLi);
+            }
+            
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    const ellipsisLi = document.createElement('li');
+                    ellipsisLi.className = 'page-item disabled';
+                    ellipsisLi.innerHTML = '<span class="page-link">...</span>';
+                    completedPagination.appendChild(ellipsisLi);
+                }
+                
+                const lastLi = document.createElement('li');
+                lastLi.className = 'page-item';
+                lastLi.innerHTML = `<button class="page-link">${totalPages}</button>`;
+                lastLi.querySelector('button').addEventListener('click', () => {
+                    completedCurrentPage = totalPages;
+                    filterAndSortCompletedApplications();
+                });
+                completedPagination.appendChild(lastLi);
+            }
+            
+            // Next button
+            const nextLi = document.createElement('li');
+            nextLi.className = `page-item ${completedCurrentPage === totalPages ? 'disabled' : ''}`;
+            nextLi.innerHTML = `
+                <button class="page-link" ${completedCurrentPage === totalPages ? 'disabled' : ''}>
+                    <span aria-hidden="true">&raquo;</span>
+                </button>
+            `;
+            if (completedCurrentPage < totalPages) {
+                nextLi.querySelector('button').addEventListener('click', () => {
+                    completedCurrentPage++;
+                    filterAndSortCompletedApplications();
+                });
+            }
+            completedPagination.appendChild(nextLi);
+        }
+
+        function setActiveStatusFilter(status) {
+            // Remove active class from all buttons
+            statusFilterBtns.forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.remove('btn-warning', 'btn-info', 'btn-success', 'btn-secondary');
+                btn.classList.add('btn-outline-warning', 'btn-outline-info', 'btn-outline-success', 'btn-outline-secondary');
             });
+            
+            // Add active class to clicked button
+            const activeBtn = document.querySelector(`[data-status="${status}"]`);
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+                
+                // Update button styling based on status
+                switch(status) {
+                    case 'all':
+                        activeBtn.classList.remove('btn-outline-secondary');
+                        activeBtn.classList.add('btn-secondary');
+                        break;
+                    case 'pending':
+                        activeBtn.classList.remove('btn-outline-warning');
+                        activeBtn.classList.add('btn-warning');
+                        break;
+                    case 'processing':
+                        activeBtn.classList.remove('btn-outline-info');
+                        activeBtn.classList.add('btn-info');
+                        break;
+                    case 'done':
+                        activeBtn.classList.remove('btn-outline-success');
+                        activeBtn.classList.add('btn-success');
+                        break;
+                }
+            }
+            
+            activeStatusFilter = status;
+            currentPage = 1;
+            filterAndSortApplications();
         }
 
         function loadStudentDetails(studentId) {
-            // Fetch student details from the server
             fetch(`/get_student/${studentId}`)
                 .then(response => response.json())
                 .then(student => {
@@ -679,94 +1026,49 @@
             const timeline = document.getElementById('applicationTimeline');
             timeline.innerHTML = '';
             
-            // Submitted
-            const submittedItem = document.createElement('div');
-            submittedItem.className = 'timeline-item';
-            submittedItem.innerHTML = `
-                <div class="timeline-marker timeline-marker-pending">
-                    <i class="bi bi-clock"></i>
-                </div>
-                <div>
-                    <p class="fw-medium mb-0">Application Submitted</p>
-                    <p class="small text-muted">Student submitted application</p>
-                </div>
-            `;
-            timeline.appendChild(submittedItem);
+            const timelineSteps = [
+                { status: 'pending', icon: 'bi-clock', title: 'Application Submitted', desc: 'Student submitted application' },
+                { status: 'processing', icon: 'bi-arrow-repeat', title: 'Processing Started', desc: 'Status updated to processing' },
+                { status: 'done', icon: 'bi-check-lg', title: 'Processing Completed', desc: 'ID card is ready for pickup' },
+                { status: 'receive', icon: 'bi-emoji-smile', title: 'ID Card Received', desc: 'Student has received their ID card' }
+            ];
             
-            // Processing
-            if (status === 'processing' || status === 'done' || status === 'receive') {
-                const processingItem = document.createElement('div');
-                processingItem.className = 'timeline-item';
-                processingItem.innerHTML = `
-                    <div class="timeline-marker timeline-marker-processing">
-                        <i class="bi bi-arrow-repeat"></i>
-                    </div>
-                    <div>
-                        <p class="fw-medium mb-0">Processing Started</p>
-                        <p class="small text-muted">Status updated to processing</p>
-                    </div>
-                `;
-                timeline.appendChild(processingItem);
-            }
+            const statusOrder = ['pending', 'processing', 'done', 'receive'];
+            const currentIndex = statusOrder.indexOf(status);
             
-            // Done
-            if (status === 'done' || status === 'receive') {
-                const doneItem = document.createElement('div');
-                doneItem.className = 'timeline-item';
-                doneItem.innerHTML = `
-                    <div class="timeline-marker timeline-marker-done">
-                        <i class="bi bi-check-lg"></i>
-                    </div>
-                    <div>
-                        <p class="fw-medium mb-0">Processing Completed</p>
-                        <p class="small text-muted">ID card is ready for pickup</p>
-                    </div>
-                `;
-                timeline.appendChild(doneItem);
-            }
-            
-            // Received
-            if (status === 'receive') {
-                const receivedItem = document.createElement('div');
-                receivedItem.className = 'timeline-item';
-                receivedItem.innerHTML = `
-                    <div class="timeline-marker timeline-marker-receive">
-                        <i class="bi bi-emoji-smile"></i>
-                    </div>
-                    <div>
-                        <p class="fw-medium mb-0">ID Card Received</p>
-                        <p class="small text-muted">Student has received their ID card</p>
-                    </div>
-                `;
-                timeline.appendChild(receivedItem);
-            }
+            timelineSteps.forEach((step, index) => {
+                if (index <= currentIndex) {
+                    const timelineItem = document.createElement('div');
+                    timelineItem.className = 'timeline-item';
+                    timelineItem.innerHTML = `
+                        <div class="timeline-marker timeline-marker-${step.status}">
+                            <i class="bi ${step.icon}"></i>
+                        </div>
+                        <div>
+                            <p class="fw-medium mb-0">${step.title}</p>
+                            <p class="small text-muted">${step.desc}</p>
+                        </div>
+                    `;
+                    timeline.appendChild(timelineItem);
+                }
+            });
         }
 
         function saveStatusChanges() {
             const newStatus = statusSelect.value;
             const oldStatus = selectedStudent.application_status;
         
-            // If status is "done", show confirmation modal first
             if (newStatus === 'done') {
                 const confirmModal = new bootstrap.Modal(document.getElementById('confirmStatusModal'));
                 confirmModal.show();
         
                 document.getElementById('confirmYesBtn').onclick = function () {
-                    // Show loader (optional)
-                    document.getElementById('modalLoader')?.classList.remove('d-none');
-                
-                    // Hide modal quickly
                     confirmModal.hide();
-                
-                    // Proceed with request
                     proceedStatusUpdate(newStatus, oldStatus);
                 };
-                
-        
-                return; // Stop here until confirmed
+                return;
             }
         
-            // For other statuses, proceed immediately
             proceedStatusUpdate(newStatus, oldStatus);
         }
         
@@ -788,24 +1090,9 @@
                             : student
                     );
         
-                    // Update filtered list if receive status is involved
-                    if (newStatus === 'receive' || oldStatus === 'receive') {
-                        filteredApplications = applications.filter(app => app.application_status !== 'receive');
-                    }
-        
-                    // Show success toast
                     showToast('Status Updated', `${selectedStudent.name}'s application status has been updated to ${newStatus}.`);
-        
-                    // Close modal
                     studentModal.hide();
-        
-                    // Update UI
                     updateStats();
-        
-                    // Reload page if moved to "receive"
-                    if (newStatus === 'receive') {
-                        setTimeout(() => location.reload(), 1000);
-                    }
                 } else {
                     showToast('Error', data.error || 'Failed to update status', 'error');
                 }
@@ -815,38 +1102,22 @@
                 showToast('Error', 'Failed to update status', 'error');
             });
         }
-        
-
-        function setToLocalStorage(key, value) {
-            localStorage.setItem(key, value);
-            showToast('Item Saved', `${key} has been saved to local storage.`);
-        }
 
         function clearFilters() {
             searchQuery = '';
-            statusFilter = [];
+            activeStatusFilter = 'all';
             currentPage = 1;
             
-            // Reset UI
             searchInput.value = '';
-            statusFilterCheckboxes.forEach(checkbox => {
-                checkbox.checked = false;
-            });
-            
-            // Update filter badge
-            updateFilterBadge();
-            
-            // Re-filter applications
-            filterAndSortApplications();
+            setActiveStatusFilter('all');
         }
 
-        function updateFilterBadge() {
-            if (statusFilter.length > 0) {
-                filterBadge.textContent = statusFilter.length;
-                filterBadge.classList.remove('d-none');
-            } else {
-                filterBadge.classList.add('d-none');
-            }
+        function clearCompletedFilters() {
+            completedSearchQuery = '';
+            completedCurrentPage = 1;
+            
+            searchCompletedInput.value = '';
+            filterAndSortCompletedApplications();
         }
 
         function updateSortIndicators() {
@@ -860,64 +1131,50 @@
             });
         }
 
-        function searchCompletedApplications(query) {
-            const rows = completedTable.querySelectorAll('tr');
-            
-            rows.forEach(row => {
-                const studentId = row.cells[0]?.textContent || '';
-                const name = row.cells[1]?.textContent || '';
-                const course = row.cells[2]?.textContent || '';
-                
-                const matches = 
-                    studentId.toLowerCase().includes(query.toLowerCase()) ||
-                    name.toLowerCase().includes(query.toLowerCase()) ||
-                    course.toLowerCase().includes(query.toLowerCase());
-                
-                row.style.display = matches ? '' : 'none';
+        function updateCompletedSortIndicators() {
+            document.querySelectorAll('.completed-sort-indicator').forEach(indicator => {
+                const field = indicator.getAttribute('data-field');
+                if (field === completedSortField) {
+                    indicator.textContent = completedSortDirection === 'asc' ? ' ↑' : ' ↓';
+                } else {
+                    indicator.textContent = '';
+                }
             });
         }
 
         // Event Listeners
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize UI
             updateStats();
             updateSortIndicators();
+            updateCompletedSortIndicators();
             
-
-            
-            // Search input
+            // Search input for applications
             searchInput.addEventListener('input', function() {
                 searchQuery = this.value;
                 currentPage = 1;
                 filterAndSortApplications();
             });
             
-            // Search completed input
+            // Search input for completed
             searchCompletedInput.addEventListener('input', function() {
-                searchCompletedApplications(this.value);
+                completedSearchQuery = this.value;
+                completedCurrentPage = 1;
+                filterAndSortCompletedApplications();
             });
             
-            // Status filter checkboxes
-            statusFilterCheckboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    const status = this.value;
-                    
-                    if (this.checked) {
-                        statusFilter.push(status);
-                    } else {
-                        statusFilter = statusFilter.filter(s => s !== status);
-                    }
-                    
-                    updateFilterBadge();
-                    currentPage = 1;
-                    filterAndSortApplications();
+            // Status filter buttons
+            statusFilterBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const status = this.getAttribute('data-status');
+                    setActiveStatusFilter(status);
                 });
             });
             
-            // Clear filters button
+            // Clear filters buttons
             clearFiltersBtn.addEventListener('click', clearFilters);
+            clearCompletedFiltersBtn.addEventListener('click', clearCompletedFilters);
             
-            // Sort options
+            // Sort options for applications
             sortOptions.forEach(option => {
                 option.addEventListener('click', function() {
                     const field = this.getAttribute('data-field');
@@ -933,8 +1190,25 @@
                     filterAndSortApplications();
                 });
             });
+
+            // Sort options for completed
+            completedSortOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    const field = this.getAttribute('data-field');
+                    
+                    if (completedSortField === field) {
+                        completedSortDirection = completedSortDirection === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        completedSortField = field;
+                        completedSortDirection = 'asc';
+                    }
+                    
+                    updateCompletedSortIndicators();
+                    filterAndSortCompletedApplications();
+                });
+            });
             
-            // Sortable table headers
+            // Sortable table headers for applications
             sortableHeaders.forEach(header => {
                 header.addEventListener('click', function() {
                     const field = this.getAttribute('data-sort');
@@ -948,6 +1222,23 @@
                     
                     updateSortIndicators();
                     filterAndSortApplications();
+                });
+            });
+
+            // Sortable table headers for completed
+            completedSortableHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const field = this.getAttribute('data-sort-completed');
+                    
+                    if (completedSortField === field) {
+                        completedSortDirection = completedSortDirection === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        completedSortField = field;
+                        completedSortDirection = 'asc';
+                    }
+                    
+                    updateCompletedSortIndicators();
+                    filterAndSortCompletedApplications();
                 });
             });
             
@@ -990,7 +1281,8 @@
                             break;
                     }
                     
-                    setToLocalStorage(key, value);
+                    localStorage.setItem(key, value);
+                    showToast('Item Saved', `${key} has been saved to local storage.`);
                 });
             });
         });
@@ -1028,6 +1320,27 @@
         .status-receive {
             background-color: rgba(13, 110, 253, 0.2);
             color: #084298;
+        }
+
+        /* Status filter buttons */
+        .status-filter-btn {
+            transition: all 0.2s ease;
+            border-width: 2px;
+        }
+
+        .status-filter-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .status-filter-btn.active {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .status-filter-btn .badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.4rem;
         }
         
         /* Timeline */
@@ -1116,6 +1429,26 @@
             from { opacity: 0; }
             to { opacity: 1; }
         }
+
+        /* Results info styling */
+        #resultsInfo, #completedResultsInfo {
+            font-size: 0.9rem;
+        }
+
+        #activeFilters, #completedActiveFilters {
+            font-size: 0.8rem;
+            font-style: italic;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .status-filter-btn {
+                margin-bottom: 0.5rem;
+            }
+            
+            .status-filter-btn .badge {
+                display: none;
+            }
+        }
     </style>
 {% endblock %}
-

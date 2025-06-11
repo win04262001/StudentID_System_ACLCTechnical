@@ -4,431 +4,830 @@
 
 {% block head %}
 {{ super() }}
-<!-- Add Socket.IO client library for real-time features -->
 <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-  <div class="row">
-    <!-- Sidebar with message info -->
-    <div class="col-lg-3 mb-4">
-      <div class="card border-0 shadow-sm h-100">
-        <div class="card-header bg-primary text-white">
-          <h5 class="card-title mb-0">
-            <i class="fas fa-info-circle me-2"></i> Conversation Info
-          </h5>
+<div class="messenger-container">
+  <!-- Left Sidebar -->
+  <div class="messenger-sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">
+        <i class="fas fa-comments me-2"></i>
+        Support Chats
+      </div>
+      <div class="sidebar-actions">
+        <button class="btn-icon" title="New Message">
+          <i class="fas fa-edit"></i>
+        </button>
+      </div>
+    </div>
+    
+    <div class="search-container">
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Search conversations...">
+      </div>
+    </div>
+    
+    <div class="conversations-list">
+      <!-- Active conversation -->
+      <div class="conversation-item active">
+        <div class="conversation-avatar">
+          <div class="avatar-circle bg-primary">
+            <i class="fas fa-headset text-white"></i>
+          </div>
+          <div class="status-indicator online"></div>
         </div>
-        <div class="card-body">
-          <div class="mb-3">
-            <label class="form-label text-muted">Status</label>
-            <div>
-              {% if message.status == 'pending' %}
-                <span class="badge bg-warning text-dark px-3 py-2">Pending</span>
-              {% elif message.status == 'in_progress' %}
-                <span class="badge bg-info px-3 py-2">In Progress</span>
-              {% elif message.status == 'resolved' %}
-                <span class="badge bg-success px-3 py-2">Resolved</span>
-              {% endif %}
+        <div class="conversation-content">
+          <div class="conversation-header">
+            <span class="conversation-name">IT Support</span>
+            <span class="conversation-time">{{ message.updated_at.strftime('%H:%M') if message.updated_at else message.created_at.strftime('%H:%M') }}</span>
+          </div>
+          <div class="conversation-preview">{{ message.subject }}</div>
+        </div>
+        <div class="conversation-status">
+          {% if message.status == 'pending' %}
+            <div class="status-badge pending"></div>
+          {% elif message.status == 'in_progress' %}
+            <div class="status-badge in-progress"></div>
+          {% elif message.status == 'resolved' %}
+            <div class="status-badge resolved"></div>
+          {% endif %}
+        </div>
+      </div>
+      
+      <!-- Back to messages link -->
+      <div class="conversation-item" onclick="window.location.href='{{ url_for('student_support_messages') }}'">        <div class="conversation-avatar">
+          <div class="avatar-circle bg-secondary">
+            <i class="fas fa-arrow-left text-white"></i>
+          </div>
+        </div>
+        <div class="conversation-content">
+          <div class="conversation-header">
+            <span class="conversation-name">All Messages</span>
+          </div>
+          <div class="conversation-preview">View all support messages</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Chat Area -->
+  <div class="messenger-main">
+    <!-- Chat Header -->
+    <div class="chat-header">
+      <div class="chat-header-info">
+        <div class="chat-avatar">
+          <div class="avatar-circle bg-primary">
+            <i class="fas fa-headset text-white"></i>
+          </div>
+          <div class="status-indicator online"></div>
+        </div>
+        <div class="chat-details">
+          <h5 class="chat-name">IT Support</h5>
+          <span class="chat-status">{{ message.subject }}</span>
+        </div>
+      </div>
+      <div class="chat-actions">
+        <button class="btn-icon" title="Call">
+          <i class="fas fa-phone"></i>
+        </button>
+        <button class="btn-icon" title="Video Call">
+          <i class="fas fa-video"></i>
+        </button>
+        <button class="btn-icon" title="Info">
+          <i class="fas fa-info-circle"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Messages Area -->
+    <div class="messages-container" id="messagesContainer">
+      <div class="messages-content">
+        <!-- Date Divider -->
+        <div class="date-divider">
+          <span>{{ message.created_at.strftime('%B %d, %Y') }}</span>
+        </div>
+
+        <!-- Initial Message (Student) -->
+        <div class="message-group outgoing">
+          <div class="message-item">
+            <div class="message-bubble">
+              <div class="message-text">{{ message.message }}</div>
+              <div class="message-time">{{ message.created_at.strftime('%H:%M') }}</div>
             </div>
           </div>
-          <div class="mb-3">
-            <label class="form-label text-muted">Subject</label>
-            <div class="fw-bold">{{ message.subject }}</div>
+          <div class="message-status">
+            {% if message.is_seen %}
+              <i class="fas fa-check-double seen"></i>
+            {% else %}
+              <i class="fas fa-check sent"></i>
+            {% endif %}
           </div>
-          <div class="mb-3">
-            <label class="form-label text-muted">Date Opened</label>
-            <div>{{ message.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+        </div>
+
+        <!-- Auto Reply (if exists) -->
+        {% if message.auto_reply %}
+        <div class="message-group incoming">
+          <div class="message-avatar">
+            <div class="avatar-circle bg-light">
+              <i class="fas fa-robot text-primary"></i>
+            </div>
           </div>
-          <div class="mb-3">
-            <label class="form-label text-muted">Last Activity</label>
-            <div>{{ message.updated_at.strftime('%Y-%m-%d %H:%M') if message.updated_at else 'Not updated yet' }}</div>
+          <div class="message-content">
+            <div class="message-item">
+              <div class="message-bubble">
+                <div class="message-text">
+                  {{ message.auto_reply }}
+                  <div class="auto-reply-note">
+                    <i class="fas fa-info-circle"></i>
+                    This is an automated response. An admin will respond soon.
+                  </div>
+                </div>
+                <div class="message-time">{{ message.created_at.strftime('%H:%M') }}</div>
+              </div>
+            </div>
           </div>
-          
-          <div class="d-grid gap-2 mt-4">
-            <a href="{{ url_for('student_support_messages') }}" class="btn btn-outline-secondary">
-              <i class="fas fa-arrow-left me-2"></i> Back to Messages
-            </a>
+        </div>
+        {% endif %}
+
+        <!-- Admin Response (if exists) -->
+        {% if message.admin_response %}
+        <div class="message-group incoming">
+          <div class="message-avatar">
+            <div class="avatar-circle bg-primary">
+              <i class="fas fa-headset text-white"></i>
+            </div>
+          </div>
+          <div class="message-content">
+            <div class="message-item">
+              <div class="message-bubble">
+                <div class="message-text">{{ message.admin_response }}</div>
+                <div class="message-time">{{ message.updated_at.strftime('%H:%M') if message.updated_at else message.created_at.strftime('%H:%M') }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Message History -->
+        {% if history %}
+          {% set current_date = message.created_at.strftime('%Y-%m-%d') %}
+          {% for item in history %}
+            {% if item.created_at.strftime('%Y-%m-%d') != current_date %}
+              <div class="date-divider">
+                <span>{{ item.created_at.strftime('%B %d, %Y') }}</span>
+              </div>
+              {% set current_date = item.created_at.strftime('%Y-%m-%d') %}
+            {% endif %}
+            
+            <div class="message-group {{ 'outgoing' if item.responder_role == 'student' else 'incoming' }}">
+              {% if item.responder_role != 'student' %}
+                <div class="message-avatar">
+                  <div class="avatar-circle bg-primary">
+                    <i class="fas fa-headset text-white"></i>
+                  </div>
+                </div>
+              {% endif %}
+              <div class="message-content">
+                <div class="message-item">
+                  <div class="message-bubble">
+                    <div class="message-text">{{ item.response }}</div>
+                    <div class="message-time">{{ item.created_at.strftime('%H:%M') }}</div>
+                  </div>
+                </div>
+              </div>
+              {% if item.responder_role == 'student' %}
+                <div class="message-status">
+                  {% if item.is_seen %}
+                    <i class="fas fa-check-double seen"></i>
+                  {% else %}
+                    <i class="fas fa-check sent"></i>
+                  {% endif %}
+                </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        {% endif %}
+
+        <!-- Typing Indicator -->
+        <div class="typing-indicator" id="typingIndicator" style="display: none;">
+          <div class="message-avatar">
+            <div class="avatar-circle bg-primary">
+              <i class="fas fa-headset text-white"></i>
+            </div>
+          </div>
+          <div class="typing-bubble">
+            <div class="typing-dots">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Chat area -->
-    <div class="col-lg-9 mb-4">
-      <div class="card border-0 shadow-sm h-100">
-        <div class="card-header bg-primary text-white">
-          <div class="d-flex align-items-center">
-            <div class="avatar-circle bg-white text-primary me-2">
-              <i class="fas fa-headset"></i>
+    <!-- Message Input -->
+    <div class="message-input-container">
+      {% if message.status != 'resolved' %}
+        <form id="messageForm" action="{{ url_for('student_reply_message', message_id=message.id) }}" method="POST">
+          <div class="input-wrapper">
+            <button type="button" class="btn-attachment" title="Attach File">
+              <i class="fas fa-plus"></i>
+            </button>
+            <div class="input-field">
+              <textarea id="messageInput" name="response" placeholder="Type a message..." rows="1"></textarea>
             </div>
-            <div>
-              <h5 class="card-title mb-0">IT Support</h5>
-              <small class="text-white-50">{{ message.subject }}</small>
-            </div>
+            <button type="button" class="btn-emoji" title="Add Emoji">
+              <i class="fas fa-smile"></i>
+            </button>
+            <button type="submit" class="btn-send" title="Send Message">
+              <i class="fas fa-paper-plane"></i>
+            </button>
           </div>
+        </form>
+      {% else %}
+        <div class="resolved-notice">
+          <i class="fas fa-check-circle"></i>
+          This conversation has been resolved. Create a new support request for further assistance.
         </div>
-        
-        <div class="card-body p-0 d-flex flex-column h-100">
-          <!-- Chat messages area -->
-          <div class="chat-messages p-3" id="chatMessages">
-            <!-- Initial message -->
-            <div class="message-date-divider">
-              <span>{{ message.created_at.strftime('%B %d, %Y') }}</span>
-            </div>
-            
-            <!-- Outgoing message (student) -->
-            <div class="message-container outgoing">
-              <div class="message-avatar">
-                <div class="avatar-circle bg-primary text-white">
-                  <i class="fas fa-user"></i>
-                </div>
-              </div>
-              <div class="message-content-wrapper">
-                <div class="message-bubble">
-                  <div class="message-header">
-                    <span class="message-sender">You</span>
-                    <span class="message-time">{{ message.created_at.strftime('%H:%M') }}</span>
-                  </div>
-                  <div class="message-content">
-                    {{ message.message }}
-                  </div>
-                </div>
-                <div class="message-status">
-                  {% if message.is_seen %}
-                    <i class="fas fa-check-double text-primary"></i>
-                  {% else %}
-                    <i class="fas fa-check"></i>
-                  {% endif %}
-                </div>
-              </div>
-            </div>
-
-            <!-- Auto-reply message (if exists) -->
-            {% if message.auto_reply %}
-            <div class="message-container incoming">
-              <div class="message-avatar">
-                <div class="avatar-circle bg-light text-primary">
-                  <i class="fas fa-robot"></i>
-                </div>
-              </div>
-              <div class="message-content-wrapper">
-                <div class="message-bubble">
-                  <div class="message-header">
-                    <span class="message-sender">Auto-Support</span>
-                    <span class="message-time">{{ message.created_at.strftime('%H:%M') }}</span>
-                  </div>
-                  <div class="message-content">
-                    {{ message.auto_reply }}
-                    <div class="mt-2 text-muted fst-italic small">
-                      <i class="fas fa-info-circle me-1"></i> This is an automated response. An admin will respond to your query soon.
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            {% endif %}
-
-            <!-- Incoming message (admin) -->
-            {% if message.admin_response %}
-            <div class="message-container incoming">
-              <div class="message-avatar">
-                <div class="avatar-circle bg-light text-primary">
-                  <i class="fas fa-headset"></i>
-                </div>
-              </div>
-              <div class="message-content-wrapper">
-                <div class="message-bubble">
-                  <div class="message-header">
-                    <span class="message-sender">Support</span>
-                    <span class="message-time">{{ message.updated_at.strftime('%H:%M') if message.updated_at else message.created_at.strftime('%H:%M') }}</span>
-                  </div>
-                  <div class="message-content">
-                    {{ message.admin_response }}
-                  </div>
-                </div>
-              </div>
-            </div>
-            {% endif %}
-            
-            <!-- Message history -->
-            {% if history %}
-              {% set current_date = message.created_at.strftime('%Y-%m-%d') %}
-              {% for item in history %}
-                {% if item.created_at.strftime('%Y-%m-%d') != current_date %}
-                  <div class="message-date-divider">
-                    <span>{{ item.created_at.strftime('%B %d, %Y') }}</span>
-                  </div>
-                  {% set current_date = item.created_at.strftime('%Y-%m-%d') %}
-                {% endif %}
-                
-                <div class="message-container {{ 'outgoing' if item.responder_role == 'student' else 'incoming' }}">
-                  <div class="message-avatar">
-                    <div class="avatar-circle {{ 'bg-primary text-white' if item.responder_role == 'student' else 'bg-light text-primary' }}">
-                      <i class="{{ 'fas fa-user' if item.responder_role == 'student' else 'fas fa-headset' }}"></i>
-                    </div>
-                  </div>
-                  <div class="message-content-wrapper">
-                    <div class="message-bubble">
-                      <div class="message-header">
-                        <span class="message-sender">{{ 'You' if item.responder_role == 'student' else item.responder_name }}</span>
-                        <span class="message-time">{{ item.created_at.strftime('%H:%M') }}</span>
-                      </div>
-                      <div class="message-content">
-                        {{ item.response }}
-                      </div>
-                    </div>
-                    {% if item.responder_role == 'student' %}
-                      <div class="message-status">
-                        {% if item.is_seen %}
-                          <i class="fas fa-check-double text-primary"></i>
-                        {% else %}
-                          <i class="fas fa-check"></i>
-                        {% endif %}
-                      </div>
-                    {% endif %}
-                  </div>
-                </div>
-              {% endfor %}
-            {% endif %}
-            
-            <!-- Typing indicator (hidden by default) -->
-            <div class="typing-indicator" id="typingIndicator" style="display: none;">
-              <div class="message-avatar">
-                <div class="avatar-circle bg-light text-primary">
-                  <i class="fas fa-headset"></i>
-                </div>
-              </div>
-              <div class="typing-bubble">
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Message input area -->
-          <div class="chat-input-container mt-auto p-3 border-top">
-            {% if message.status != 'resolved' %}
-              <form id="messageForm" action="{{ url_for('student_reply_message', message_id=message.id) }}" method="POST">
-                <div class="input-group">
-                  <textarea class="form-control" id="responseMessage" name="response" placeholder="Type your message..." rows="1" required></textarea>
-                  <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-paper-plane"></i>
-                  </button>
-                </div>
-              </form>
-            {% else %}
-              <div class="alert alert-success mb-0">
-                <i class="fas fa-check-circle me-2"></i> This conversation has been resolved. If you need further assistance, please create a new support request.
-              </div>
-            {% endif %}
-          </div>
-        </div>
-      </div>
+      {% endif %}
     </div>
   </div>
 </div>
 
 <style>
-  /* Chat styling */
-  .chat-messages {
-    height: 500px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+/* Messenger Container */
+.messenger-container {
+  display: flex;
+  height: calc(100vh - 120px);
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Sidebar */
+.messenger-sidebar {
+  width: 320px;
+  background: white;
+  border-right: 1px solid #e4e6ea;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e4e6ea;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sidebar-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #050505;
+}
+
+.sidebar-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: #f0f2f5;
+  color: #65676b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-icon:hover {
+  background: #e4e6ea;
+}
+
+.search-container {
+  padding: 8px 16px;
+}
+
+.search-box {
+  position: relative;
+  background: #f0f2f5;
+  border-radius: 20px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search-box i {
+  color: #65676b;
+  font-size: 14px;
+}
+
+.search-box input {
+  border: none;
+  background: none;
+  outline: none;
+  flex: 1;
+  font-size: 15px;
+  color: #050505;
+}
+
+.search-box input::placeholder {
+  color: #65676b;
+}
+
+.conversations-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.conversation-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  position: relative;
+}
+
+.conversation-item:hover {
+  background: #f0f2f5;
+}
+
+.conversation-item.active {
+  background: #e7f3ff;
+}
+
+.conversation-avatar {
+  position: relative;
+  margin-right: 12px;
+}
+
+.avatar-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.status-indicator {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+.status-indicator.online {
+  background: #42b883;
+}
+
+.conversation-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.conversation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.conversation-name {
+  font-weight: 600;
+  color: #050505;
+  font-size: 15px;
+}
+
+.conversation-time {
+  font-size: 13px;
+  color: #65676b;
+}
+
+.conversation-preview {
+  color: #65676b;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.conversation-status {
+  margin-left: 8px;
+}
+
+.status-badge {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.status-badge.pending {
+  background: #f59e0b;
+}
+
+.status-badge.in-progress {
+  background: #3b82f6;
+}
+
+.status-badge.resolved {
+  background: #10b981;
+}
+
+/* Main Chat Area */
+.messenger-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: white;
+}
+
+.chat-header {
+  padding: 12px 20px;
+  border-bottom: 1px solid #e4e6ea;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+}
+
+.chat-header-info {
+  display: flex;
+  align-items: center;
+}
+
+.chat-avatar {
+  position: relative;
+  margin-right: 12px;
+}
+
+.chat-avatar .avatar-circle {
+  width: 40px;
+  height: 40px;
+  font-size: 16px;
+}
+
+.chat-details h5 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #050505;
+}
+
+.chat-status {
+  font-size: 13px;
+  color: #65676b;
+}
+
+.chat-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Messages */
+.messages-container {
+  flex: 1;
+  overflow-y: auto;
+  background: #f8f9fa;
+}
+
+.messages-content {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.date-divider {
+  text-align: center;
+  margin: 16px 0;
+}
+
+.date-divider span {
+  background: white;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  color: #65676b;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.message-group {
+  display: flex;
+  margin-bottom: 8px;
+  align-items: flex-end;
+}
+
+.message-group.incoming {
+  justify-content: flex-start;
+}
+
+.message-group.outgoing {
+  justify-content: flex-end;
+}
+
+.message-avatar {
+  margin-right: 8px;
+  margin-bottom: 4px;
+}
+
+.message-avatar .avatar-circle {
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+}
+
+.message-content {
+  display: flex;
+  flex-direction: column;
+  max-width: 70%;
+}
+
+.message-item {
+  margin-bottom: 2px;
+}
+
+.message-bubble {
+  padding: 8px 12px;
+  border-radius: 18px;
+  position: relative;
+  word-wrap: break-word;
+}
+
+.incoming .message-bubble {
+  background: #e4e6ea;
+  color: #050505;
+  border-bottom-left-radius: 4px;
+}
+
+.outgoing .message-bubble {
+  background: #0084ff;
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.message-text {
+  font-size: 15px;
+  line-height: 1.3;
+}
+
+.message-time {
+  font-size: 11px;
+  margin-top: 4px;
+  opacity: 0.7;
+}
+
+.message-status {
+  margin-left: 8px;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.message-status .sent {
+  color: #65676b;
+}
+
+.message-status .seen {
+  color: #0084ff;
+}
+
+.auto-reply-note {
+  margin-top: 8px;
+  padding: 8px;
+  background: rgba(0, 132, 255, 0.1);
+  border-radius: 8px;
+  font-size: 12px;
+  color: #0084ff;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Typing Indicator */
+.typing-indicator {
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 8px;
+}
+
+.typing-bubble {
+  background: #e4e6ea;
+  border-radius: 18px;
+  border-bottom-left-radius: 4px;
+  padding: 12px 16px;
+  margin-left: 8px;
+}
+
+.typing-dots {
+  display: flex;
+  gap: 3px;
+}
+
+.typing-dots span {
+  width: 6px;
+  height: 6px;
+  background: #65676b;
+  border-radius: 50%;
+  animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-dots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.typing-dots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes typing {
+  0%, 80%, 100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Message Input */
+.message-input-container {
+  padding: 12px 20px;
+  background: white;
+  border-top: 1px solid #e4e6ea;
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  background: #f0f2f5;
+  border-radius: 20px;
+  padding: 6px 8px;
+}
+
+.btn-attachment {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: #0084ff;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.input-field {
+  flex: 1;
+  padding: 6px 12px;
+}
+
+.input-field textarea {
+  width: 100%;
+  border: none;
+  background: none;
+  outline: none;
+  resize: none;
+  font-size: 15px;
+  color: #050505;
+  max-height: 100px;
+  line-height: 1.3;
+}
+
+.input-field textarea::placeholder {
+  color: #65676b;
+}
+
+.btn-emoji, .btn-send {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  color: #0084ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.btn-emoji:hover, .btn-send:hover {
+  background: rgba(0, 132, 255, 0.1);
+}
+
+.resolved-notice {
+  text-align: center;
+  padding: 16px;
+  background: #d1fae5;
+  color: #065f46;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .messenger-container {
+    height: calc(100vh - 80px);
   }
   
-  .message-container {
-    display: flex;
-    width: 100%;
-    margin-bottom: 10px;
+  .messenger-sidebar {
+    width: 280px;
   }
   
-  .message-container.incoming {
-    justify-content: flex-start;
-  }
-  
-  .message-container.outgoing {
-    justify-content: flex-end;
-  }
-  
-  .message-avatar {
-    margin-right: 8px; /* Space between avatar and message */
-    flex-shrink: 0;
-  }
-  
-  .message-content-wrapper {
-    display: flex;
-    flex-direction: column;
-    max-width: 70%;
-  }
-  
-  .outgoing .message-content-wrapper {
-    align-items: flex-end;
-  }
-  
-  .message-bubble {
-    padding: 10px 15px;
-    border-radius: 18px;
-    position: relative;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-  }
-  
-  .incoming .message-bubble {
-    background-color: #f0f2f5;
-    border-bottom-left-radius: 4px;
-  }
-  
-  .outgoing .message-bubble {
-    background-color: #0d6efd;
-    color: white;
-    border-bottom-right-radius: 4px;
-  }
-  
-  .message-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 5px;
-    font-size: 0.8rem;
-  }
-  
-  .incoming .message-header {
-    color: #65676b;
-  }
-  
-  .outgoing .message-header {
-    color: rgba(255,255,255,0.7);
-  }
-  
-  .message-sender {
-    font-weight: 600;
-  }
-  
-  .message-time {
-    font-size: 0.7rem;
-    margin-left: 8px;
-  }
-  
-  .message-status {
-    font-size: 0.7rem;
-    color: #65676b;
-    margin-top: 2px;
-    margin-right: 4px;
+  .conversation-item {
+    padding: 12px 16px;
   }
   
   .avatar-circle {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    width: 48px !important;
+    height: 48px !important;
+    font-size: 18px !important;
   }
-  /* Typing indicator */
-  .typing-indicator {
-    display: flex;
-    align-items: flex-end;
-    margin-bottom: 10px;
+}
+
+@media (max-width: 576px) {
+  .messenger-sidebar {
+    display: none;
   }
   
-  .typing-bubble {
-    padding: 12px 16px;
-    background-color: #f0f2f5;
-    border-radius: 18px;
-    border-bottom-left-radius: 4px;
-    margin-left: 8px;
-    display: flex;
-    align-items: center;
+  .messenger-container {
+    height: calc(100vh - 60px);
   }
-  
-  .typing-bubble span {
-    height: 8px;
-    width: 8px;
-    float: left;
-    margin: 0 1px;
-    background-color: #9E9EA1;
-    display: block;
-    border-radius: 50%;
-    opacity: 0.4;
-  }
-  
-  .typing-bubble span:nth-of-type(1) {
-    animation: 1s blink infinite 0.3333s;
-  }
-  
-  .typing-bubble span:nth-of-type(2) {
-    animation: 1s blink infinite 0.6666s;
-  }
-  
-  .typing-bubble span:nth-of-type(3) {
-    animation: 1s blink infinite 0.9999s;
-  }
-  
-  @keyframes blink {
-    50% {
-      opacity: 1;
-    }
-  }
+}
 </style>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // Auto-scroll to bottom of chat
-    const chatMessages = document.getElementById('chatMessages');
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-    
-    // Auto-resize textarea
-    const textarea = document.getElementById('responseMessage');
-    if (textarea) {
-      function resizeTextarea() {
-        textarea.style.height = 'auto';
-        textarea.style.height = (textarea.scrollHeight) + 'px';
+document.addEventListener('DOMContentLoaded', function() {
+  const messagesContainer = document.getElementById('messagesContainer');
+  const messageInput = document.getElementById('messageInput');
+  const messageForm = document.getElementById('messageForm');
+  
+  // Auto-scroll to bottom
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  
+  // Auto-resize textarea
+  function autoResize() {
+    messageInput.style.height = 'auto';
+    messageInput.style.height = messageInput.scrollHeight + 'px';
+  }
+  
+  messageInput.addEventListener('input', autoResize);
+  
+  // Handle form submission
+  if (messageForm) {
+    messageForm.addEventListener('submit', function(e) {
+      if (!messageInput.value.trim()) {
+        e.preventDefault();
+        return;
       }
       
-      textarea.addEventListener('input', resizeTextarea);
-      
-      // Form submission with loading state
-      const messageForm = document.getElementById('messageForm');
-      const submitButton = messageForm.querySelector('button[type="submit"]');
-      
-      messageForm.addEventListener('submit', function(e) {
-        if (!textarea.value.trim()) {
-          e.preventDefault();
-          return;
-        }
-        
-        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
-        submitButton.disabled = true;
-      });
-    }
-    
-    // Check for new messages periodically
-    let lastCheckTimestamp = Math.floor(Date.now() / 1000);
-    
-    function checkForNewMessages() {
-      fetch(`/check_new_messages/{{ message.id }}/${lastCheckTimestamp}`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.has_new) {
-            // Reload the page to show new messages
-            location.reload();
-          }
-          lastCheckTimestamp = data.current_timestamp;
-        })
-        .catch(error => console.error('Error checking for new messages:', error));
-    }
-    
-    // Check for new messages every 10 seconds
-    const messageCheckInterval = setInterval(checkForNewMessages, 10000);
-    
-    // Clean up intervals when leaving the page
-    window.addEventListener('beforeunload', function() {
-      clearInterval(messageCheckInterval);
+      const submitBtn = messageForm.querySelector('.btn-send');
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     });
-  });
+  }
+  
+  // Check for new messages
+  let lastCheck = Math.floor(Date.now() / 1000);
+  
+  function checkNewMessages() {
+    fetch(`/check_new_messages/{{ message.id }}/${lastCheck}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.has_new) {
+          location.reload();
+        }
+        lastCheck = data.current_timestamp;
+      })
+      .catch(error => console.error('Error:', error));
+  }
+  
+  setInterval(checkNewMessages, 10000);
+});
 </script>
 {% endblock %}

@@ -1,0 +1,526 @@
+{% extends "base.html" %}
+
+{% block title %}Review Lost ID Request{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <!-- Back Button -->
+  <div class="mb-3">
+    <a href="{{ url_for('admin_lost_id_requests') }}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-2"></i> Back to Requests
+    </a>
+  </div>
+
+  <!-- Request Details Card -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-primary text-white">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+          <i class="bi bi-credit-card-2-front me-2"></i> Lost ID Request #{{ request.id }}
+        </h5>
+        <span class="badge 
+          {% if request.status == 'pending' %}bg-warning text-dark
+          {% elif request.status == 'verified' %}bg-info text-white
+          {% elif request.status == 'approved' %}bg-success text-white
+          {% elif request.status == 'rejected' %}bg-danger text-white
+          {% endif %} fs-6">
+          {{ request.status|title }}
+        </span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <!-- Student Information -->
+        <div class="col-md-6">
+          <h5 class="border-bottom pb-2 mb-3">Student Information</h5>
+          <div class="mb-3 row">
+            <label class="col-sm-4 col-form-label fw-bold">Student ID:</label>
+            <div class="col-sm-8">
+              <p class="form-control-plaintext">{{ request.student_id }}</p>
+            </div>
+          </div>
+          <div class="mb-3 row">
+            <label class="col-sm-4 col-form-label fw-bold">Name:</label>
+            <div class="col-sm-8">
+              <p class="form-control-plaintext">{{ request.student_name }}</p>
+            </div>
+          </div>
+          <div class="mb-3 row">
+            <label class="col-sm-4 col-form-label fw-bold">Course:</label>
+            <div class="col-sm-8">
+              <p class="form-control-plaintext">{{ request.course }}</p>
+            </div>
+          </div>
+          <div class="mb-3 row">
+            <label class="col-sm-4 col-form-label fw-bold">Email:</label>
+            <div class="col-sm-8">
+              <p class="form-control-plaintext">{{ request.email }}</p>
+            </div>
+          </div>
+          <div class="mb-3 row">
+            <label class="col-sm-4 col-form-label fw-bold">Contact:</label>
+            <div class="col-sm-8">
+              <p class="form-control-plaintext">{{ request.contact }}</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Request Details -->
+        <div class="col-md-6">
+          <h5 class="border-bottom pb-2 mb-3">Request Details</h5>
+          <div class="mb-3 row">
+            <label class="col-sm-4 col-form-label fw-bold">Submitted:</label>
+            <div class="col-sm-8">
+              <p class="form-control-plaintext">{{ request.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+            </div>
+          </div>
+          <div class="mb-3 row">
+            <label class="col-sm-4 col-form-label fw-bold">Last Updated:</label>
+            <div class="col-sm-8">
+              <p class="form-control-plaintext">{{ request.updated_at.strftime('%Y-%m-%d %H:%M') if request.updated_at else 'N/A' }}</p>
+            </div>
+          </div>
+          <div class="mb-3 row">
+            <label class="col-sm-4 col-form-label fw-bold">OSAS Verified:</label>
+            <div class="col-sm-8">
+              <p class="form-control-plaintext">
+                {% if request.osas_verified %}
+                  <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i> Yes</span>
+                {% else %}
+                  <span class="badge bg-secondary"><i class="bi bi-x-circle me-1"></i> No</span>
+                {% endif %}
+              </p>
+            </div>
+          </div>
+          <div class="mb-3 row">
+            <label class="col-sm-4 col-form-label fw-bold">Processed By:</label>
+            <div class="col-sm-8">
+              <p class="form-control-plaintext">{{ request.processed_by if request.processed_by else 'Not processed yet' }}</p>
+            </div>
+          </div>
+          <div class="mb-3 row">
+            <label class="col-sm-4 col-form-label fw-bold">Affidavit:</label>
+            <div class="col-sm-8">
+              {% if request.affidavit_file %}
+                <a href="{{ url_for('download_affidavit', file_id=request.id) }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                  <i class="bi bi-file-earmark-pdf me-1"></i> View Document
+                </a>
+              {% else %}
+                <p class="form-control-plaintext text-danger">No affidavit uploaded</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Reason/Notes -->
+      <div class="mt-3">
+        <h5 class="border-bottom pb-2 mb-3">Reason for Request</h5>
+        <div class="p-3 bg-light rounded">
+          {{ request.reason|nl2br }}
+        </div>
+      </div>
+      
+      <!-- Admin Notes -->
+      <div class="mt-4">
+        <h5 class="border-bottom pb-2 mb-3">Admin Notes</h5>
+        <form id="adminNotesForm">
+          <div class="mb-3">
+            <textarea class="form-control" id="adminNotes" rows="3" placeholder="Add notes about this request...">{{ request.admin_notes }}</textarea>
+          </div>
+          <button type="submit" class="btn btn-outline-primary">
+            <i class="bi bi-save me-1"></i> Save Notes
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Action Buttons -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-light">
+      <h5 class="mb-0">Process Request</h5>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <!-- OSAS Verification -->
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-body">
+              <h6 class="card-title">OSAS Verification</h6>
+              <p class="card-text small text-muted">Mark if the student has completed the verification process with OSAS.</p>
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="osasVerifiedSwitch" {% if request.osas_verified %}checked{% endif %}>
+                <label class="form-check-label" for="osasVerifiedSwitch">OSAS Verified</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Status Update -->
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-body">
+              <h6 class="card-title">Update Status</h6>
+              <p class="card-text small text-muted">Change the current status of this request.</p>
+              <select class="form-select" id="statusSelect">
+                <option value="pending" {% if request.status == 'pending' %}selected{% endif %}>Pending</option>
+                <option value="verified" {% if request.status == 'verified' %}selected{% endif %}>Verified</option>
+                <option value="approved" {% if request.status == 'approved' %}selected{% endif %}>Approved</option>
+                <option value="rejected" {% if request.status == 'rejected' %}selected{% endif %}>Rejected</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Final Actions -->
+        <div class="col-12 mt-4">
+          <div class="d-flex justify-content-between">
+            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#emailStudentModal">
+              <i class="bi bi-envelope me-1"></i> Email Student
+            </button>
+            <div>
+              <button type="button" class="btn btn-danger me-2" id="rejectButton" {% if request.status == 'rejected' %}disabled{% endif %}>
+                <i class="bi bi-x-circle me-1"></i> Reject Request
+              </button>
+              <button type="button" class="btn btn-success" id="approveButton" {% if request.status == 'approved' %}disabled{% endif %}>
+                <i class="bi bi-check-circle me-1"></i> Approve & Process
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Email Student Modal -->
+<div class="modal fade" id="emailStudentModal" tabindex="-1" aria-labelledby="emailStudentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="emailStudentModalLabel">Email Student</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="emailForm">
+          <div class="mb-3">
+            <label for="emailSubject" class="form-label">Subject</label>
+            <input type="text" class="form-control" id="emailSubject" value="Update on your Lost ID Request #{{ request.id }}">
+          </div>
+          <div class="mb-3">
+            <label for="emailBody" class="form-label">Message</label>
+            <textarea class="form-control" id="emailBody" rows="6">Dear {{ request.student_name }},
+
+We are writing regarding your Lost ID Request (Request #{{ request.id }}).
+
+[Your message here]
+
+Best regards,
+Technical Support Department
+ACLC College</textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="sendEmailBtn">
+          <i class="bi bi-send me-1"></i> Send Email
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Rejection Reason Modal -->
+<div class="modal fade" id="rejectionReasonModal" tabindex="-1" aria-labelledby="rejectionReasonModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="rejectionReasonModalLabel">Reject Request</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="rejectionForm">
+          <div class="mb-3">
+            <label for="rejectionReason" class="form-label">Reason for Rejection</label>
+            <textarea class="form-control" id="rejectionReason" rows="4" placeholder="Please provide a reason for rejecting this request..."></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmRejectBtn">
+          <i class="bi bi-x-circle me-1"></i> Confirm Rejection
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const requestId = {{ request.id }};
+    
+    // Save admin notes
+    document.getElementById('adminNotesForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const notes = document.getElementById('adminNotes').value;
+      
+      fetch(`/admin/update_lost_id_notes/${requestId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ notes: notes })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          showToast('Notes saved successfully', 'success');
+        } else {
+          showToast('Error saving notes: ' + data.error, 'danger');
+        }
+      })
+      .catch(error => {
+        showToast('Error: ' + error, 'danger');
+      });
+    });
+    
+    // OSAS verification toggle
+    document.getElementById('osasVerifiedSwitch').addEventListener('change', function() {
+      const verified = this.checked;
+      
+      fetch(`/admin/update_lost_id_osas/${requestId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ verified: verified })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          showToast('OSAS verification updated', 'success');
+        } else {
+          showToast('Error updating verification: ' + data.error, 'danger');
+          // Revert the switch if there was an error
+          this.checked = !verified;
+        }
+      })
+      .catch(error => {
+        showToast('Error: ' + error, 'danger');
+        // Revert the switch if there was an error
+        this.checked = !verified;
+      });
+    });
+    
+    // Status change
+    document.getElementById('statusSelect').addEventListener('change', function() {
+      const status = this.value;
+      
+      fetch(`/admin/update_lost_id_status/${requestId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: status })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          showToast('Status updated successfully', 'success');
+          // Update the status badge
+          const statusBadge = document.querySelector('.card-header .badge');
+          statusBadge.className = 'badge fs-6';
+          
+          if (status === 'pending') {
+            statusBadge.classList.add('bg-warning', 'text-dark');
+          } else if (status === 'verified') {
+            statusBadge.classList.add('bg-info', 'text-white');
+          } else if (status === 'approved') {
+            statusBadge.classList.add('bg-success', 'text-white');
+          } else if (status === 'rejected') {
+            statusBadge.classList.add('bg-danger', 'text-white');
+          }
+          
+          statusBadge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+          
+          // Enable/disable buttons based on status
+          document.getElementById('approveButton').disabled = (status === 'approved');
+          document.getElementById('rejectButton').disabled = (status === 'rejected');
+          
+        } else {
+          showToast('Error updating status: ' + data.error, 'danger');
+          // Reset the select to the previous value
+          this.value = '{{ request.status }}';
+        }
+      })
+      .catch(error => {
+        showToast('Error: ' + error, 'danger');
+        // Reset the select to the previous value
+        this.value = '{{ request.status }}';
+      });
+    });
+    
+    // Approve button
+    document.getElementById('approveButton').addEventListener('click', function() {
+      if (!confirm('Are you sure you want to approve this request? This will initiate the ID reprinting process.')) {
+        return;
+      }
+      
+      fetch(`/admin/approve_lost_id/${requestId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          showToast('Request approved successfully', 'success');
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+        } else {
+          showToast('Error approving request: ' + data.error, 'danger');
+        }
+      })
+      .catch(error => {
+        showToast('Error: ' + error, 'danger');
+      });
+    });
+    
+    // Reject button - show modal
+    document.getElementById('rejectButton').addEventListener('click', function() {
+      const rejectionModal = new bootstrap.Modal(document.getElementById('rejectionReasonModal'));
+      rejectionModal.show();
+    });
+    
+    // Confirm rejection
+    document.getElementById('confirmRejectBtn').addEventListener('click', function() {
+      const reason = document.getElementById('rejectionReason').value;
+      
+      if (!reason.trim()) {
+        alert('Please provide a reason for rejection');
+        return;
+      }
+      
+      fetch(`/admin/reject_lost_id/${requestId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reason: reason })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          showToast('Request rejected successfully', 'success');
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+        } else {
+          showToast('Error rejecting request: ' + data.error, 'danger');
+        }
+      })
+      .catch(error => {
+        showToast('Error: ' + error, 'danger');
+      });
+      
+      // Close the modal
+      const rejectionModal = bootstrap.Modal.getInstance(document.getElementById('rejectionReasonModal'));
+      rejectionModal.hide();
+    });
+    
+    // Send email
+    document.getElementById('sendEmailBtn').addEventListener('click', function() {
+      const subject = document.getElementById('emailSubject').value;
+      const body = document.getElementById('emailBody').value;
+      
+      if (!subject.trim() || !body.trim()) {
+        alert('Please provide both subject and message');
+        return;
+      }
+      
+      // Disable button and show loading state
+      this.disabled = true;
+      this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Sending...';
+      
+      fetch(`/admin/email_student/${requestId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ subject: subject, body: body })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          showToast('Email sent successfully', 'success');
+          
+          // Close the modal
+          const emailModal = bootstrap.Modal.getInstance(document.getElementById('emailStudentModal'));
+          emailModal.hide();
+        } else {
+          showToast('Error sending email: ' + data.error, 'danger');
+        }
+        
+        // Reset button
+        this.disabled = false;
+        this.innerHTML = '<i class="bi bi-send me-1"></i> Send Email';
+      })
+      .catch(error => {
+        showToast('Error: ' + error, 'danger');
+        
+        // Reset button
+        this.disabled = false;
+        this.innerHTML = '<i class="bi bi-send me-1"></i> Send Email';
+      });
+    });
+    
+    // Helper function to show toast notifications
+    function showToast(message, type) {
+      // Create toast container if it doesn't exist
+      let toastContainer = document.querySelector('.toast-container');
+      if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+        document.body.appendChild(toastContainer);
+      }
+      
+      // Create toast
+      const toastId = 'toast-' + Date.now();
+      const toast = document.createElement('div');
+      toast.className = `toast align-items-center text-white bg-${type} border-0`;
+      toast.id = toastId;
+      toast.setAttribute('role', 'alert');
+      toast.setAttribute('aria-live', 'assertive');
+      toast.setAttribute('aria-atomic', 'true');
+      
+      toast.innerHTML = `
+        <div class="d-flex">
+          <div class="toast-body">
+            ${message}
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+      `;
+      
+      toastContainer.appendChild(toast);
+      
+      // Initialize and show toast
+      const bsToast = new bootstrap.Toast(toast, {
+        autohide: true,
+        delay: 3000
+      });
+      bsToast.show();
+      
+      // Remove toast after it's hidden
+      toast.addEventListener('hidden.bs.toast', function() {
+        toast.remove();
+      });
+    }
+  });
+</script>
+{% endblock %}

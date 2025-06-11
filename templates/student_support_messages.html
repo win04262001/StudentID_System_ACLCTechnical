@@ -4,202 +4,431 @@
 
 {% block content %}
 <div class="container-fluid py-4">
-  <!-- Page Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
-      <div>
-          <h2 class="fw-bold">
-              <i class="fas fa-comments me-2 text-primary"></i> My Conversations
-          </h2>
-          <p class="text-muted">View and manage your support conversations</p>
-      </div>
-      <div>
-          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newMessageModal">
-              <i class="fas fa-plus me-2"></i> New Conversation
-          </button>
-      </div>
-  </div>
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 fw-bold text-dark mb-1">
+                        <i class="bi bi-chat-dots-fill me-2 text-primary"></i> My Conversations
+                    </h1>
+                    <p class="text-muted mb-0">View and manage your support conversations</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('lost_id_request') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-credit-card-2-front me-2"></i> Lost ID Request
+                    </a>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newMessageModal">
+                        <i class="bi bi-plus-lg me-2"></i> New Conversation
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-  <!-- Messages List -->
-  <div class="row">
-      {% if messages %}
-          {% for message in messages %}
-              <div class="col-md-6 col-lg-4 mb-4">
-                  <div class="card border-0 shadow-sm h-100 message-card">
-                      <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
-                          <div class="d-flex align-items-center">
-                              <div class="avatar-circle bg-primary text-white me-2">
-                                  <i class="fas fa-headset"></i>
-                              </div>
-                              <h6 class="mb-0">Support Chat</h6>
-                          </div>
-                          <span class="badge 
-                              {% if message.status == 'pending' %}bg-warning text-dark
-                              {% elif message.status == 'in_progress' %}bg-info
-                              {% elif message.status == 'resolved' %}bg-success
-                              {% endif %}">
-                              {{ message.status|replace('_', ' ')|title }}
-                          </span>
-                      </div>
-                      <div class="card-body">
-                          <h5 class="card-title text-truncate">{{ message.subject }}</h5>
-                          <p class="card-text text-muted small mb-0">
-                              <i class="fas fa-clock me-1"></i> 
-                              {{ message.updated_at.strftime('%Y-%m-%d %H:%M') if message.updated_at else message.created_at.strftime('%Y-%m-%d %H:%M') }}
-                          </p>
-                          <p class="card-text message-preview mt-2">
-                              {% if message.admin_response %}
-                                  <span class="text-primary fw-medium">Admin:</span> {{ message.admin_response|truncate(80) }}
-                              {% else %}
-                                  <span class="text-primary fw-medium">You:</span> {{ message.message|truncate(80) }}
-                              {% endif %}
-                          </p>
-                      </div>
-                      <div class="card-footer bg-transparent border-0">
-                          <a href="{{ url_for('student_view_message', message_id=message.id) }}" class="btn btn-primary w-100">
-                              <i class="fas fa-comments me-1"></i> Open Chat
-                          </a>
-                      </div>
-                  </div>
-              </div>
-          {% endfor %}
-      {% else %}
-          <div class="col-12">
-              <div class="card border-0 shadow-sm">
-                  <div class="card-body text-center py-5">
-                      <div class="empty-state">
-                          <i class="fas fa-comments fa-4x text-muted mb-3"></i>
-                          <h4>No conversations yet</h4>
-                          <p class="text-muted mb-4">Start a new conversation with our support team</p>
-                          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newMessageModal">
-                              <i class="fas fa-plus me-2"></i> New Conversation
-                          </button>
-                      </div>
-                  </div>
-              </div>
-          </div>
-      {% endif %}
-  </div>
+    <!-- Quick Actions Bar -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm bg-gradient-primary text-white">
+                <div class="card-body py-3">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h6 class="mb-1 fw-semibold">Need help with something specific?</h6>
+                            <p class="mb-0 small opacity-90">Quick access to common requests</p>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <div class="d-flex gap-2 justify-content-md-end">
+                                <a href="{{ url_for('my_lost_id_requests') }}" class="btn btn-light btn-sm">
+                                    <i class="bi bi-list-ul me-1"></i> My ID Requests
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messages Grid -->
+    <div class="row">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card border-0 shadow-sm h-100 message-card">
+                        <div class="card-header bg-white border-bottom-0 pb-2">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-circle bg-primary-subtle text-primary me-3">
+                                        {% if 'Lost ID Request' in message.subject %}
+                                            <i class="bi bi-credit-card-2-front"></i>
+                                        {% else %}
+                                            <i class="bi bi-headset"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0 fw-semibold">
+                                            {% if 'Lost ID Request' in message.subject %}
+                                                Lost ID Request
+                                            {% else %}
+                                                Support Chat
+                                            {% endif %}
+                                        </h6>
+                                        <small class="text-muted">
+                                            <i class="bi bi-clock me-1"></i>
+                                            {{ message.updated_at.strftime('%b %d, %Y') if message.updated_at else message.created_at.strftime('%b %d, %Y') }}
+                                        </small>
+                                    </div>
+                                </div>
+                                <span class="badge rounded-pill
+                                    {% if message.status == 'pending' %}bg-warning-subtle text-warning-emphasis
+                                    {% elif message.status == 'in_progress' %}bg-info-subtle text-info-emphasis
+                                    {% elif message.status == 'resolved' %}bg-success-subtle text-success-emphasis
+                                    {% endif %}">
+                                    {% if message.status == 'pending' %}
+                                        <i class="bi bi-clock-fill me-1"></i>Pending
+                                    {% elif message.status == 'in_progress' %}
+                                        <i class="bi bi-arrow-repeat me-1"></i>In Progress
+                                    {% elif message.status == 'resolved' %}
+                                        <i class="bi bi-check-circle-fill me-1"></i>Resolved
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body pt-2">
+                            <h5 class="card-title text-truncate mb-2">{{ message.subject }}</h5>
+                            <div class="message-preview text-muted small mb-3">
+                                {% if message.admin_response %}
+                                    <div class="d-flex align-items-start">
+                                        <div class="avatar-xs bg-success-subtle text-success-emphasis rounded-circle me-2 flex-shrink-0">
+                                            <i class="bi bi-person-check-fill"></i>
+                                        </div>
+                                        <div>
+                                            <span class="fw-medium text-success">Admin:</span>
+                                            <span class="text-dark">{{ message.admin_response|truncate(80) }}</span>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <div class="d-flex align-items-start">
+                                        <div class="avatar-xs bg-primary-subtle text-primary rounded-circle me-2 flex-shrink-0">
+                                            <i class="bi bi-person-fill"></i>
+                                        </div>
+                                        <div>
+                                            <span class="fw-medium text-primary">You:</span>
+                                            <span class="text-dark">{{ message.message|truncate(80) }}</span>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    {{ message.updated_at.strftime('%I:%M %p') if message.updated_at else message.created_at.strftime('%I:%M %p') }}
+                                </small>
+                                {% if message.status != 'resolved' %}
+                                    <span class="badge bg-primary-subtle text-primary-emphasis">
+                                        <i class="bi bi-dot"></i> Active
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0 pt-0">
+                            <a href="{{ url_for('student_view_message', message_id=message.id) }}" class="btn btn-primary w-100">
+                                <i class="bi bi-chat-dots me-2"></i> Open Conversation
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <div class="empty-state">
+                            <div class="mb-4">
+                                <div class="avatar-xl bg-primary-subtle text-primary rounded-circle mx-auto mb-3">
+                                    <i class="bi bi-chat-dots fs-1"></i>
+                                </div>
+                                <h4 class="fw-bold text-dark">No conversations yet</h4>
+                                <p class="text-muted mb-4">Start a new conversation with our support team to get help with any questions or issues.</p>
+                            </div>
+                            <div class="d-flex gap-2 justify-content-center">
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newMessageModal">
+                                    <i class="bi bi-plus-lg me-2"></i> Start Conversation
+                                </button>
+                                <a href="{{ url_for('lost_id_request') }}" class="btn btn-outline-primary">
+                                    <i class="bi bi-credit-card-2-front me-2"></i> Request Lost ID
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
 </div>
 
 <!-- New Message Modal -->
 <div class="modal fade" id="newMessageModal" tabindex="-1" aria-labelledby="newMessageModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-      <div class="modal-content border-0 shadow">
-          <div class="modal-header bg-primary text-white">
-              <h5 class="modal-title" id="newMessageModalLabel">
-                  <i class="fas fa-plus-circle me-2"></i> New Support Conversation
-              </h5>
-              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <form id="supportForm" action="{{ url_for('submit_support_message') }}" method="POST">
-              <div class="modal-body">
-                  <div class="mb-3">
-                      <label for="supportSubject" class="form-label">Subject</label>
-                      <input type="text" class="form-control" id="supportSubject" name="subject" placeholder="What's your question about?" required>
-                  </div>
-                  <div class="mb-3">
-                      <label for="supportMessage" class="form-label">Message</label>
-                      <textarea class="form-control" id="supportMessage" name="message" rows="5" placeholder="Describe your issue in detail..." required></textarea>
-                  </div>
-              </div>
-              <div class="modal-footer border-0">
-                  <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                  <button type="submit" class="btn btn-primary" id="sendSupportMessage">
-                      <i class="fas fa-paper-plane me-2"></i> Start Conversation
-                  </button>
-              </div>
-          </form>
-      </div>
-  </div>
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white border-0">
+                <h5 class="modal-title fw-semibold" id="newMessageModalLabel">
+                    <i class="bi bi-plus-circle me-2"></i> Start New Conversation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="supportForm" action="{{ url_for('submit_support_message') }}" method="POST">
+                <div class="modal-body p-4">
+                    <div class="mb-4">
+                        <label for="supportSubject" class="form-label fw-semibold">Subject</label>
+                        <input type="text" class="form-control form-control-lg" id="supportSubject" name="subject" 
+                               placeholder="What do you need help with?" required>
+                        <div class="form-text">Be specific to help us assist you better</div>
+                    </div>
+                    <div class="mb-4">
+                        <label for="supportMessage" class="form-label fw-semibold">Message</label>
+                        <textarea class="form-control" id="supportMessage" name="message" rows="6" 
+                                  placeholder="Describe your issue or question in detail..." required></textarea>
+                        <div class="form-text">Include any relevant details that might help us understand your situation</div>
+                    </div>
+                    
+                    <!-- Quick Templates -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Quick Templates</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-outline-secondary btn-sm template-btn" 
+                                    data-subject="Technical Issue" 
+                                    data-message="I'm experiencing a technical issue with...">
+                                <i class="bi bi-gear me-1"></i> Technical Issue
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm template-btn" 
+                                    data-subject="Account Access" 
+                                    data-message="I'm having trouble accessing my account...">
+                                <i class="bi bi-person-lock me-1"></i> Account Access
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm template-btn" 
+                                    data-subject="General Inquiry" 
+                                    data-message="I have a question about...">
+                                <i class="bi bi-question-circle me-1"></i> General Question
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg me-2"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="sendSupportMessage">
+                        <i class="bi bi-send me-2"></i> Start Conversation
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3"></div>
+
 <style>
-  .message-card {
-    transition: transform 0.2s;
-  }
-  
-  .message-card:hover {
-    transform: translateY(-5px);
-  }
-  
-  .message-preview {
-    height: 3em;
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-  }
-  
-  .avatar-circle {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.9rem;
-  }
-  
-  .empty-state {
-    padding: 2rem;
-  }
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, var(--bs-primary) 0%, #0056b3 100%);
+    }
+    
+    .message-card {
+        transition: all 0.3s ease;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .message-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+    }
+    
+    .avatar-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+    }
+    
+    .avatar-xs {
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+    }
+    
+    .avatar-xl {
+        width: 80px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .message-preview {
+        min-height: 60px;
+        line-height: 1.4;
+    }
+    
+    .empty-state {
+        padding: 2rem 1rem;
+    }
+    
+    .card {
+        border-radius: 12px;
+    }
+    
+    .btn {
+        border-radius: 8px;
+        font-weight: 500;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, var(--bs-primary) 0%, #0056b3 100%);
+        border: none;
+    }
+    
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #0056b3 0%, var(--bs-primary) 100%);
+        transform: translateY(-1px);
+    }
+    
+    .badge {
+        font-weight: 500;
+        font-size: 0.75rem;
+    }
+    
+    .form-control:focus {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .template-btn:hover {
+        background-color: var(--bs-primary);
+        color: white;
+        border-color: var(--bs-primary);
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .message-card:hover {
+            transform: none;
+        }
+        
+        .d-flex.gap-2 {
+            flex-direction: column;
+        }
+        
+        .btn {
+            width: 100%;
+        }
+    }
 </style>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-      const supportForm = document.getElementById('supportForm');
-      
-      supportForm.addEventListener('submit', function(e) {
-          e.preventDefault();
-          
-          const formData = new FormData(this);
-          const jsonData = {
-              subject: formData.get('subject'),
-              message: formData.get('message')
-          };
-          
-          // Disable submit button and show loading state
-          const submitBtn = document.getElementById('sendSupportMessage');
-          const originalBtnText = submitBtn.innerHTML;
-          submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Sending...';
-          submitBtn.disabled = true;
-          
-          fetch('/submit_support_message', {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(jsonData)
-          })
-          .then(response => response.json())
-          .then(data => {
-              if (data.success) {
-                  // Close modal
-                  const modal = bootstrap.Modal.getInstance(document.getElementById('newMessageModal'));
-                  modal.hide();
-                  
-                  // Show success message
-                  showToast('Your message has been sent successfully!', 'success');
-                  
-                  // Reload page after a short delay
-                  setTimeout(() => {
-                      location.reload();
-                  }, 1500);
-              } else {
-                  showToast(data.error || 'An error occurred while sending your message', 'error');
-                  // Reset button
-                  submitBtn.innerHTML = originalBtnText;
-                  submitBtn.disabled = false;
-              }
-          })
-          .catch(error => {
-              console.error('Error:', error);
-              showToast('Network error. Please check your connection and try again.', 'error');
-              // Reset button
-              submitBtn.innerHTML = originalBtnText;
-              submitBtn.disabled = false;
-          });
-      });
-  });
+document.addEventListener('DOMContentLoaded', function() {
+    const supportForm = document.getElementById('supportForm');
+    const templateButtons = document.querySelectorAll('.template-btn');
+    
+    // Template button functionality
+    templateButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const subject = this.getAttribute('data-subject');
+            const message = this.getAttribute('data-message');
+            
+            document.getElementById('supportSubject').value = subject;
+            document.getElementById('supportMessage').value = message;
+            
+            // Focus on message field for editing
+            document.getElementById('supportMessage').focus();
+        });
+    });
+    
+    // Form submission
+    supportForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const jsonData = {
+            subject: formData.get('subject'),
+            message: formData.get('message')
+        };
+        
+        // Disable submit button and show loading state
+        const submitBtn = document.getElementById('sendSupportMessage');
+        const originalBtnText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Sending...';
+        submitBtn.disabled = true;
+        
+        fetch('/submit_support_message', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(jsonData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('newMessageModal'));
+                modal.hide();
+                
+                // Show success toast
+                showToast('Success!', 'Your message has been sent successfully!', 'success');
+                
+                // Reload page after a short delay
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                showToast('Error', data.error || 'An error occurred while sending your message', 'danger');
+                // Reset button
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Network Error', 'Please check your connection and try again.', 'danger');
+            // Reset button
+            submitBtn.innerHTML = originalBtnText;
+            submitBtn.disabled = false;
+        });
+    });
+    
+    // Toast notification function
+    function showToast(title, message, type) {
+        const toastContainer = document.querySelector('.toast-container');
+        const toastId = 'toast-' + Date.now();
+        
+        const toastHTML = `
+            <div id="${toastId}" class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <strong>${title}</strong><br>${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        `;
+        
+        toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+        const toastElement = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastElement, { autohide: true, delay: 4000 });
+        toast.show();
+        
+        toastElement.addEventListener('hidden.bs.toast', function() {
+            toastElement.remove();
+        });
+    }
+});
 </script>
 {% endblock %}
